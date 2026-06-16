@@ -485,8 +485,8 @@ function orgRank(){
   var avgDig=all.reduce(function(s,x){return s+x.디지털순증;},0)/n;
   var avgScore=all.reduce(function(s,x){return s+x.지구당;},0)/n;
   var sum='<div class="sg">'
-    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위</div><div class="ss">전체 '+all.length.toLocaleString()+'개</div></div>'
-    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개</div></div>'
+    +'<div class="sc"'+(pos==='총국'?' style="flex:1"':'')+'><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위</div><div class="ss">전체 '+all.length.toLocaleString()+'개</div></div>'
+    +(pos==='총국'?'':'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개</div></div>')
     +'</div>'
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
@@ -507,8 +507,8 @@ function orgRank(){
   }
   return '<div class="mt">'+pos+' 순위</div>'+sum
     +block('전사 상위 10위',national)
-    +block('총국 상위 10위',chong)
-    +block('사업국 상위 10위',saup);
+    +(pos==='총국'?'':block('총국 상위 10위',chong))
+    +((pos==='사업국'||pos==='총국')?'':block('사업국 상위 10위',saup));
 }
 
 function info(){
