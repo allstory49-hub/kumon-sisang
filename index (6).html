@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<!-- KUMON 실적관리 v2.1 2026-06-16 -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KUMON 당월 시상 및 인센티브 현황</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F4F5F3; --card:#FFFFFF; --card2:#F7F8F6;
+  --green:#1D9E75; --green-d:#0F6E56; --green-l:#E1F5EE; --green-ll:#F0FBF7;
+  --blue:#185FA5; --blue-l:#E6F1FB; --blue-ll:#B5D4F4;
+  --amber:#BA7517; --amber-l:#FAEEDA;
+  --red:#A32D2D; --red-l:#FCEBEB;
+  --t1:#1A1C1A; --t2:#5E635E; --t3:#9CA29C;
+  --bd:#E6E8E4; --bd2:#D2D6D0;
+  --r-sm:8px; --r-md:11px; --r-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:14px;color:var(--t1);background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+input,button{font-family:inherit;font-size:14px}
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative}
+.page{display:none}.page.active{display:block}
+
+/* 로딩 */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:18px;color:var(--t2)}
+.spin{width:38px;height:38px;border:3px solid var(--bd2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 로그인 */
+.lw{padding:2rem 1.25rem;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.lc{width:100%;max-width:380px}
+.logo{text-align:center;margin-bottom:2rem}
+.logo .k{font-size:34px;font-weight:800;letter-spacing:-0.02em;color:var(--t1)}
+.logo .s{font-size:15px;font-weight:600;color:var(--green);margin-top:6px}
+.logo .d{font-size:12px;color:var(--t2);margin-top:10px}
+.lcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-lg);padding:1.75rem 1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.dbadge{margin-bottom:1.25rem}
+.fl{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;display:block}
+.fi{width:100%;padding:12px 14px;border:1px solid var(--bd2);border-radius:var(--r-md);background:var(--card2);color:var(--t1);margin-bottom:12px;transition:border-color .15s}
+.fi:focus{outline:none;border-color:var(--green);background:#fff}
+.bg{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .15s}
+.bg:active{background:var(--green-d)}
+.err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;min-height:18px}
+
+/* 헤더 */
+.hdr{background:var(--card);border-bottom:1px solid var(--bd);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:10}
+.hbrand{font-size:16px;font-weight:700}.hbrand span{color:var(--green);font-weight:600}
+.hr{display:flex;align-items:center;gap:10px}
+.uname{font-size:12px;color:var(--t2);font-weight:500}
+.bo{font-size:12px;color:var(--t2);background:none;border:1px solid var(--bd2);border-radius:var(--r-sm);padding:6px 11px;cursor:pointer;font-weight:500}
+.bo:active{background:var(--card2)}
+
+/* 탭 */
+.tb{display:flex;background:var(--card);border-bottom:1px solid var(--bd);overflow-x:auto;scrollbar-width:none;position:sticky;top:54px;z-index:9}
+.tb::-webkit-scrollbar{display:none}
+.tbn{flex-shrink:0;padding:12px 16px;font-size:13px;font-weight:500;color:var(--t2);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tbn.on{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+.bd{padding:1.1rem}
+
+/* 타이틀 */
+.mt{font-size:18px;font-weight:700;margin-bottom:0.9rem;letter-spacing:-0.01em}
+.stl{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:9px;margin-top:2px}
+
+/* 영웅 카드 */
+.hc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-lg);padding:1.4rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.ht{display:flex;align-items:center;gap:13px;margin-bottom:1.25rem}
+.av{width:52px;height:52px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:var(--green-d);flex-shrink:0}
+.av.b{background:var(--blue-l);color:var(--blue)}
+.av.av-sq{border-radius:12px;font-size:11.5px;font-weight:700;line-height:1.15;text-align:center;padding:4px;word-break:keep-all;letter-spacing:-0.02em}
+.sr2{display:grid;grid-template-columns:1fr 1fr;gap:9px;text-align:center;margin-top:9px}
+.sr2 .slb{line-height:1.35}
+.minwarn{margin-top:12px;padding:9px 12px;background:var(--red-l);color:var(--red);border-radius:var(--r-sm);font-size:11.5px;font-weight:600;text-align:center;line-height:1.4}
+.hn{font-size:17px;font-weight:700}
+.hsb{font-size:12px;color:var(--t2);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;text-align:center}
+.sb{background:var(--card2);border-radius:var(--r-md);padding:13px 6px}
+.sb.flip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.sb.flip .slb{margin-top:0}
+.sn{font-size:22px;font-weight:800;letter-spacing:-0.02em}
+.sn.g{color:var(--green)}.sn.y{color:var(--amber)}.sn.bl{color:var(--blue)}.sn.r{color:var(--red)}
+.slb{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
+
+/* 통계 그리드 */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.sc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-md);padding:13px}
+.sl{font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:500}
+.sv{font-size:21px;font-weight:800;letter-spacing:-0.02em}
+.ss{font-size:11px;color:var(--t2);margin-top:2px}
+.sv2{font-size:21px;font-weight:800;letter-spacing:-0.02em}
+.unit{font-size:12px;font-weight:500;color:var(--t2);margin-left:3px}
+.subp{font-size:12px;color:var(--green);font-weight:700;margin-top:3px}
+.top1row{display:flex;gap:10px;margin-bottom:1rem}
+.top1{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:var(--r-md);padding:11px 13px;min-width:0}
+.top1l{font-size:11px;color:var(--t2);margin-bottom:4px}
+.top1v{font-size:13px;font-weight:600;line-height:1.3}
+.sc.wide{margin-bottom:10px}
+.mini3{display:flex;gap:8px;margin-top:7px}
+.mini3>div{flex:1;text-align:center;min-width:0;background:var(--card2);border-radius:var(--r-sm);padding:8px 4px}
+.m3l{font-size:10px;color:var(--t2);margin-bottom:3px;white-space:nowrap}
+.m3v{font-size:18px;font-weight:800;letter-spacing:-0.02em}
+.m3v.rd{color:var(--red)}
+.unit{font-size:12px;font-weight:500;color:var(--t2);margin-left:1px}
+.subp{font-size:12px;font-weight:600;color:var(--green);margin-top:2px}
+.top1row{display:flex;gap:10px;margin-bottom:1rem}
+.top1{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:var(--r-md);padding:11px 13px;min-width:0}
+.top1l{font-size:11px;color:var(--t2);margin-bottom:3px}
+.top1v{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 리스트 */
+.cl{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1rem}
+.cr{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--bd)}
+.cr:last-child{border-bottom:none}
+.cr.tot{background:var(--card2)}
+.cv{font-size:13px;font-weight:600;color:var(--green)}.cv.r{color:var(--red)}
+.cll{font-size:13px;color:var(--t2)}
+
+/* 순위 행 */
+.rb{width:27px;height:27px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.r1{background:var(--amber-l);color:#854F0B}.r2{background:#EEF0EC;color:#444}.r3{background:#FAECE7;color:#993C1D}.rn{background:var(--card2);color:var(--t2)}
+.rr{display:flex;align-items:center;gap:11px;padding:11px 15px;border-bottom:1px solid var(--bd)}
+.rr:last-child{border-bottom:none}
+.rr.hi{background:var(--green-ll)}.rr.hi2{background:var(--blue-l)}
+.rn2{flex:1;font-size:13px;font-weight:500;min-width:0}
+.rsb{font-size:11px;color:var(--t2);font-weight:400}
+.rsc{text-align:right;flex-shrink:0}
+.rsa{font-size:13px;font-weight:700;color:var(--green)}.rsa.r{color:var(--red)}
+.rsi{font-size:11px;color:var(--amber);margin-top:1px;font-weight:500}
+.rhead{display:flex;align-items:center;gap:11px;padding:10px 15px;border-bottom:1px solid var(--bd);background:var(--card2)}
+.rhead .sp{flex:1}
+.rhc{width:56px;text-align:center;font-size:11.5px;color:var(--t1);font-weight:700;white-space:nowrap}
+.rcol{width:56px;text-align:center;flex-shrink:0}
+.rcol-v{font-size:14px;font-weight:600}
+.rcol.big .rcol-v{font-size:17px;font-weight:800;letter-spacing:-0.02em}
+.rhc.w2{width:66px;white-space:normal;line-height:1.15}
+.rcol.w2{width:66px}
+.m2{display:flex;gap:12px}
+.m2>div{flex:1;min-width:0}
+.me{display:inline-block;font-size:10px;background:var(--green);color:#fff;padding:1px 7px;border-radius:5px;margin-left:5px;font-weight:600;vertical-align:middle}
+.me.b{background:var(--blue)}
+
+/* 막대 */
+.bw{background:var(--card);border:1px solid var(--bd);border-radius:var(--r-lg);padding:1.1rem;margin-bottom:1rem}
+.bi{display:flex;align-items:center;gap:9px;margin-bottom:8px}.bi:last-child{margin-bottom:0}
+.bn{font-size:12px;color:var(--t2);width:46px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;font-weight:500}
+.bt{flex:1;height:19px;background:var(--card2);border-radius:5px;overflow:hidden}
+.bf{height:100%;border-radius:5px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:20px;transition:width .5s ease}
+.bf.g{background:#9FE1CB}.bf.gd{background:var(--green)}.bf.bl2{background:var(--blue-ll)}.bf.bld{background:var(--blue)}
+.bs{font-size:11px;font-weight:700;color:#085041}
+
+/* 안내 박스 */
+.ib{padding:11px 15px;border-radius:var(--r-md);font-size:12px;margin-bottom:1rem;line-height:1.5}
+.ib.bl{background:var(--blue-l);color:var(--blue)}
+.ib.gr{background:var(--green-l);color:var(--green-d)}
+.ib.am{background:var(--amber-l);color:#854F0B}
+.tagx{font-size:11px;background:var(--red-l);color:var(--red);padding:2px 9px;border-radius:5px;font-weight:600}
+.bpos{display:inline-block;font-size:11px;padding:2px 9px;border-radius:5px;font-weight:600}
+.bpos.g{background:var(--green-l);color:var(--green-d)}
+.bpos.b{background:var(--blue-l);color:var(--blue)}
+
+/* 업로드 */
+.upz{border:1.5px dashed var(--bd2);border-radius:var(--r-lg);padding:1.2rem;margin-bottom:0.8rem;cursor:pointer;background:var(--card);display:flex;align-items:center;gap:13px;transition:all .15s}
+.upz:active{background:var(--card2)}
+.upz.done{border-color:var(--green);border-style:solid;background:var(--green-ll)}
+.upi{width:42px;height:42px;border-radius:var(--r-md);background:var(--green-l);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.upi.done{background:var(--green)}
+.upi svg{width:22px;height:22px}
+.upl{font-size:13px;font-weight:600}
+.ups{font-size:11px;color:var(--t2);margin-top:3px}
+.ups.done{color:var(--green-d)}
+.actb{width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:var(--r-md);font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+.actb:active{background:var(--green-d)}
+.actb:disabled{background:#A8D5C2;cursor:not-allowed}
+
+/* 검색 */
+.sb2{display:flex;gap:8px;margin-bottom:1rem}
+.si{flex:1;padding:11px 13px;border:1px solid var(--bd2);border-radius:var(--r-md);background:var(--card2);color:var(--t1)}
+.si:focus{outline:none;border-color:var(--green);background:#fff}
+.sbtn{padding:11px 16px;background:var(--green);color:#fff;border:none;border-radius:var(--r-md);cursor:pointer;font-size:13px;font-weight:600}
+
+/* 직책 토글 */
+.rtog{display:flex;gap:7px;margin-bottom:1rem;flex-wrap:wrap}
+.rtb{padding:7px 13px;font-size:12px;border:1px solid var(--bd2);border-radius:var(--r-md);background:var(--card);cursor:pointer;color:var(--t2);font-weight:500}
+.rtb.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.empty{text-align:center;padding:2rem 1rem;color:var(--t2);font-size:13px}
+.ftr{text-align:center;padding:1.5rem 1rem;font-size:11px;color:var(--t3)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- 로딩 -->
+<div id="pp" class="page active">
+  <div class="loading"><div class="spin"></div><div style="font-size:13px;font-weight:500">데이터 불러오는 중...</div></div>
+</div>
+
+<!-- 로그인 -->
+<div id="lp" class="page">
+<div class="lw"><div class="lc">
+  <div class="logo">
+    <div class="k">KUMON</div>
+    <div class="s">당월 시상 및 인센티브 현황</div>
+    <div class="d">아이디: 이름 · 비밀번호: 사번</div>
+  </div>
+  <div class="lcard">
+    <div class="dbadge" id="dbadge" style="display:none"></div>
+    <label class="fl">아이디 (이름)</label>
+    <input class="fi" id="uid" type="text" placeholder="이름 입력" autocomplete="off">
+    <label class="fl">비밀번호 (사번)</label>
+    <input class="fi" id="upw" type="password" placeholder="사번 입력" autocomplete="off">
+    <button class="bg" onclick="doLogin()">로그인</button>
+    <div class="err" id="lerr"></div>
+  </div>
+  <div class="ftr">© KUMON 실적관리 시스템</div>
+</div></div>
+</div>
+
+<!-- 사용자 -->
+<div id="up" class="page">
+  <div class="hdr"><div class="hbrand">KUMON <span>시상현황</span></div>
+    <div class="hr"><span class="uname" id="uNm"></span><button class="bo" onclick="out()">로그아웃</button></div></div>
+  <div class="tb" id="uTabs"></div>
+  <div class="bd" id="uBody"></div>
+</div>
+
+<!-- 관리자 -->
+<div id="ap" class="page">
+  <div class="hdr"><div class="hbrand">KUMON <span>관리자</span></div>
+    <button class="bo" onclick="out()">로그아웃</button></div>
+  <div class="tb" id="aTabs"></div>
+  <div class="bd" id="aBody"></div>
+</div>
+
+</div>
+<script>
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{}};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'upload',otab:'지구',search:null};
+var UP={teacher:null,org:null};
+
+/* ───── GitHub 설정 ───── */
+var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
+
+/* ───── 데이터 로드 (GitHub의 baked.js를 매번 최신으로) ───── */
+async function loadData(){
+  try{
+    var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return false;
+    var txt=await res.text();
+    var json=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim();
+    var B=JSON.parse(json);
+    if(B.t)APP.teachers=rankTeachers(decT(B.t));
+    if(B.o)APP.org=B.o;
+    if(B.m)APP.meta=B.m;
+    return true;
+  }catch(e){return false;}
+}
+
+/* ───── GitHub에 baked.js 저장 (관리자 업로드 시) ───── */
+function b64utf8(s){return btoa(unescape(encodeURIComponent(s)));}
+async function saveToGitHub(bakedJs){
+  var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+GH.path;
+  var hd={'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'};
+  var sha=null;
+  try{var g=await fetch(api+'?t='+Date.now(),{headers:hd,cache:'no-store'});if(g.ok){var gj=await g.json();sha=gj.sha;}}catch(e){}
+  var body={message:'데이터 갱신 '+new Date().toISOString(),content:b64utf8(bakedJs)};
+  if(sha)body.sha=sha;
+  var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+  if(!r.ok){var et=await r.text();throw new Error('GitHub 저장 실패 ('+r.status+'): '+et.slice(0,120));}
+  return true;
+}
+
+/* ───── 초기화 ───── */
+(async function init(){
+  await loadData();
+  renderBadge();
+  showPage('lp');
+})();
+
+function showPage(id){['pp','lp','up','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
+function out(){S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
+function rbC(n){return n===1?'r1':n===2?'r2':n===3?'r3':'rn';}
+function badgeStyle(rank){
+  if(rank>10)return 'background:var(--card2);color:var(--t2)';
+  var t=(rank-1)/9;
+  var hue=Math.round(160+t*52);
+  var light=Math.round(34+t*30);
+  var txt=light<54?'#fff':'#0A2A22';
+  return 'background:hsl('+hue+',54%,'+light+'%);color:'+txt;
+}
+function fmt(n){n=Math.round((Number(n)||0)*10)/10;return n.toLocaleString('en-US',{maximumFractionDigits:1});}
+function fmt2(n){return Math.round(n*100)/100;}
+
+function renderBadge(){
+  var el=document.getElementById('dbadge');
+  if(APP.meta&&APP.meta.date){
+    el.style.display='block';
+    el.innerHTML='<div class="ib gr" style="margin-bottom:0">📅 최신 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명</div>';
+  }else{
+    el.style.display='block';
+    el.innerHTML='<div class="ib am" style="margin-bottom:0">아직 업로드된 데이터가 없습니다. 관리자 업로드 후 조회 가능합니다.</div>';
+  }
+}
+
+/* ───── 로그인 ───── */
+function doLogin(){
+  var id=document.getElementById('uid').value.trim();
+  var pw=document.getElementById('upw').value.trim();
+  document.getElementById('lerr').textContent='';
+  if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
+  if(id==='admin'&&pw==='kumon2024'){showPage('ap');renderAdmin();return;}
+  var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
+  if(t){S.user=t;S.type='teacher';S.pos='구몬교사';document.getElementById('uNm').textContent=id;showPage('up');S.tab='my';renderUser();return;}
+  var roles=['지구','지국','사업국','총국'];
+  for(var i=0;i<roles.length;i++){
+    var o=(APP.org[roles[i]]||[]).find(function(r){return r.관리자명===id&&r.사번===pw;});
+    if(o){S.user=o;S.type='org';S.pos=roles[i];document.getElementById('uNm').textContent=id;showPage('up');S.tab='my';renderUser();return;}
+  }
+  document.getElementById('lerr').textContent='이름 또는 사번이 올바르지 않습니다.';
+}
+
+/* ───── 사용자 화면 ───── */
+function renderUser(){
+  var isOrg=S.type==='org';
+  var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
+                :[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}];
+  document.getElementById('uTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.tab===t.id?' on':'')+'" onclick="S.tab=\''+t.id+'\';renderUser()">'+t.l+'</button>';}).join('');
+  var b=document.getElementById('uBody');
+  if(S.tab==='my')b.innerHTML=isOrg?myOrg():myTeacher();
+  else if(S.tab==='rank')b.innerHTML=isOrg?orgRank():teacherRank();
+  else b.innerHTML=info();
+}
+
+function myTeacher(){
+  var r=S.user,aw=fmt(r.시상계);
+  var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
+  var sn=shortName(r.소속명)||r.소속명;
+  var items=[['과목순증',r.과목순증],['특별점수(마스타)',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['펜세트점수',r.펜세트점수],['스구N전환재약정',r.스구N전환재약정],['스구N재약정',r.스구N재약정]];
+  return '<div class="mt">내 실적</div>'
+    +'<div class="ib gr">📅 기준일: '+(APP.meta.date||'')+'&nbsp;·&nbsp;대상자 '+(APP.meta.total||0).toLocaleString()+'명</div>'
+    +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb"><span class="bpos g">구몬교사</span> · 근무 '+r.근무기간+'개월</div></div></div>'
+    +'<div class="sr">'
+    +'<div class="sb flip"><div class="slb">과목순증</div><div class="sn'+(r.과목순증<0?' r':' g')+'">'+fmt(r.과목순증)+'</div></div>'
+    +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
+    +'<div class="sb flip"><div class="slb">시상점수</div><div class="sn'+(aw<0?' r':' g')+'">'+aw+'</div></div></div>'
+    +'<div class="sr2">'
+    +'<div class="sb flip"><div class="slb">전사 순위<br>(전체 '+(APP.meta.total||0).toLocaleString()+'명)</div><div class="sn y">'+r.순위+'위</div></div>'
+    +'<div class="sb flip"><div class="slb">총국 순위<br>(총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명)</div><div class="sn bl">'+(r.총국순위||'-')+'위</div></div></div>'
+    +(meetMin?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
+    +'</div>'
+    +'<div class="stl">항목별 내역</div><div class="cl">'+items.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+(i[1]<0?' r':'')+'">'+fmt(i[1])+'</span></div>';}).join('')
+    +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+(aw<0?' r':'')+'" style="font-size:15px">'+aw+'</span></div></div>';
+}
+
+function myOrg(){
+  var r=S.user,sc=fmt(r.지구당),tot=(APP.org[S.pos]||[]).length;
+  var sn=shortName(r.소속명)||r.소속명;
+  var scoreLabel=(S.pos==='지구')?'시상점수':'시상점수(지구당)';
+  var code=r.소속코드||'';
+  var pfx=(S.pos==='지구')?code:(S.pos==='지국')?code.slice(0,4):(S.pos==='사업국')?code.slice(0,2):code.slice(0,1);
+  var mts=APP.teachers.filter(function(t){return (t.소속코드||'').indexOf(pfx)===0;}).sort(function(a,b){return (b.시상계-a.시상계)||(b.전월말관리과목-a.전월말관리과목);}).slice(0,50);
+  var mtAll=APP.teachers.filter(function(t){return (t.소속코드||'').indexOf(pfx)===0;}).length;
+  return '<div class="mt">내 실적</div>'
+    +'<div class="ib gr">📅 기준일: '+(APP.meta.date||'')+'&nbsp;·&nbsp;'+S.pos+' '+tot.toLocaleString()+'개 집계</div>'
+    +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.관리자명+'</div><div class="hsb"><span class="bpos b">'+S.pos+'</span> · '+r.소속명+'</div></div></div>'
+    +'<div class="sr">'
+    +'<div class="sb flip"><div class="slb">과목순증</div><div class="sn'+(r.과목순증<0?' r':' g')+'">'+fmt(r.과목순증)+'</div></div>'
+    +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
+    +'<div class="sb flip"><div class="slb">'+scoreLabel+'</div><div class="sn'+(r.지구당<0?' r':' g')+'">'+sc+'</div></div></div>'
+    +'<div class="sr2">'
+    +'<div class="sb flip"><div class="slb">전사 순위<br>(전체 '+tot.toLocaleString()+'개)</div><div class="sn y">'+r.순위+'위</div></div>'
+    +'<div class="sb flip"><div class="slb">총국 순위<br>(총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개)</div><div class="sn bl">'+(r.총국순위||'-')+'위</div></div></div>'
+    +'</div>'
+    +'<div class="stl">소속 교사 ('+mtAll.toLocaleString()+'명)</div><div class="cl">'
+    +(mts.length?'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
+    +mts.map(function(t){return '<div class="rr"><div class="rn2" style="flex:1">'+t.교사명+'<br><span class="rsb">'+t.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(t.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(t.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(t.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(t.디지털순증)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:'+(t.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(t.시상계)+'</div></div></div>';}).join('')
+    :'<div class="empty">해당 교사가 없습니다.</div>')+'</div>';
+}
+
+function teacherRank(){
+  var r=S.user;
+  var p1=(r.소속코드||'').charAt(0), p2=(r.소속코드||'').slice(0,2);
+  var national=APP.teachers.slice(0,10);
+  var chong=APP.teachers.filter(function(x){return (x.소속코드||'').charAt(0)===p1;}).slice(0,10);
+  var saup=APP.teachers.filter(function(x){return (x.소속코드||'').slice(0,2)===p2;}).slice(0,10);
+  var avgSubj=APP.teachers.length?APP.teachers.reduce(function(s,x){return s+x.과목순증;},0)/APP.teachers.length:0;
+  var avgDig=APP.teachers.length?APP.teachers.reduce(function(s,x){return s+x.디지털순증;},0)/APP.teachers.length:0;
+  var sum='<div class="sg">'
+    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위</div><div class="ss">전체 '+(APP.meta.total||0).toLocaleString()+'명</div></div>'
+    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명</div></div>'
+    +'</div>'
+    +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
+    +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
+    +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
+    +'<div><div class="m3l">시상점수</div><div class="m3v" style="color:'+(r.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(r.시상계)+'</div></div></div></div>'
+    +'<div class="sc wide"><div class="sl">전국 평균</div><div class="mini3">'
+    +'<div><div class="m3l">과목순증</div><div class="m3v">'+fmt(avgSubj)+'</div></div>'
+    +'<div><div class="m3l">디지털순증</div><div class="m3v">'+fmt(avgDig)+'</div></div>'
+    +'<div><div class="m3l">시상점수</div><div class="m3v">'+fmt(APP.meta.avg||0)+'</div></div></div></div>';
+  function block(title,arr){
+    if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
+    return '<div class="stl">'+title+'</div><div class="cl">'
+      +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
+      +arr.map(function(x,idx){
+      var im=x.교사번호===r.교사번호;
+      return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:'+(x.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(x.시상계)+'</div></div></div>';
+    }).join('')+'</div>';
+  }
+  return '<div class="mt">시상점수 순위</div>'+sum
+    +block('전사 상위 10위',national)
+    +block('총국 상위 10위',chong)
+    +block('사업국 상위 10위',saup);
+}
+
+function orgRank(){
+  var r=S.user,pos=S.pos,all=APP.org[pos]||[];
+  var p1=(r.소속코드||'').charAt(0),p2=(r.소속코드||'').slice(0,2);
+  var national=all.slice(0,10);
+  var chong=all.filter(function(x){return (x.소속코드||'').charAt(0)===p1;}).slice(0,10);
+  var saup=all.filter(function(x){return (x.소속코드||'').slice(0,2)===p2;}).slice(0,10);
+  var scoreLabel=(pos==='지구')?'시상점수':'시상점수(지구당)';
+  var n=all.length||1;
+  var avgSubj=all.reduce(function(s,x){return s+x.과목순증;},0)/n;
+  var avgDig=all.reduce(function(s,x){return s+x.디지털순증;},0)/n;
+  var avgScore=all.reduce(function(s,x){return s+x.지구당;},0)/n;
+  var sum='<div class="sg">'
+    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위</div><div class="ss">전체 '+all.length.toLocaleString()+'개</div></div>'
+    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개</div></div>'
+    +'</div>'
+    +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
+    +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
+    +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
+    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</div></div></div></div>'
+    +'<div class="sc wide"><div class="sl">'+pos+' 평균</div><div class="mini3">'
+    +'<div><div class="m3l">과목순증</div><div class="m3v">'+fmt(avgSubj)+'</div></div>'
+    +'<div><div class="m3l">디지털순증</div><div class="m3v">'+fmt(avgDig)+'</div></div>'
+    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v">'+fmt(avgScore)+'</div></div></div></div>';
+  function block(title,arr){
+    if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
+    return '<div class="stl">'+title+'</div><div class="cl">'
+      +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
+      +arr.map(function(x,idx){
+      var im=x.사번&&x.사번===r.사번;
+      return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';
+    }).join('')+'</div>';
+  }
+  return '<div class="mt">'+pos+' 순위</div>'+sum
+    +block('전사 상위 10위',national)
+    +block('총국 상위 10위',chong)
+    +block('사업국 상위 10위',saup);
+}
+
+function info(){
+  if(S.type==='org')return '<div class="mt">조직 시상 기준</div>'
+    +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수</div>'
+    +'<div class="ib am">💡 달성률은 시상점수와 별도로 관리되는 목표 대비 달성 지표입니다.</div>'
+    +'<div class="stl">직책별 산정 방식</div><div class="cl">'
+    +'<div class="cr"><span class="cll">지구</span><span class="cv">시상점수 합계</span></div>'
+    +'<div class="cr"><span class="cll">지국 / 사업국</span><span class="cv">합계 ÷ 담당 지구수</span></div>'
+    +'<div class="cr"><span class="cll">총국</span><span class="cv">시상 없음 (참고용)</span></div></div>';
+  return '<div class="mt">시상 기준 안내</div>'
+    +'<div class="ib bl">시상점수 = 과목순증 + 특별점수(마스타) + 디지털순증 + 태블릿점수 + 펜세트점수 + 스구N전환재약정 + 스구N재약정</div>'
+    +'<div class="stl">필수조건 (시상 대상 기준)</div><div class="cl">'
+    +'<div class="cr"><span class="cll">과목순증</span><span class="cv">1 이상</span></div>'
+    +'<div class="cr"><span class="cll">디지털순증</span><span class="cv">1 이상</span></div>'
+    +'<div class="cr"><span class="cll">근무기간</span><span class="cv">3차월 이상</span></div></div>'
+    +'<div class="stl">TOP 시상 기준</div><div class="cl">'
+    +'<div class="cr"><span class="cll">전사 TOP 시상</span><span class="cv">시상점수 30점 이상</span></div>'
+    +'<div class="cr"><span class="cll">총국 TOP 시상</span><span class="cv">시상점수 25점 이상</span></div>'
+    +'<div class="cr"><span class="cll">사업국 TOP 시상</span><span class="cv">시상점수 12점 이상</span></div>'
+    +'<div class="cr"><span class="cll">지국 우수 시상</span><span class="cv">시상점수 10점 이상</span></div></div>';
+}
+
+/* ───── 관리자 화면 ───── */
+function renderAdmin(){
+  var tabs=[{id:'upload',l:'📤 업로드'},{id:'org',l:'조직 순위'},{id:'rank',l:'교사 순위'},{id:'search',l:'교사 조회'}];
+  document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
+  var b=document.getElementById('aBody');
+  if(S.atab==='upload')b.innerHTML=upload();
+  else if(S.atab==='org')b.innerHTML=adminOrg();
+  else if(S.atab==='rank')b.innerHTML=adminRank();
+  else b.innerHTML=search();
+}
+
+var ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+var ICON_OK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+function upload(){
+  var has=APP.meta&&APP.meta.date;
+  return '<div class="mt">데이터 업로드</div>'
+    +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
+    +'<div class="ib bl">ℹ️ 엑셀 2개를 올려 <b>데이터 반영하기</b>를 누르면 저장되고, 약 1분 뒤 <b>전 직원</b>이 최신 데이터를 조회할 수 있어요.</div>'
+    +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
+    +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
+    +'<input type="file" id="tf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'teacher\')">'
+    +'<div class="stl">② 소속별총실적현황.xlsx</div>'
+    +'<div class="upz'+(UP.org?' done':'')+'" onclick="document.getElementById(\'of\').click()"><div class="upi'+(UP.org?' done':'')+'">'+(UP.org?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.org?UP.org.name:'파일 선택하기')+'</div><div class="ups'+(UP.org?' done':'')+'">조직별 시상점수 파일</div></div></div>'
+    +'<input type="file" id="of" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'org\')">'
+    +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
+    +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>';
+}
+
+function pickFile(input,type){
+  var f=input.files[0];if(!f)return;
+  var msg=document.getElementById('umsg');if(msg)msg.textContent='';
+  var rd=new FileReader();
+  rd.onload=function(e){UP[type]={data:new Uint8Array(e.target.result),name:f.name};renderAdmin();};
+  rd.readAsArrayBuffer(f);
+}
+
+function findCol(h,cands){for(var k=0;k<cands.length;k++){for(var i=0;i<h.length;i++){if(h[i]!=null&&String(h[i]).trim().indexOf(cands[k])>=0)return i;}}return -1;}
+function mergeHeader(rows){var h0=rows[0]||[],h1=rows[1]||[],n=Math.max(h0.length,h1.length),h=[];for(var c=0;c<n;c++){var a=(h1[c]!=null?String(h1[c]).trim():''),b=(h0[c]!=null?String(h0[c]).trim():'');h[c]=a+(a&&b?' ':'')+b;}return h;}
+function shortName(s){return String(s||'').replace(/(지구|지소|지국)$/,'').replace(/지$/,'');}
+
+/* 저장 용량 절감: 교사 데이터를 배열 형식으로 인코딩 */
+var T_KEYS=['소속코드','소속명','교사번호','교사명','근무기간','전월말관리과목','과목순증','특별점수','디지털순증','태블릿점수','펜세트점수','스구N전환재약정','스구N재약정','시상계'];
+function encT(rec){return rec.map(function(r){return T_KEYS.map(function(k){return r[k];});});}
+function decT(arr){if(!arr||!arr.length)return [];if(!Array.isArray(arr[0]))return arr;return arr.map(function(a){var o={};T_KEYS.forEach(function(k,i){o[k]=a[i];});return o;});}
+function rankTeachers(rec){
+  function cmp(a,b){return (b.시상계-a.시상계)||(b.전월말관리과목-a.전월말관리과목);}
+  rec.sort(cmp);rec.forEach(function(r,i){r.순위=i+1;});
+  var grp={};rec.forEach(function(r){var g=(r.소속코드||'').charAt(0);(grp[g]=grp[g]||[]).push(r);});
+  Object.keys(grp).forEach(function(g){grp[g].sort(cmp);grp[g].forEach(function(r,i){r.총국순위=i+1;r.총국총원=grp[g].length;});});
+  return rec;
+}
+
+function parseTeacher(data){
+  var wb=XLSX.read(data,{type:'array'});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  var h=mergeHeader(rows);
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계'])};
+  if(C.교사명<0)throw new Error('교사명 열을 찾지 못했습니다.');
+  var rec=[];
+  for(var i=2;i<rows.length;i++){
+    var row=rows[i];if(!row||!row[C.교사명])continue;
+    var nm=String(row[C.교사명]||'').trim(),code=String(row[C.소속코드]||'').trim(),wk=Number(row[C.근무기간])||0;
+    if(!nm||nm==='지구장')continue;
+    if(/^[Xx]/.test(code))continue;
+    if(wk<2)continue;
+    rec.push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),교사번호:String(row[C.교사번호]||'').trim().split('.')[0],교사명:nm,근무기간:wk,전월말관리과목:Number(row[C.전월말관리과목])||0,
+      과목순증:Number(row[C.과목순증])||0,특별점수:Number(row[C.특별점수])||0,디지털순증:Number(row[C.디지털순증])||0,태블릿점수:Number(row[C.태블릿점수])||0,펜세트점수:Number(row[C.펜세트점수])||0,스구N전환재약정:Number(row[C.스구N전환재약정])||0,스구N재약정:Number(row[C.스구N재약정])||0,시상계:fmt2(Number(row[C.시상계])||0)});
+  }
+  rankTeachers(rec);
+  var total=rec.length,max=rec.length?rec[0].시상계:0;
+  var avg=total?Math.round(rec.reduce(function(s,r){return s+r.시상계;},0)/total*10)/10:0;
+  var positive=rec.filter(function(r){return r.시상계>0;}).length;
+  return{records:rec,stats:{total:total,max:max,avg:avg,positive:positive}};
+}
+
+function classifyOrg(code){
+  code=String(code||'').trim();
+  if(code.length!==5)return null;
+  if(/^[Xx]/.test(code))return null;
+  if(/^[A-Za-z]1000$/.test(code))return '총국';
+  if(/^[A-Za-z]{2}\d{3}$/.test(code)){
+    var d=code.slice(2),last=d[2],second=d[1];
+    if(d==='000')return '사업국';
+    if(last==='0'&&second!=='0')return '지국';
+    if('12359'.indexOf(last)>=0)return '지구';
+  }
+  return null;
+}
+function parseOrg(data){
+  var wb=XLSX.read(data,{type:'array'});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  var h=mergeHeader(rows);
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),과목순증:findCol(h,['과목순증']),디지털순증:findCol(h,['디지털순증']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
+  if(C.소속코드<0)throw new Error('소속코드 열을 찾지 못했습니다.');
+  var res={지구:[],지국:[],사업국:[],총국:[]};
+  for(var i=2;i<rows.length;i++){
+    var row=rows[i];if(!row)continue;
+    var code=String(row[C.소속코드]||'').trim();
+    var rl=classifyOrg(code);if(!rl)continue;
+    var mn=String(row[C.관리자명]||'').trim(),sb=String(row[C.사번]||'').trim().split('.')[0];
+    if(mn==='nan')mn='';if(sb==='nan')sb='';
+    res[rl].push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn||'(공석)',사번:sb,과목순증:Number(row[C.과목순증])||0,디지털순증:Number(row[C.디지털순증])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:fmt2(Number(row[C.달성률])||0)});
+  }
+  ['지구','지국','사업국','총국'].forEach(function(rl){
+    res[rl].sort(function(a,b){return b.지구당-a.지구당;});
+    res[rl].forEach(function(r,i){r.순위=i+1;});
+    var grp={};
+    res[rl].forEach(function(r){var g=(r.소속코드||'').charAt(0);(grp[g]=grp[g]||[]).push(r);});
+    Object.keys(grp).forEach(function(g){grp[g].sort(function(a,b){return b.지구당-a.지구당;});grp[g].forEach(function(r,i){r.총국순위=i+1;r.총국총원=grp[g].length;});});
+  });
+  return res;
+}
+
+function tick(){return new Promise(function(r){setTimeout(r,60);});}
+async function doUpload(){
+  var btn=document.getElementById('ubtn'),msg=document.getElementById('umsg');
+  btn.disabled=true;btn.textContent='처리 중...';msg.textContent='';
+  try{
+    msg.innerHTML='<span style="color:var(--blue)">교사 파일 분석 중... (수천 명 처리, 잠시만요)</span>';
+    await tick();
+    var tR=parseTeacher(UP.teacher.data);
+    msg.innerHTML='<span style="color:var(--blue)">✓ 교사 '+tR.stats.total.toLocaleString()+'명 · 조직 파일 분석 중...</span>';
+    await tick();
+    var oR=parseOrg(UP.org.data);
+    await tick();
+    var now=new Date();
+    var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
+    msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · GitHub에 저장 중... (잠시만요)</span>';
+    await tick();
+    var bakedJs='var BAKED='+JSON.stringify({t:encT(tR.records),o:oR,m:meta})+';';
+    await saveToGitHub(bakedJs);
+    APP.teachers=tR.records;APP.org=oR;APP.meta=meta;UP={teacher:null,org:null};
+    msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
+    btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
+  }catch(err){
+    msg.innerHTML='<span style="color:var(--red)">❌ 오류: '+err.message+'</span>';
+    btn.textContent='데이터 반영하기';btn.disabled=false;
+  }
+}
+
+function adminOrg(){
+  var roles=['지구','지국','사업국','총국'];
+  var btns='<div class="rtog">'+roles.map(function(r){return '<button class="rtb'+(S.otab===r?' on':'')+'" onclick="S.otab=\''+r+'\';renderAdmin()">'+r+' ('+(APP.org[r]||[]).length+')</button>';}).join('')+'</div>';
+  var all=APP.org[S.otab]||[],arr=all.slice(0,50),tot=all.length;
+  if(!tot)return '<div class="mt">조직 순위</div>'+btns+'<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  var subjInc=all.filter(function(x){return x.과목순증>0;}).length;
+  var subjPct=tot?Math.round(subjInc/tot*100):0;
+  var digInc=all.filter(function(x){return x.디지털순증>0;}).length;
+  var digPct=tot?Math.round(digInc/tot*100):0;
+  var t1S=all.reduce(function(m,x){return (!m||x.과목순증>m.과목순증)?x:m;},null);
+  var t1D=all.reduce(function(m,x){return (!m||x.디지털순증>m.디지털순증)?x:m;},null);
+  var scoreLabel=(S.otab==='지구')?'시상점수':'시상점수<br>(지구당)';
+  var sum='<div class="sg">'
+    +'<div class="sc"><div class="sl">대상</div><div class="sv">'+tot.toLocaleString()+'<span class="unit">개</span></div></div>'
+    +'<div class="sc"><div class="m2">'
+    +'<div><div class="sl">과목순증</div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+subjPct+'%)</div></div>'
+    +'<div><div class="sl">디지털순증</div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+digPct+'%)</div></div>'
+    +'</div></div>'
+    +'</div>'
+    +'<div class="top1row">'
+    +'<div class="top1"><div class="top1l">과목순증 1위</div><div class="top1v">'+(t1S?shortName(t1S.소속명)+' '+t1S.관리자명+' '+fmt(t1S.과목순증):'-')+'</div></div>'
+    +'<div class="top1"><div class="top1l">디지털순증 1위</div><div class="top1v">'+(t1D?shortName(t1D.소속명)+' '+t1D.관리자명+' '+fmt(t1D.디지털순증):'-')+'</div></div>'
+    +'</div>';
+  var rows='<div class="cl">'
+    +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
+    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';}).join('')+'</div>';
+  return '<div class="mt">조직 순위</div>'+btns+sum+rows;
+}
+
+function adminRank(){
+  if(!APP.teachers.length)return '<div class="mt">교사 순위</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  var top=APP.teachers.slice(0,50);
+  var total=APP.meta.total||APP.teachers.length;
+  var subjInc=APP.teachers.filter(function(x){return x.과목순증>0;}).length;
+  var subjPct=total?Math.round(subjInc/total*100):0;
+  var digInc=APP.teachers.filter(function(x){return x.디지털순증>0;}).length;
+  var digPct=total?Math.round(digInc/total*100):0;
+  var t1Subj=APP.teachers.reduce(function(m,x){return (!m||x.과목순증>m.과목순증)?x:m;},null);
+  var t1Dig=APP.teachers.reduce(function(m,x){return (!m||x.디지털순증>m.디지털순증)?x:m;},null);
+  return '<div class="mt">교사 순위 (상위 50명)</div>'
+    +'<div class="sg">'
+    +'<div class="sc"><div class="sl">대상자</div><div class="sv">'+total.toLocaleString()+'<span class="unit">명</span></div></div>'
+    +'<div class="sc"><div class="m2">'
+    +'<div><div class="sl">과목순증</div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+subjPct+'%)</div></div>'
+    +'<div><div class="sl">디지털순증</div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+digPct+'%)</div></div>'
+    +'</div></div>'
+    +'</div>'
+    +'<div class="top1row">'
+    +'<div class="top1"><div class="top1l">과목순증 1위</div><div class="top1v">'+(t1Subj?shortName(t1Subj.소속명)+' '+t1Subj.교사명+' '+fmt(t1Subj.과목순증):'-')+'</div></div>'
+    +'<div class="top1"><div class="top1l">D순증 1위</div><div class="top1v">'+(t1Dig?shortName(t1Dig.소속명)+' '+t1Dig.교사명+' '+fmt(t1Dig.디지털순증):'-')+'</div></div>'
+    +'</div>'
+    +'<div class="cl">'
+    +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
+    +top.map(function(r){return '<div class="rr"><div class="rb" style="'+badgeStyle(r.순위)+'">'+r.순위+'</div><div class="rn2">'+r.교사명+'<br><span class="rsb">'+r.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(r.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(r.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(r.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(r.디지털순증)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:'+(r.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(r.시상계)+'</div></div></div>';}).join('')+'</div>';
+}
+
+function search(){
+  var h='<div class="mt">교사 조회</div><div class="sb2"><input class="si" id="sInp" placeholder="이름 또는 교사번호..."><button class="sbtn" onclick="doSearch()">조회</button></div>';
+  if(S.search===null)return h;
+  if(!S.search)return h+'<div class="empty">검색 결과가 없습니다.</div>';
+  var r=S.search,aw=fmt(r.시상계);
+  return h+'<div class="hc"><div class="ht"><div class="av">'+r.교사명.slice(0,2)+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb"><span class="bpos g">교사</span> · '+r.소속명+' · <b style="color:var(--amber)">'+r.순위+'위</b></div></div></div>'
+    +'<div class="sg"><div class="sc"><div class="sl">시상점수</div><div class="sv" style="color:'+(aw>=0?'var(--green)':'var(--red)')+'">'+aw+'</div></div>'
+    +'<div class="sc"><div class="sl">교사번호</div><div class="sv" style="font-size:15px">'+r.교사번호+'</div></div>'
+    +'<div class="sc"><div class="sl">근무기간</div><div class="sv" style="font-size:15px">'+r.근무기간+'개월</div></div>'
+    +'<div class="sc"><div class="sl">소속</div><div class="sv" style="font-size:14px">'+r.소속명+'</div></div></div></div>';
+}
+function doSearch(){var q=document.getElementById('sInp').value.trim();if(!q)return;S.search=APP.teachers.find(function(r){return r.교사명===q||r.교사번호===q;})||false;renderAdmin();}
+
+document.addEventListener('keydown',function(e){if(e.key==='Enter'){var lp=document.getElementById('lp');if(lp&&lp.classList.contains('active'))doLogin();}});
+</script>
+</body>
+</html>
