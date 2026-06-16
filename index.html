@@ -315,7 +315,7 @@ function doLogin(){
   var pw=document.getElementById('upw').value.trim();
   document.getElementById('lerr').textContent='';
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
-  if(id==='admin'&&pw==='kumon2024'){showPage('ap');renderAdmin();return;}
+  if(id==='한정호'&&pw==='921128'){showPage('ap');renderAdmin();return;}
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
   if(t){S.user=t;S.type='teacher';S.pos='구몬교사';document.getElementById('uNm').textContent=id;showPage('up');S.tab='my';renderUser();return;}
   var roles=['지구','지국','사업국','총국'];
