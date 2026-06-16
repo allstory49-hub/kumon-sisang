@@ -250,12 +250,17 @@ var UP={teacher:null,org:null};
 
 function loadBaked(){
   try{
-    if(typeof BAKED==='undefined'||!BAKED)return false;
-    if(BAKED.t)APP.teachers=rankTeachers(decT(BAKED.t));
-    if(BAKED.o)APP.org=BAKED.o;
-    if(BAKED.m)APP.meta=BAKED.m;
+    if(typeof BAKED==='undefined'||!BAKED) return false;
+
+    if(BAKED.f) APP.teachers = BAKED.f;
+    if(BAKED.o) APP.org = BAKED.o;
+    if(BAKED.m) APP.meta = BAKED.m;
+
     return true;
-  }catch(e){return false;}
+  }catch(e){
+    console.error(e);
+    return false;
+  }
 }
 
 /* ───── 초기화 ───── */
