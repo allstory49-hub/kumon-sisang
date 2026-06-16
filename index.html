@@ -200,7 +200,14 @@ input,button{font-family:inherit;font-size:14px}
 .rkdn{color:#e03131;font-weight:800;font-size:12px}
 .rksame{color:var(--t3);font-weight:700;font-size:12px}
 .rknew{color:var(--blue);font-weight:800;font-size:10px;vertical-align:middle}
-.rnote{margin:2px 0 10px;padding:9px 12px;font-size:11px;color:var(--t3);background:var(--bg2);border-radius:8px;line-height:1.5;text-align:center}
+.rnote{margin:2px 0 10px;padding:9px 12px;font-size:11px;color:var(--t3);background:var(--card2);border-radius:8px;line-height:1.5;text-align:center}
+.toplist{display:flex;flex-direction:column;gap:9px;margin-top:6px}
+.topgl{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:3px}
+.toprow{display:flex;align-items:center;gap:8px;padding:2px 0}
+.topscope{font-size:10px;font-weight:700;color:#fff;background:var(--amber);border-radius:4px;padding:1px 6px;flex:0 0 auto}
+.topscope.tc{background:var(--blue)}
+.topnm{flex:1;font-size:12.5px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topv{font-size:14px;font-weight:800;flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -503,10 +510,7 @@ function teacherRank(){
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div><div class="m3l">시상점수</div><div class="m3v" style="color:'+(r.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(r.시상계)+'</div></div></div></div>'
-    +'<div class="sc wide"><div class="sl">전국 평균</div><div class="mini3">'
-    +'<div><div class="m3l">과목순증</div><div class="m3v">'+fmt(avgSubj)+'</div></div>'
-    +'<div><div class="m3l">디지털순증</div><div class="m3v">'+fmt(avgDig)+'</div></div>'
-    +'<div><div class="m3l">시상점수</div><div class="m3v">'+fmt(APP.meta.avg||0)+'</div></div></div></div>';
+    +topCard(APP.teachers,(r.소속코드||'').charAt(0),function(t){return shortName(t.소속명)+' '+t.교사명;});
   function block(title,arr){
     if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
     return '<div class="stl">'+title+'</div><div class="cl">'
@@ -543,10 +547,7 @@ function orgRank(){
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</div></div></div></div>'
-    +'<div class="sc wide"><div class="sl">'+pos+' 평균</div><div class="mini3">'
-    +'<div><div class="m3l">과목순증</div><div class="m3v">'+fmt(avgSubj)+'</div></div>'
-    +'<div><div class="m3l">디지털순증</div><div class="m3v">'+fmt(avgDig)+'</div></div>'
-    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v">'+fmt(avgScore)+'</div></div></div></div>';
+    +topCard(APP.org.지구||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;});
   function block(title,arr){
     if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
     return '<div class="stl">'+title+'</div><div class="cl">'
@@ -629,6 +630,12 @@ function pickFile(input,type){
 function findCol(h,cands){for(var k=0;k<cands.length;k++){for(var i=0;i<h.length;i++){if(h[i]!=null&&String(h[i]).trim().indexOf(cands[k])>=0)return i;}}return -1;}
 function mergeHeader(rows){var h0=rows[0]||[],h1=rows[1]||[],n=Math.max(h0.length,h1.length),h=[];for(var c=0;c<n;c++){var a=(h1[c]!=null?String(h1[c]).trim():''),b=(h0[c]!=null?String(h0[c]).trim():'');h[c]=a+(a&&b?' ':'')+b;}return h;}
 function shortName(s){return String(s||'').replace(/(지구|지소|지국)$/,'').replace(/지$/,'');}
+function topCard(arr,pref,nameFn){
+  function mx(key,pf){var b=null;for(var i=0;i<arr.length;i++){var x=arr[i];if(pf&&(x.소속코드||'').charAt(0)!==pf)continue;if(b===null||x[key]>b[key])b=x;}return b;}
+  function row(scope,cls,e,key){var v=e?e[key]:null;return '<div class="toprow"><span class="topscope'+cls+'">'+scope+'</span><span class="topnm">'+(e?nameFn(e):'-')+'</span><span class="topv" style="color:'+(v!=null&&v<0?'var(--red)':'var(--green)')+'">'+(e?fmt(v):'-')+'</span></div>';}
+  function grp(label,key){return '<div class="topg"><div class="topgl">'+label+' 1위</div>'+row('전사','',mx(key,null),key)+row('총국',' tc',mx(key,pref),key)+'</div>';}
+  return '<div class="sc wide"><div class="sl">핵심지표 TOP</div><div class="toplist">'+grp('과목순증','과목순증')+grp('디지털순증','디지털순증')+'</div></div>';
+}
 
 /* 저장 용량 절감: 교사 데이터를 배열 형식으로 인코딩 */
 var T_KEYS=['소속코드','소속명','교사번호','교사명','근무기간','전월말관리과목','과목순증','특별점수','디지털순증','태블릿점수','펜세트점수','스구N전환재약정','스구N재약정','시상계'];
