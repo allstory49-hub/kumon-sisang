@@ -456,6 +456,15 @@ function myOrg(){
       +'<div class="sb flip"><div class="slb">전사 순위<br>(전체 '+tot.toLocaleString()+'개)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div></div>'
       +'<div class="sb flip"><div class="slb">총국 순위<br>(총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개)</div><div class="sn bl">'+(r.총국순위||'-')+'위</div></div></div>';
 
+  var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
+  var oitems=[['과목순증',r.과목순증],['특별점수(마스타)',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['펜세트점수',r.펜세트점수],['스구N전환재약정',r.스구N전환재약정],['스구N재약정',r.스구N재약정]];
+  var detail='<div class="stl">항목별 내역</div><div class="cl">'
+    +oitems.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+((i[1]||0)<0?' r':'')+'">'+fmt(i[1]||0)+'</span></div>';}).join('')
+    +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+((r.시상점수||0)<0?' r':'')+'" style="font-size:15px">'+fmt(r.시상점수||0)+'</span></div>'
+    +(S.pos!=='지구'?'<div class="cr"><span class="cll">담당 지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
+      +'<div class="cr tot"><span class="cll" style="font-weight:600">지구당 점수</span><span class="cv" style="font-size:15px;color:'+((r.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</span></div>':'')
+    +'</div>';
+
   return '<div class="mt">내 실적</div>'
     +'<div class="ib gr">📅 기준일: '+(APP.meta.date||'')+'&nbsp;·&nbsp;'+S.pos+' '+tot.toLocaleString()+'개 집계</div>'
     +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.관리자명+'</div><div class="hsb"><span class="bpos b">'+S.pos+'</span> · '+r.소속명+'</div></div></div>'
@@ -464,7 +473,9 @@ function myOrg(){
     +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div class="sb flip"><div class="slb">'+scoreLabel+'</div><div class="sn'+(r.지구당<0?' r':' g')+'">'+sc+'</div></div></div>'
     +rankRow
+    +(meetMin?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
     +'</div>'
+    +detail
     +body;
 }
 
@@ -545,6 +556,7 @@ function orgRank(){
 function info(){
   if(S.type==='org')return '<div class="mt">조직 시상 기준</div>'
     +'<div class="ib bl">시상점수 = 과목순증 + 특별점수(마.스.타) + 디지털순증 + 태블릿 점수 + 펜세트 점수 + 스구N 재약정 점수</div>'
+    +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수 &nbsp;<b>(지국 · 사업국에만 적용)</b></div>'
     +'<div class="stl">최소 기준</div><div class="cl">'
     +'<div class="cr"><span class="cll">과목순증</span><span class="cv">1 이상</span></div>'
     +'<div class="cr"><span class="cll">디지털순증</span><span class="cv">1 이상</span></div></div>'
@@ -552,8 +564,7 @@ function info(){
     +'<div class="cr"><span class="cll">추천(입문수료)</span><span class="cv">1 이상</span></div></div>'
     +'<div class="ib am">📌 추천 구제조항: 달성률 200% 이상 <b>또는</b> 직전 3개월간 월평균 1명 이상 추천</div>'
     +'<div class="stl">최우수상 시상 조건</div><div class="cl">'
-    +'<div class="cr"><span class="cll">전월 과목순증</span><span class="cv">0 이상</span></div></div>'
-    +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수</div>';
+    +'<div class="cr"><span class="cll">전월 과목순증</span><span class="cv">0 이상</span></div></div>';
   return '<div class="mt">시상 기준 안내</div>'
     +'<div class="ib bl">시상점수 = 과목순증 + 특별점수(마스타) + 디지털순증 + 태블릿점수 + 펜세트점수 + 스구N전환재약정 + 스구N재약정</div>'
     +'<div class="stl">필수조건 (시상 대상 기준)</div><div class="cl">'
@@ -664,7 +675,7 @@ function parseOrg(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),과목순증:findCol(h,['과목순증']),디지털순증:findCol(h,['디지털순증']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
   if(C.소속코드<0)throw new Error('소속코드 열을 찾지 못했습니다.');
   var res={지구:[],지국:[],사업국:[],총국:[]};
   for(var i=2;i<rows.length;i++){
@@ -673,7 +684,10 @@ function parseOrg(data){
     var rl=classifyOrg(code);if(!rl)continue;
     var mn=String(row[C.관리자명]||'').trim(),sb=String(row[C.사번]||'').trim().split('.')[0];
     if(mn==='nan')mn='';if(sb==='nan')sb='';
-    res[rl].push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn||'(공석)',사번:sb,과목순증:Number(row[C.과목순증])||0,디지털순증:Number(row[C.디지털순증])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:fmt2(Number(row[C.달성률])||0)});
+    res[rl].push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn||'(공석)',사번:sb,
+      전월말:Number(row[C.전월말])||0,과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
+      태블릿점수:fmt2(Number(row[C.태블릿])||0),펜세트점수:fmt2(Number(row[C.펜세트])||0),스구N전환재약정:fmt2(Number(row[C.스구N전환재약정])||0),스구N재약정:fmt2(Number(row[C.스구N재약정])||0),
+      시상점수:fmt2(Number(row[C.시상점수])||0),지구수:Number(row[C.지구수])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:fmt2(Number(row[C.달성률])||0)});
   }
   ['지구','지국','사업국','총국'].forEach(function(rl){
     res[rl].sort(function(a,b){return b.지구당-a.지구당;});
