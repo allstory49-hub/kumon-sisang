@@ -207,7 +207,7 @@ input,button{font-family:inherit;font-size:14px}
 <div class="lw"><div class="lc">
   <div class="logo">
     <div class="k">KUMON</div>
-    <div class="s">당월 시상 및 인센티브 현황</div>
+    <div class="s">당월 교사 및 조직 시상 순위</div>
     <div class="d">아이디: 이름 · 비밀번호: 사번</div>
   </div>
   <div class="lcard">
@@ -513,12 +513,16 @@ function orgRank(){
 
 function info(){
   if(S.type==='org')return '<div class="mt">조직 시상 기준</div>'
-    +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수</div>'
-    +'<div class="ib am">💡 달성률은 시상점수와 별도로 관리되는 목표 대비 달성 지표입니다.</div>'
-    +'<div class="stl">직책별 산정 방식</div><div class="cl">'
-    +'<div class="cr"><span class="cll">지구</span><span class="cv">시상점수 합계</span></div>'
-    +'<div class="cr"><span class="cll">지국 / 사업국</span><span class="cv">합계 ÷ 담당 지구수</span></div>'
-    +'<div class="cr"><span class="cll">총국</span><span class="cv">시상 없음 (참고용)</span></div></div>';
+    +'<div class="ib bl">시상점수 = 과목순증 + 특별점수(마.스.타) + 디지털순증 + 태블릿 점수 + 펜세트 점수 + 스구N 재약정 점수</div>'
+    +'<div class="stl">최소 기준</div><div class="cl">'
+    +'<div class="cr"><span class="cll">과목순증</span><span class="cv">1 이상</span></div>'
+    +'<div class="cr"><span class="cll">디지털순증</span><span class="cv">1 이상</span></div></div>'
+    +'<div class="stl">지국 · 사업국 추가 기준</div><div class="cl">'
+    +'<div class="cr"><span class="cll">추천(입문수료)</span><span class="cv">1 이상</span></div></div>'
+    +'<div class="ib am">📌 추천 구제조항: 달성률 200% 이상 <b>또는</b> 직전 3개월간 월평균 1명 이상 추천</div>'
+    +'<div class="stl">최우수상 시상 조건</div><div class="cl">'
+    +'<div class="cr"><span class="cll">전월 과목순증</span><span class="cv">0 이상</span></div></div>'
+    +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수</div>';
   return '<div class="mt">시상 기준 안내</div>'
     +'<div class="ib bl">시상점수 = 과목순증 + 특별점수(마스타) + 디지털순증 + 태블릿점수 + 펜세트점수 + 스구N전환재약정 + 스구N재약정</div>'
     +'<div class="stl">필수조건 (시상 대상 기준)</div><div class="cl">'
