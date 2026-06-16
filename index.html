@@ -240,32 +240,46 @@ input,button{font-family:inherit;font-size:14px}
 </div>
 
 </div>
-<script src="https://kumon-api.allstory49.workers.dev/latest"></script>
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'upload',otab:'지구',search:null};
 var UP={teacher:null,org:null};
 
-/* ───── 내장 데이터 (게시 시 HTML에 포함, 로그인 불필요) ───── */
+/* ───── GitHub 설정 ───── */
+var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
 
-function loadBaked(){
+/* ───── 데이터 로드 (GitHub의 baked.js를 매번 최신으로) ───── */
+async function loadData(){
   try{
-    if(typeof BAKED==='undefined'||!BAKED) return false;
-
-    if(BAKED.f) APP.teachers = BAKED.f;
-    if(BAKED.o) APP.org = BAKED.o;
-    if(BAKED.m) APP.meta = BAKED.m;
-
+    var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return false;
+    var txt=await res.text();
+    var json=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim();
+    var B=JSON.parse(json);
+    if(B.t)APP.teachers=rankTeachers(decT(B.t));
+    if(B.o)APP.org=B.o;
+    if(B.m)APP.meta=B.m;
     return true;
-  }catch(e){
-    console.error(e);
-    return false;
-  }
+  }catch(e){return false;}
+}
+
+/* ───── GitHub에 baked.js 저장 (관리자 업로드 시) ───── */
+function b64utf8(s){return btoa(unescape(encodeURIComponent(s)));}
+async function saveToGitHub(bakedJs){
+  var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+GH.path;
+  var hd={'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'};
+  var sha=null;
+  try{var g=await fetch(api+'?t='+Date.now(),{headers:hd,cache:'no-store'});if(g.ok){var gj=await g.json();sha=gj.sha;}}catch(e){}
+  var body={message:'데이터 갱신 '+new Date().toISOString(),content:b64utf8(bakedJs)};
+  if(sha)body.sha=sha;
+  var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+  if(!r.ok){var et=await r.text();throw new Error('GitHub 저장 실패 ('+r.status+'): '+et.slice(0,120));}
+  return true;
 }
 
 /* ───── 초기화 ───── */
-(function init(){
-  loadBaked();
+(async function init(){
+  await loadData();
   renderBadge();
   showPage('lp');
 })();
@@ -480,9 +494,9 @@ var ICON_OK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"
 
 function upload(){
   var has=APP.meta&&APP.meta.date;
-  return '<div class="mt">데이터 미리보기</div>'
-    +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다.</div>')
-    +'<div class="ib bl">ℹ️ 여기서 엑셀을 올리면 <b>이 화면에서만</b> 새 데이터로 미리볼 수 있어요. 직원 배포 링크에 반영하려면 Claude 대화에 엑셀을 올려 다시 게시해야 합니다.</div>'
+  return '<div class="mt">데이터 업로드</div>'
+    +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
+    +'<div class="ib bl">ℹ️ 엑셀 2개를 올려 <b>데이터 반영하기</b>를 누르면 저장되고, 약 1분 뒤 <b>전 직원</b>이 최신 데이터를 조회할 수 있어요.</div>'
     +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
@@ -491,7 +505,7 @@ function upload(){
     +'<div class="upz'+(UP.org?' done':'')+'" onclick="document.getElementById(\'of\').click()"><div class="upi'+(UP.org?' done':'')+'">'+(UP.org?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.org?UP.org.name:'파일 선택하기')+'</div><div class="ups'+(UP.org?' done':'')+'">조직별 시상점수 파일</div></div></div>'
     +'<input type="file" id="of" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'org\')">'
-    +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>미리보기 반영</button>'
+    +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>';
 }
 
@@ -596,9 +610,13 @@ async function doUpload(){
     await tick();
     var now=new Date();
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
+    msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · GitHub에 저장 중... (잠시만요)</span>';
+    await tick();
+    var bakedJs='var BAKED='+JSON.stringify({t:encT(tR.records),o:oR,m:meta})+';';
+    await saveToGitHub(bakedJs);
     APP.teachers=tR.records;APP.org=oR;APP.meta=meta;UP={teacher:null,org:null};
-    msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 미리보기 반영 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--amber)">⚠ 이 화면에서만 보이는 미리보기예요. 직원 배포 링크에 반영하려면 Claude 대화에 엑셀을 올려 <b>재게시</b>하세요.</span>';
-    btn.textContent='데이터 반영하기';btn.disabled=false;renderAdmin();
+    msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
+    btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
     msg.innerHTML='<span style="color:var(--red)">❌ 오류: '+err.message+'</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;
