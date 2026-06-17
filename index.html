@@ -215,6 +215,16 @@ input,button{font-family:inherit;font-size:14px}
 .topscope.tc{background:var(--blue)}
 .topnm{flex:1;font-size:15px;color:var(--t1);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topv{font-size:20px;font-weight:900;flex:0 0 auto}
+.chwrap{max-width:420px;margin:34px auto;padding:0 8px}
+.chhi{font-size:18px;font-weight:700;text-align:center;color:var(--t1)}
+.chsub{font-size:13px;color:var(--t2);text-align:center;margin:5px 0 24px}
+.chbtn{display:block;width:100%;border:1.5px solid var(--bd);background:var(--card);border-radius:16px;padding:24px 18px;margin-bottom:14px;text-align:center;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.chbtn:active{transform:scale(.99)}
+.chbtn.award{border-color:rgba(29,158,117,.45);background:linear-gradient(180deg,rgba(29,158,117,.09),rgba(29,158,117,.02))}
+.chbtn.inc{border-color:rgba(245,158,11,.45);background:linear-gradient(180deg,rgba(245,158,11,.10),rgba(245,158,11,.02))}
+.chic{font-size:42px;line-height:1}
+.chtt{font-size:20px;font-weight:800;margin-top:9px;color:var(--t1)}
+.chds{font-size:12px;color:var(--t2);margin-top:4px}
 </style>
 </head>
 <body>
@@ -246,12 +256,33 @@ input,button{font-family:inherit;font-size:14px}
 </div></div>
 </div>
 
-<!-- 사용자 -->
+<!-- 선택 (시상/인센티브) -->
+<div id="cp" class="page">
+  <div class="hdr"><div class="hbrand">KUMON</div>
+    <button class="bo" onclick="out()">로그아웃</button></div>
+  <div class="bd">
+    <div class="chwrap">
+      <div class="chhi">안녕하세요, <b id="cNm"></b>님</div>
+      <div class="chsub">확인할 항목을 선택하세요</div>
+      <button class="chbtn award" onclick="goAward()"><div class="chic">🏆</div><div class="chtt">시상</div><div class="chds">당월 교사·조직 시상 순위</div></button>
+      <button class="chbtn inc" onclick="goIncentive()"><div class="chic">💰</div><div class="chtt">인센티브</div><div class="chds">당월 인센티브 현황</div></button>
+    </div>
+  </div>
+</div>
+
+<!-- 사용자 (시상) -->
 <div id="up" class="page">
   <div class="hdr"><div class="hbrand">KUMON <span>시상현황</span></div>
-    <div class="hr"><span class="uname" id="uNm"></span><button class="bo" onclick="out()">로그아웃</button></div></div>
+    <div class="hr"><button class="bo" onclick="showPage('cp')">← 메뉴</button><button class="bo" onclick="out()">로그아웃</button></div></div>
   <div class="tb" id="uTabs"></div>
   <div class="bd" id="uBody"></div>
+</div>
+
+<!-- 인센티브 -->
+<div id="ip" class="page">
+  <div class="hdr"><div class="hbrand">KUMON <span>인센티브</span></div>
+    <div class="hr"><button class="bo" onclick="showPage('cp')">← 메뉴</button><button class="bo" onclick="out()">로그아웃</button></div></div>
+  <div class="bd" id="iBody"></div>
 </div>
 
 <!-- 관리자 -->
@@ -338,7 +369,7 @@ async function saveToGitHub(bakedJs){
   showPage('lp');
 })();
 
-function showPage(id){['pp','lp','up','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
+function showPage(id){['pp','lp','cp','up','ip','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
 function out(){S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
 function rbC(n){return n===1?'r1':n===2?'r2':n===3?'r3':'rn';}
 function badgeStyle(rank){
@@ -371,16 +402,25 @@ function doLogin(){
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
   if(id==='한정호'&&pw==='921128'){showPage('ap');renderAdmin();return;}
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
-  if(t){S.user=t;S.type='teacher';S.pos='구몬교사';document.getElementById('uNm').textContent=id;showPage('up');S.tab='my';renderUser();return;}
+  if(t){S.user=t;S.type='teacher';S.pos='구몬교사';S.tab='my';goChooser(id);return;}
   var roles=['지구','지국','사업국','총국'];
   for(var i=0;i<roles.length;i++){
     var o=(APP.org[roles[i]]||[]).find(function(r){return r.관리자명===id&&r.사번===pw;});
-    if(o){S.user=o;S.type='org';S.pos=roles[i];document.getElementById('uNm').textContent=id;showPage('up');S.tab='my';renderUser();return;}
+    if(o){S.user=o;S.type='org';S.pos=roles[i];S.tab='my';goChooser(id);return;}
   }
   document.getElementById('lerr').textContent='이름 또는 사번이 올바르지 않습니다.';
 }
 
 /* ───── 사용자 화면 ───── */
+function goChooser(name){document.getElementById('cNm').textContent=name;showPage('cp');}
+function goAward(){showPage('up');renderUser();}
+function goIncentive(){showPage('ip');renderIncentive();}
+function renderIncentive(){
+  document.getElementById('iBody').innerHTML=
+    '<div class="mt">인센티브</div>'
+    +'<div class="ib am">🚧 인센티브 화면은 준비 중입니다. 곧 교사부터 순차적으로 추가될 예정이에요.</div>'
+    +'<div class="ib bl">교사 · 지구 · 지국 · 사업국별 인센티브를 매월 기준에 맞춰 제공할 예정입니다.</div>';
+}
 function renderUser(){
   var isOrg=S.type==='org';
   var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
