@@ -225,6 +225,20 @@ input,button{font-family:inherit;font-size:14px}
 .chic{font-size:42px;line-height:1}
 .chtt{font-size:20px;font-weight:800;margin-top:9px;color:var(--t1)}
 .chds{font-size:12px;color:var(--t2);margin-top:4px}
+.incres{text-align:center;font-size:17px;font-weight:800;padding:12px;border-radius:12px;margin:6px 0 12px}
+.incres.win{color:#0f7a4d;background:rgba(29,158,117,.12)}
+.incres.lose{color:var(--t2);background:var(--card2)}
+.iclist{display:flex;flex-direction:column;gap:0}
+.icrow{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:var(--card2);border-radius:10px}
+.iclt{font-size:14px;font-weight:700;color:var(--t1);display:flex;flex-direction:column;gap:2px}
+.icneed{font-size:11px;font-weight:500;color:var(--t3)}
+.icval{font-size:18px;font-weight:800;color:var(--t2);display:flex;align-items:center;gap:7px}
+.icval.ok{color:#0f7a4d}
+.icok{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:5px;padding:2px 7px}
+.icno{font-size:11px;font-weight:700;color:#fff;background:var(--t3);border-radius:5px;padding:2px 7px}
+.icor{text-align:center;font-size:12px;font-weight:700;color:var(--t3);padding:5px 0}
+.icgift{margin-top:12px;text-align:center;font-size:15px;font-weight:800;color:#b45309;background:rgba(245,158,11,.13);border-radius:12px;padding:13px}
+.icguide{margin-top:12px;text-align:center;font-size:13px;color:var(--t2)}
 </style>
 </head>
 <body>
@@ -416,10 +430,38 @@ function goChooser(name){document.getElementById('cNm').textContent=name;showPag
 function goAward(){showPage('up');renderUser();}
 function goIncentive(){showPage('ip');renderIncentive();}
 function renderIncentive(){
-  document.getElementById('iBody').innerHTML=
-    '<div class="mt">인센티브</div>'
-    +'<div class="ib am">🚧 인센티브 화면은 준비 중입니다. 곧 교사부터 순차적으로 추가될 예정이에요.</div>'
-    +'<div class="ib bl">교사 · 지구 · 지국 · 사업국별 인센티브를 매월 기준에 맞춰 제공할 예정입니다.</div>';
+  var b=document.getElementById('iBody');
+  if(S.type==='teacher'){b.innerHTML=teacherInc();return;}
+  b.innerHTML='<div class="mt">인센티브</div>'
+    +'<div class="ib am">🚧 '+S.pos+' 인센티브 화면은 준비 중입니다. 교사부터 순차적으로 추가하고 있어요.</div>';
+}
+function teacherInc(){
+  var r=S.user;
+  var sj=r.과목순증||0, ip=r.입회||0;
+  var okS=sj>=5, okI=ip>=12, ach=okS||okI;
+  var sn=shortName(r.소속명)||r.소속명;
+  function cond(label,val,need,ok){
+    return '<div class="icrow"><div class="iclt">'+label+'<span class="icneed">'+need+' 이상</span></div>'
+      +'<div class="icval'+(ok?' ok':'')+'">'+fmt(val)+' '+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div>';
+  }
+  return '<div class="mt">교사 월 성과 인센티브</div>'
+    +'<div class="ib gr">📅 기간: <b>26년 6월</b> · 지급월: 26년 7월</div>'
+    +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb">'+r.소속명+'</div></div></div>'
+    +'<div class="incres '+(ach?'win':'lose')+'">'+(ach?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
+    +'<div class="iclist">'
+    +cond('합산과목 순증',sj,'5',okS)
+    +'<div class="icor">또는</div>'
+    +cond('합산과목 입회',ip,'12',okI)
+    +'</div>'
+    +(ach?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
+    +'</div>'
+    +'<div class="stl">시상품</div><div class="cl"><div class="cr"><span class="cll">스퀘어가든 3in1 마스터 멀티다지기</span><span class="cv">소비자가 190,000원</span></div></div>'
+    +'<div class="stl">기준</div><div class="cl">'
+    +'<div class="cr"><span class="cll">합산과목 순증</span><span class="cv">5 이상</span></div>'
+    +'<div class="cr"><span class="cll">합산과목 입회</span><span class="cv">12 이상</span></div>'
+    +'<div class="cr"><span class="cll" style="color:var(--t2)">→ 두 조건 중 1개라도 달성 시 지급</span><span class="cv"></span></div></div>'
+    +'<div class="ib bl">· 합산과목 순증은 인정입회·NKU·당복을 포함합니다.<br>· 합산과목 입회는 인정입회·브플·NKU를 포함하고 당복은 제외합니다.<br>· 지급월 기준 재직중인 일반교사에 한해 지급됩니다.</div>'
+    +'<div class="ib am">📌 대상자는 7월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다. · 담당: 영업기획팀 김성희 매니저(02-397-9436)</div>';
 }
 function renderUser(){
   var isOrg=S.type==='org';
@@ -687,7 +729,7 @@ function topCard(arr,pref,nameFn,skipChong){
 }
 
 /* 저장 용량 절감: 교사 데이터를 배열 형식으로 인코딩 */
-var T_KEYS=['소속코드','소속명','교사번호','교사명','근무기간','전월말관리과목','과목순증','특별점수','디지털순증','태블릿점수','펜세트점수','스구N전환재약정','스구N재약정','시상계'];
+var T_KEYS=['소속코드','소속명','교사번호','교사명','근무기간','전월말관리과목','과목순증','특별점수','디지털순증','태블릿점수','펜세트점수','스구N전환재약정','스구N재약정','시상계','입회'];
 function encT(rec){return rec.map(function(r){return T_KEYS.map(function(k){return r[k];});});}
 function decT(arr){if(!arr||!arr.length)return [];if(!Array.isArray(arr[0]))return arr;return arr.map(function(a){var o={};T_KEYS.forEach(function(k,i){o[k]=a[i];});return o;});}
 function rankTeachers(rec){
@@ -703,7 +745,7 @@ function parseTeacher(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계']),입회관리과목:findCol(h,['입회 관리과목']),당복:findCol(h,['당복'])};
   if(C.교사명<0)throw new Error('교사명 열을 찾지 못했습니다.');
   var rec=[];
   for(var i=2;i<rows.length;i++){
@@ -712,8 +754,9 @@ function parseTeacher(data){
     if(!nm||nm==='지구장')continue;
     if(/^[Xx]/.test(code))continue;
     if(wk<2)continue;
+    var iphoe=fmt2((Number(row[C.입회관리과목])||0)-(Number(row[C.당복])||0));
     rec.push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),교사번호:String(row[C.교사번호]||'').trim().split('.')[0],교사명:nm,근무기간:wk,전월말관리과목:Number(row[C.전월말관리과목])||0,
-      과목순증:Number(row[C.과목순증])||0,특별점수:Number(row[C.특별점수])||0,디지털순증:Number(row[C.디지털순증])||0,태블릿점수:Number(row[C.태블릿점수])||0,펜세트점수:Number(row[C.펜세트점수])||0,스구N전환재약정:Number(row[C.스구N전환재약정])||0,스구N재약정:Number(row[C.스구N재약정])||0,시상계:fmt2(Number(row[C.시상계])||0)});
+      과목순증:Number(row[C.과목순증])||0,특별점수:Number(row[C.특별점수])||0,디지털순증:Number(row[C.디지털순증])||0,태블릿점수:Number(row[C.태블릿점수])||0,펜세트점수:Number(row[C.펜세트점수])||0,스구N전환재약정:Number(row[C.스구N전환재약정])||0,스구N재약정:Number(row[C.스구N재약정])||0,시상계:fmt2(Number(row[C.시상계])||0),입회:iphoe});
   }
   rankTeachers(rec);
   var total=rec.length,max=rec.length?rec[0].시상계:0;
