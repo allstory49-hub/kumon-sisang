@@ -404,8 +404,8 @@ function myTeacher(){
     +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div class="sb flip"><div class="slb">시상점수</div><div class="sn'+(aw<0?' r':' g')+'">'+aw+'</div></div></div>'
     +'<div class="sr2">'
-    +'<div class="sb flip"><div class="slb">전사 순위<br>(전체 '+(APP.meta.total||0).toLocaleString()+'명)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevT,r.교사번호,r.순위)+'</div></div>'
-    +'<div class="sb flip"><div class="slb">총국 순위<br>(총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevT,r.교사번호,r.총국순위,'c')+'</div></div></div>'
+    +'<div class="sb flip"><div class="slb">전사 순위<br>('+(APP.meta.total||0).toLocaleString()+'명 교사 중)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevT,r.교사번호,r.순위)+'</div></div>'
+    +'<div class="sb flip"><div class="slb">총국 순위<br>('+(r.총국총원?r.총국총원.toLocaleString():'-')+'명 교사 중)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevT,r.교사번호,r.총국순위,'c')+'</div></div></div>'
     +(meetMin?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
     +'</div>'
     +'<div class="stl">항목별 내역</div><div class="cl">'+items.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+(i[1]<0?' r':'')+'">'+fmt(i[1])+'</span></div>';}).join('')
@@ -473,10 +473,10 @@ function myOrg(){
   }
 
   var rankRow=(S.pos==='총국')
-    ?'<div class="sr2"><div class="sb flip" style="flex:1"><div class="slb">전사 순위<br>(전체 '+tot.toLocaleString()+'개)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div></div></div>'
+    ?'<div class="sr2"><div class="sb flip" style="flex:1"><div class="slb">전사 순위<br>('+tot.toLocaleString()+'개 '+S.pos+' 중)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div></div></div>'
     :'<div class="sr2">'
-      +'<div class="sb flip"><div class="slb">전사 순위<br>(전체 '+tot.toLocaleString()+'개)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div></div>'
-      +'<div class="sb flip"><div class="slb">총국 순위<br>(총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div></div></div>';
+      +'<div class="sb flip"><div class="slb">전사 순위<br>('+tot.toLocaleString()+'개 '+S.pos+' 중)</div><div class="sn y">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div></div>'
+      +'<div class="sb flip"><div class="slb">총국 순위<br>('+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 '+S.pos+' 중)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div></div></div>';
 
   var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
   var oitems=[['과목순증',r.과목순증],['특별점수(마스타)',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['펜세트점수',r.펜세트점수],['스구N전환재약정',r.스구N전환재약정],['스구N재약정',r.스구N재약정]];
@@ -510,8 +510,8 @@ function teacherRank(){
   var avgSubj=APP.teachers.length?APP.teachers.reduce(function(s,x){return s+x.과목순증;},0)/APP.teachers.length:0;
   var avgDig=APP.teachers.length?APP.teachers.reduce(function(s,x){return s+x.디지털순증;},0)/APP.teachers.length:0;
   var sum='<div class="sg">'
-    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevT,r.교사번호,r.순위)+'</div><div class="ss">전체 '+(APP.meta.total||0).toLocaleString()+'명</div></div>'
-    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevT,r.교사번호,r.총국순위,'c')+'</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명</div></div>'
+    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevT,r.교사번호,r.순위)+'</div><div class="ss">'+(APP.meta.total||0).toLocaleString()+'명 교사 중</div></div>'
+    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevT,r.교사번호,r.총국순위,'c')+'</div><div class="ss">'+(r.총국총원?r.총국총원.toLocaleString():'-')+'명 교사 중</div></div>'
     +'</div>'
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
@@ -547,8 +547,8 @@ function orgRank(){
   var avgDig=all.reduce(function(s,x){return s+x.디지털순증;},0)/n;
   var avgScore=all.reduce(function(s,x){return s+x.지구당;},0)/n;
   var sum='<div class="sg">'
-    +'<div class="sc"'+(pos==='총국'?' style="flex:1"':'')+'><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div><div class="ss">전체 '+all.length.toLocaleString()+'개</div></div>'
-    +(pos==='총국'?'':'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개</div></div>')
+    +'<div class="sc"'+(pos==='총국'?' style="flex:1"':'')+'><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div><div class="ss">'+all.length.toLocaleString()+'개 '+pos+' 중</div></div>'
+    +(pos==='총국'?'':'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div><div class="ss">'+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 '+pos+' 중</div></div>')
     +'</div>'
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
