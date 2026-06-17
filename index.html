@@ -246,6 +246,10 @@ input,button{font-family:inherit;font-size:14px}
 .giftimg{width:100%;max-width:280px;border-radius:12px;display:block;margin:0 auto 10px}
 .giftnm{font-size:14px;font-weight:700;color:var(--t1)}
 .giftpr{font-size:12px;color:var(--t2);margin-top:2px}
+.incsec{border:1.5px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:16px;background:var(--card)}
+.incsech{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:10px}
+.ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
+.ictiers b{font-weight:800}
 </style>
 </head>
 <body>
@@ -316,7 +320,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{}};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'upload',otab:'지구',search:null};
 var UP={teacher:null,org:null};
 
@@ -336,6 +340,8 @@ async function loadData(){
     if(B.m)APP.meta=B.m;
     APP.prevT=B.pt||{};
     APP.prevO=B.po||{};
+    APP.incList=[];APP.incMap={};
+    if(B.inc){var IK=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입'];B.inc.forEach(function(a){var o={};IK.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});}
     return true;
   }catch(e){return false;}
 }
@@ -423,11 +429,13 @@ function doLogin(){
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
   if(id==='한정호'&&pw==='921128'){showPage('ap');renderAdmin();return;}
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
-  if(t){S.user=t;S.type='teacher';S.pos='구몬교사';S.tab='my';goChooser(id);return;}
+  if(t){S.user=t;S.type='teacher';S.pos='구몬교사';S.inSisang=true;S.tab='my';goChooser(id);return;}
+  var it=APP.incList.find(function(r){return r.교사명===id&&r.교사번호===pw;});
+  if(it){S.user=it;S.type='teacher';S.pos='구몬교사';S.inSisang=false;S.tab='my';goChooser(id);return;}
   var roles=['지구','지국','사업국','총국'];
   for(var i=0;i<roles.length;i++){
     var o=(APP.org[roles[i]]||[]).find(function(r){return r.관리자명===id&&r.사번===pw;});
-    if(o){S.user=o;S.type='org';S.pos=roles[i];S.tab='my';goChooser(id);return;}
+    if(o){S.user=o;S.type='org';S.pos=roles[i];S.inSisang=true;S.tab='my';goChooser(id);return;}
   }
   document.getElementById('lerr').textContent='이름 또는 사번이 올바르지 않습니다.';
 }
@@ -443,35 +451,41 @@ function renderIncentive(){
     +'<div class="ib am">🚧 '+S.pos+' 인센티브 화면은 준비 중입니다. 교사부터 순차적으로 추가하고 있어요.</div>';
 }
 function teacherInc(){
-  var r=S.user;
-  var sj=r.과목순증||0, ip=r.입회||0;
-  var okS=sj>=5, okI=ip>=12, ach=okS||okI;
-  var sn=shortName(r.소속명)||r.소속명;
+  var u=S.user, inc=APP.incMap[u.교사번호]||u;
+  var sn=shortName(inc.소속명||u.소속명)||(inc.소속명||u.소속명);
+  var sj=inc.과목순증||0, ip=inc.입회||0, inflow=inc.유입||0;
+  var okS=sj>=5, okI=ip>=12, ach1=okS||okI;
+  var tier=inflow>=5?2:inflow>=3?1:0, pay=tier===2?'2만원':tier===1?'1만원':'', ach2=tier>0;
   function cond(label,val,need,ok){
     return '<div class="icrow"><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">기준 <b>'+need+' 이상</b></div></div>'
       +'<div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmt(val)+'</div>'+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div>';
   }
-  return '<div class="mt">교사 월 성과 인센티브</div>'
+  var head='<div class="mt">교사 인센티브</div>'
     +'<div class="ib gr">📅 기간: <b>26년 6월</b> · 지급월: 26년 7월</div>'
-    +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb">'+r.소속명+'</div></div></div>'
-    +'<div class="incres '+(ach?'win':'lose')+'">'+(ach?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
-    +'<div class="iclist">'
-    +cond('합산과목 순증',sj,'5',okS)
-    +'<div class="icor">또는</div>'
-    +cond('합산과목 입회',ip,'12',okI)
-    +'</div>'
-    +(ach?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
-    +'</div>'
-    +'<div class="stl">시상품</div><div class="cl"><div class="giftbox"><img class="giftimg" src="gift.png" alt="시상품"><div class="giftnm">스퀘어가든 3in1 마스터 멀티다지기</div><div class="giftpr">소비자가 190,000원</div></div></div>'
-    +'<div class="stl">기준</div><div class="cl">'
-    +'<div class="cr"><span class="cll">합산과목 순증</span><span class="cv">5 이상</span></div>'
-    +'<div class="cr"><span class="cll">합산과목 입회</span><span class="cv">12 이상</span></div>'
-    +'<div class="cr"><span class="cll" style="color:var(--t2)">→ 두 조건 중 1개라도 달성 시 지급</span><span class="cv"></span></div></div>'
-    +'<div class="ib bl">· 합산과목 순증은 인정입회·NKU·당복을 포함합니다.<br>· 합산과목 입회는 인정입회·브플·NKU를 포함하고 당복은 제외합니다.<br>· 지급월 기준 재직중인 일반교사에 한해 지급됩니다.</div>'
-    +'<div class="ib am">📌 대상자는 7월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다. · 담당: 영업기획팀 김성희 매니저(02-397-9436)</div>';
+    +'<div class="hc" style="margin-bottom:16px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+inc.교사명+'</div><div class="hsb">'+inc.소속명+'</div></div></div></div>';
+  var sec1='<div class="incsec"><div class="incsech">🏆 월 성과 인센티브</div>'
+    +'<div class="incres '+(ach1?'win':'lose')+'">'+(ach1?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
+    +'<div class="iclist">'+cond('합산과목 순증',sj,'5',okS)+'<div class="icor">또는</div>'+cond('합산과목 입회',ip,'12',okI)+'</div>'
+    +(ach1?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
+    +'<div class="giftbox"><img class="giftimg" src="gift.png" alt="시상품"><div class="giftpr">소비자가 190,000원</div></div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 합산과목 순증은 인정입회·NKU·당복을 포함합니다.<br>· 합산과목 입회는 인정입회·브플·NKU를 포함하고 당복은 제외합니다.</div>'
+    +'</div>';
+  var sec2='<div class="incsec"><div class="incsech">🆕 신규 회원 인센티브</div>'
+    +'<div class="incres '+(ach2?'win':'lose')+'">'+(ach2?'🎉 네이버페이 '+pay+' 지급 대상!':'아직 미달성이에요')+'</div>'
+    +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">신규+재학습 유입 회원수</div><div class="ictiers">3명 이상 → <b>1만원</b><br>5명 이상 → <b>2만원</b></div></div>'
+    +'<div class="icright"><div class="icnum'+(ach2?' ok':'')+'">'+fmt(inflow)+'명</div>'+(ach2?'<span class="icok">'+pay+'</span>':'<span class="icno">미달</span>')+'</div></div></div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 유입 회원은 당복과 과추 회원을 제외합니다.</div>'
+    +'</div>';
+  var notes='<div class="ib am">📌 대상자는 26년 7월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다.<br>· 지급월 기준 재직중인 일반교사에 한해 지급됩니다. · 담당: 영업기획팀 김성희 매니저(02-397-9436)</div>';
+  return head+sec1+sec2+notes;
 }
 function renderUser(){
   var isOrg=S.type==='org';
+  if(S.type==='teacher'&&S.inSisang===false){
+    document.getElementById('uTabs').innerHTML='';
+    document.getElementById('uBody').innerHTML='<div class="ib am" style="margin-top:18px">시상 순위 대상이 아닙니다.<br>상단 <b>← 메뉴</b>에서 <b>💰 인센티브</b>를 확인해주세요.</div>';
+    return;
+  }
   var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
                 :[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}];
   document.getElementById('uTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.tab===t.id?' on':'')+'" onclick="S.tab=\''+t.id+'\';renderUser()">'+t.l+'</button>';}).join('');
