@@ -481,7 +481,7 @@ function myOrg(){
   var detail='<div class="stl">항목별 내역</div><div class="cl">'
     +oitems.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+((i[1]||0)<0?' r':'')+'">'+fmt(i[1]||0)+'</span></div>';}).join('')
     +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+((r.시상점수||0)<0?' r':'')+'" style="font-size:15px">'+fmt(r.시상점수||0)+'</span></div>'
-    +(S.pos!=='지구'?'<div class="cr"><span class="cll">담당 지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
+    +(S.pos!=='지구'?'<div class="cr"><span class="cll">지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
       +'<div class="cr tot"><span class="cll" style="font-weight:600">지구당 점수</span><span class="cv" style="font-size:15px;color:'+((r.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</span></div>':'')
     +'</div>';
 
@@ -552,7 +552,7 @@ function orgRank(){
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</div></div></div></div>'
-    +topCard(APP.org.지구||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;});
+    +topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},pos==='총국');
   function block(title,arr){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
     if(!arr.length)return ttl+'<div class="empty">해당 데이터가 없습니다.</div>';
@@ -636,10 +636,10 @@ function pickFile(input,type){
 function findCol(h,cands){for(var k=0;k<cands.length;k++){for(var i=0;i<h.length;i++){if(h[i]!=null&&String(h[i]).trim().indexOf(cands[k])>=0)return i;}}return -1;}
 function mergeHeader(rows){var h0=rows[0]||[],h1=rows[1]||[],n=Math.max(h0.length,h1.length),h=[];for(var c=0;c<n;c++){var a=(h1[c]!=null?String(h1[c]).trim():''),b=(h0[c]!=null?String(h0[c]).trim():'');h[c]=a+(a&&b?' ':'')+b;}return h;}
 function shortName(s){return String(s||'').replace(/(지구|지소|지국)$/,'').replace(/지$/,'');}
-function topCard(arr,pref,nameFn){
+function topCard(arr,pref,nameFn,skipChong){
   function mx(key,pf){var b=null;for(var i=0;i<arr.length;i++){var x=arr[i];if(pf&&(x.소속코드||'').charAt(0)!==pf)continue;if(b===null||x[key]>b[key])b=x;}return b;}
   function row(scope,cls,e,key){var v=e?e[key]:null;return '<div class="toprow"><span class="topscope'+cls+'">'+scope+'</span><span class="topnm">'+(e?nameFn(e):'-')+'</span><span class="topv" style="color:'+(v!=null&&v<0?'var(--red)':'var(--green)')+'">'+(e?fmt(v):'-')+'</span></div>';}
-  function grp(label,key){return '<div class="topg"><div class="topgl">'+label+' 1위</div>'+row('전사','',mx(key,null),key)+row('총국',' tc',mx(key,pref),key)+'</div>';}
+  function grp(label,key){return '<div class="topg"><div class="topgl">'+label+' 1위</div>'+row('전사','',mx(key,null),key)+(skipChong?'':row('총국',' tc',mx(key,pref),key))+'</div>';}
   return '<div class="sc wide topcard"><div class="sl topcl">🏆 핵심지표 TOP</div><div class="toplist">'+grp('과목순증','과목순증')+grp('디지털순증','디지털순증')+'</div></div>';
 }
 
