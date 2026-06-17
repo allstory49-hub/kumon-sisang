@@ -228,17 +228,24 @@ input,button{font-family:inherit;font-size:14px}
 .incres{text-align:center;font-size:17px;font-weight:800;padding:12px;border-radius:12px;margin:6px 0 12px}
 .incres.win{color:#0f7a4d;background:rgba(29,158,117,.12)}
 .incres.lose{color:var(--t2);background:var(--card2)}
-.iclist{display:flex;flex-direction:column;gap:0}
-.icrow{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;background:var(--card2);border-radius:10px}
-.iclt{font-size:14px;font-weight:700;color:var(--t1);display:flex;flex-direction:column;gap:2px}
-.icneed{font-size:11px;font-weight:500;color:var(--t3)}
-.icval{font-size:18px;font-weight:800;color:var(--t2);display:flex;align-items:center;gap:7px}
-.icval.ok{color:#0f7a4d}
-.icok{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:5px;padding:2px 7px}
-.icno{font-size:11px;font-weight:700;color:#fff;background:var(--t3);border-radius:5px;padding:2px 7px}
-.icor{text-align:center;font-size:12px;font-weight:700;color:var(--t3);padding:5px 0}
+.iclist{display:flex;flex-direction:column;gap:9px}
+.icrow{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;background:var(--card2);border-radius:12px;border:1px solid var(--bd)}
+.iclt{display:flex;flex-direction:column;gap:5px}
+.icl1{font-size:14px;font-weight:700;color:var(--t1)}
+.icneed{font-size:13px;font-weight:600;color:var(--blue);background:rgba(59,130,246,.12);border-radius:6px;padding:3px 9px;align-self:flex-start}
+.icneed b{font-weight:800}
+.icright{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.icnum{font-size:24px;font-weight:900;color:var(--t2);line-height:1}
+.icnum.ok{color:#0f7a4d}
+.icok{font-size:12px;font-weight:800;color:#fff;background:var(--green);border-radius:6px;padding:3px 10px}
+.icno{font-size:12px;font-weight:800;color:#fff;background:#94a3b8;border-radius:6px;padding:3px 10px}
+.icor{text-align:center;font-size:12px;font-weight:700;color:var(--t3)}
 .icgift{margin-top:12px;text-align:center;font-size:15px;font-weight:800;color:#b45309;background:rgba(245,158,11,.13);border-radius:12px;padding:13px}
 .icguide{margin-top:12px;text-align:center;font-size:13px;color:var(--t2)}
+.giftbox{text-align:center;padding:6px}
+.giftimg{width:100%;max-width:280px;border-radius:12px;display:block;margin:0 auto 10px}
+.giftnm{font-size:14px;font-weight:700;color:var(--t1)}
+.giftpr{font-size:12px;color:var(--t2);margin-top:2px}
 </style>
 </head>
 <body>
@@ -441,8 +448,8 @@ function teacherInc(){
   var okS=sj>=5, okI=ip>=12, ach=okS||okI;
   var sn=shortName(r.소속명)||r.소속명;
   function cond(label,val,need,ok){
-    return '<div class="icrow"><div class="iclt">'+label+'<span class="icneed">'+need+' 이상</span></div>'
-      +'<div class="icval'+(ok?' ok':'')+'">'+fmt(val)+' '+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div>';
+    return '<div class="icrow"><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">기준 <b>'+need+' 이상</b></div></div>'
+      +'<div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmt(val)+'</div>'+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div>';
   }
   return '<div class="mt">교사 월 성과 인센티브</div>'
     +'<div class="ib gr">📅 기간: <b>26년 6월</b> · 지급월: 26년 7월</div>'
@@ -455,7 +462,7 @@ function teacherInc(){
     +'</div>'
     +(ach?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
     +'</div>'
-    +'<div class="stl">시상품</div><div class="cl"><div class="cr"><span class="cll">스퀘어가든 3in1 마스터 멀티다지기</span><span class="cv">소비자가 190,000원</span></div></div>'
+    +'<div class="stl">시상품</div><div class="cl"><div class="giftbox"><img class="giftimg" src="gift.png" alt="시상품"><div class="giftnm">스퀘어가든 3in1 마스터 멀티다지기</div><div class="giftpr">소비자가 190,000원</div></div></div>'
     +'<div class="stl">기준</div><div class="cl">'
     +'<div class="cr"><span class="cll">합산과목 순증</span><span class="cv">5 이상</span></div>'
     +'<div class="cr"><span class="cll">합산과목 입회</span><span class="cv">12 이상</span></div>'
