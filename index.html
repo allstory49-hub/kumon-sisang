@@ -200,6 +200,7 @@ input,button{font-family:inherit;font-size:14px}
 .rkdn{color:#e03131;font-weight:800;font-size:12px}
 .rksame{color:var(--t3);font-weight:700;font-size:12px}
 .rknew{color:var(--blue);font-weight:800;font-size:10px;vertical-align:middle}
+.rkprev{font-size:9px;font-weight:500;color:var(--t3);margin-right:2px;vertical-align:middle}
 .mtnote{font-size:10.5px;font-weight:500;color:var(--t3);margin-left:2px}
 .rkstl{font-size:15.5px;font-weight:800;color:var(--t1);margin:22px 0 10px;padding:8px 12px;border-left:4px solid var(--green);background:var(--card2);border-radius:0 8px 8px 0}
 .rkstlsub{font-size:11px;font-weight:500;color:var(--t3)}
@@ -308,13 +309,14 @@ async function getPrevRanks(){
 function rankDelta(map,key,cur,field){
   if(!map||!Object.keys(map).length)return '';
   var rec=map[key];
-  if(rec==null)return ' <span class="rknew">NEW</span>';
+  var lbl='<span class="rkprev">전일대비</span>';
+  if(rec==null)return ' '+lbl+'<span class="rknew">NEW</span>';
   var p=(typeof rec==='object')?rec[field||'n']:rec;
   if(p==null)return '';
   var d=p-cur;
-  if(d>0)return ' <span class="rkup">▲'+d+'</span>';
-  if(d<0)return ' <span class="rkdn">▼'+(-d)+'</span>';
-  return ' <span class="rksame">—</span>';
+  if(d>0)return ' '+lbl+'<span class="rkup">▲'+d+'</span>';
+  if(d<0)return ' '+lbl+'<span class="rkdn">▼'+(-d)+'</span>';
+  return ' '+lbl+'<span class="rksame">—</span>';
 }
 async function saveToGitHub(bakedJs){
   var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+GH.path;
