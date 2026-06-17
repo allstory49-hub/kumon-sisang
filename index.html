@@ -736,8 +736,8 @@ async function doUpload(){
     await tick();
     var oR=parseOrg(UP.org.data);
     await tick();
-    var now=new Date();
-    var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
+    var now=new Date();now.setDate(now.getDate()-1);
+    var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
     var prev=await getPrevRanks();
