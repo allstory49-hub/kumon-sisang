@@ -201,6 +201,8 @@ input,button{font-family:inherit;font-size:14px}
 .rksame{color:var(--t3);font-weight:700;font-size:12px}
 .rknew{color:var(--blue);font-weight:800;font-size:10px;vertical-align:middle}
 .mtnote{font-size:10.5px;font-weight:500;color:var(--t3);margin-left:2px}
+.rkstl{font-size:15.5px;font-weight:800;color:var(--t1);margin:22px 0 10px;padding:8px 12px;border-left:4px solid var(--green);background:var(--card2);border-radius:0 8px 8px 0}
+.rkstlsub{font-size:11px;font-weight:500;color:var(--t3)}
 .topcard{background:linear-gradient(180deg,rgba(29,158,117,.10),rgba(29,158,117,.03));border:1.5px solid rgba(29,158,117,.35)}
 .topcl{font-size:14px;font-weight:800;color:var(--green);margin-bottom:4px}
 .toplist{display:flex;flex-direction:column;gap:12px;margin-top:8px}
@@ -515,8 +517,9 @@ function teacherRank(){
     +'<div><div class="m3l">시상점수</div><div class="m3v" style="color:'+(r.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(r.시상계)+'</div></div></div></div>'
     +topCard(APP.teachers,(r.소속코드||'').charAt(0),function(t){return shortName(t.소속명)+' '+t.교사명;});
   function block(title,arr){
-    if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
-    return '<div class="stl">'+title+'</div><div class="cl">'
+    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
+    if(!arr.length)return ttl+'<div class="empty">해당 데이터가 없습니다.</div>';
+    return ttl+'<div class="cl">'
       +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
       +arr.map(function(x,idx){
       var im=x.교사번호===r.교사번호;
@@ -551,8 +554,9 @@ function orgRank(){
     +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</div></div></div></div>'
     +topCard(APP.org.지구||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;});
   function block(title,arr){
-    if(!arr.length)return '<div class="stl">'+title+'</div><div class="empty">해당 데이터가 없습니다.</div>';
-    return '<div class="stl">'+title+'</div><div class="cl">'
+    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
+    if(!arr.length)return ttl+'<div class="empty">해당 데이터가 없습니다.</div>';
+    return ttl+'<div class="cl">'
       +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabelBr+'</div></div>'
       +arr.map(function(x,idx){
       var im=x.사번&&x.사번===r.사번;
