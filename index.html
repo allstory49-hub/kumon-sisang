@@ -200,7 +200,7 @@ input,button{font-family:inherit;font-size:14px}
 .rkdn{color:#e03131;font-weight:800;font-size:12px}
 .rksame{color:var(--t3);font-weight:700;font-size:12px}
 .rknew{color:var(--blue);font-weight:800;font-size:10px;vertical-align:middle}
-.rnote{margin:2px 0 10px;padding:9px 12px;font-size:11px;color:var(--t3);background:var(--card2);border-radius:8px;line-height:1.5;text-align:center}
+.mtnote{font-size:10.5px;font-weight:500;color:var(--t3);margin-left:2px}
 .topcard{background:linear-gradient(180deg,rgba(29,158,117,.10),rgba(29,158,117,.03));border:1.5px solid rgba(29,158,117,.35)}
 .topcl{font-size:14px;font-weight:800;color:var(--green);margin-bottom:4px}
 .toplist{display:flex;flex-direction:column;gap:12px;margin-top:8px}
@@ -509,7 +509,6 @@ function teacherRank(){
     +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevT,r.교사번호,r.순위)+'</div><div class="ss">전체 '+(APP.meta.total||0).toLocaleString()+'명</div></div>'
     +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevT,r.교사번호,r.총국순위,'c')+'</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명</div></div>'
     +'</div>'
-    +'<div class="rnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</div>'
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
@@ -524,7 +523,7 @@ function teacherRank(){
       return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:'+(x.시상계<0?'var(--red)':'var(--green)')+'">'+fmt(x.시상계)+'</div></div></div>';
     }).join('')+'</div>';
   }
-  return '<div class="mt">시상점수 순위</div>'+sum
+  return '<div class="mt">시상점수 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
     +block('전사 상위 10위',national)
     +block('총국 상위 10위',chong)
     +block('사업국 상위 10위',saup);
@@ -546,7 +545,6 @@ function orgRank(){
     +'<div class="sc"'+(pos==='총국'?' style="flex:1"':'')+'><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div><div class="ss">전체 '+all.length.toLocaleString()+'개</div></div>'
     +(pos==='총국'?'':'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div><div class="ss">총국 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개</div></div>')
     +'</div>'
-    +'<div class="rnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</div>'
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
@@ -561,7 +559,7 @@ function orgRank(){
       return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';
     }).join('')+'</div>';
   }
-  return '<div class="mt">'+pos+' 순위</div>'+sum
+  return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
     +block('전사 상위 10위',national)
     +(pos==='총국'?'':block('총국 상위 10위',chong))
     +((pos==='사업국'||pos==='총국')?'':block('사업국 상위 10위',saup));
