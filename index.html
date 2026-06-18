@@ -250,6 +250,16 @@ input,button{font-family:inherit;font-size:14px}
 .incsech{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:10px}
 .ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
 .ictiers b{font-weight:800}
+.incwrap{display:flex;flex-direction:column;gap:8px}
+.incstat{display:flex;justify-content:space-between;align-items:center;padding:12px 13px;border-radius:11px;background:var(--card2);border:1px solid var(--bd)}
+.incstat.tot{background:rgba(29,158,117,.10);border-color:rgba(29,158,117,.32)}
+.incstat.na{opacity:.65}
+.isl{font-size:14px;font-weight:700;color:var(--t1);display:flex;flex-direction:column;gap:2px}
+.issub{font-size:11px;font-weight:500;color:var(--t3)}
+.isr{display:flex;align-items:baseline;gap:9px}
+.isn{font-size:19px;font-weight:900;color:var(--green)}
+.isp{font-size:13px;font-weight:800;color:var(--t2)}
+.isrna{font-size:12px;font-weight:700;color:var(--t3)}
 </style>
 </head>
 <body>
@@ -703,13 +713,35 @@ function info(){
 
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
-  var tabs=[{id:'upload',l:'📤 업로드'},{id:'org',l:'조직 순위'},{id:'rank',l:'교사 순위'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'upload',l:'📤 업로드'},{id:'inc',l:'💰 인센티브'},{id:'org',l:'조직 순위'},{id:'rank',l:'교사 순위'},{id:'search',l:'교사 조회'}];
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
   if(S.atab==='upload')b.innerHTML=upload();
+  else if(S.atab==='inc')b.innerHTML=adminInc();
   else if(S.atab==='org')b.innerHTML=adminOrg();
   else if(S.atab==='rank')b.innerHTML=adminRank();
   else b.innerHTML=search();
+}
+function adminInc(){
+  if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  var L=APP.incList,n=L.length;
+  var ms=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12);}).length;
+  var n1=L.filter(function(r){return r.유입>=3;}).length;
+  var n2=L.filter(function(r){return r.유입>=5;}).length;
+  var tot=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12)||(r.유입>=3);}).length;
+  function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
+  function row(label,sub,cnt){return '<div class="incstat"><div class="isl">'+label+(sub?'<span class="issub">'+sub+'</span>':'')+'</div><div class="isr"><span class="isn">'+fmt(cnt)+'명</span><span class="isp">'+pct(cnt)+'</span></div></div>';}
+  function na(label){return '<div class="incstat na"><div class="isl">'+label+'</div><div class="isrna">준비 중</div></div>';}
+  return '<div class="mt">인센티브 통계</div>'
+    +'<div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준 · 전체 대상 '+fmt(n)+'명</div>'
+    +'<div class="stl">교사 인센티브</div><div class="incwrap">'
+    +row('월 성과 인센티브','순증 5↑ 또는 입회 12↑',ms)
+    +row('신규 회원 · 네이버페이 1만원','유입 3명 이상',n1)
+    +row('신규 회원 · 네이버페이 2만원','유입 5명 이상',n2)
+    +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
+    +'</div>'
+    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+na('지구 인센티브')+na('지국 인센티브')+na('사업국 인센티브')+'</div>'
+    +'<div class="ib am">📌 조직(지구·지국·사업국) 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
 }
 
 var ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
