@@ -634,9 +634,9 @@ function teacherRank(){
     }).join('')+'</div>';
   }
   return '<div class="mt">시상점수 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +block('전사 상위 10위',national)
-    +block('총국 상위 10위',chong)
-    +block('사업국 상위 10위',saup);
+    +block('전사 상위',national)
+    +block('총국 상위',chong)
+    +block('사업국 상위',saup);
 }
 
 function orgRank(){
@@ -671,9 +671,9 @@ function orgRank(){
     }).join('')+'</div>';
   }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +block('전사 상위 10위',national)
-    +(pos==='총국'?'':block('총국 상위 10위',chong))
-    +((pos==='사업국'||pos==='총국')?'':block('사업국 상위 10위',saup));
+    +block('전사 상위',national)
+    +(pos==='총국'?'':block('총국 상위',chong))
+    +((pos==='사업국'||pos==='총국')?'':block('사업국 상위',saup));
 }
 
 function info(){
