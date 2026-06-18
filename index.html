@@ -713,14 +713,22 @@ function info(){
 
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
-  var tabs=[{id:'upload',l:'📤 업로드'},{id:'inc',l:'💰 인센티브'},{id:'org',l:'조직 순위'},{id:'rank',l:'교사 순위'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'upload',l:'📤 업로드'},{id:'inc',l:'💰 인센티브'},{id:'sisang',l:'🏆 시상'},{id:'search',l:'교사 조회'}];
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
   if(S.atab==='upload')b.innerHTML=upload();
   else if(S.atab==='inc')b.innerHTML=adminInc();
-  else if(S.atab==='org')b.innerHTML=adminOrg();
-  else if(S.atab==='rank')b.innerHTML=adminRank();
+  else if(S.atab==='sisang')b.innerHTML=adminSisang();
   else b.innerHTML=search();
+}
+function adminSisang(){
+  var subs=['교사','지구','지국','사업국','총국'];
+  if(!S.stab)S.stab='교사';
+  var btns='<div class="rtog">'+subs.map(function(s){return '<button class="rtb'+(S.stab===s?' on':'')+'" onclick="S.stab=\''+s+'\';renderAdmin()">'+s+'</button>';}).join('')+'</div>';
+  var body;
+  if(S.stab==='교사')body=adminRank();
+  else{S.otab=S.stab;body=adminOrg();}
+  return '<div class="mt">시상 순위</div>'+btns+body;
 }
 function adminInc(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
@@ -926,10 +934,8 @@ async function doUpload(){
 }
 
 function adminOrg(){
-  var roles=['지구','지국','사업국','총국'];
-  var btns='<div class="rtog">'+roles.map(function(r){return '<button class="rtb'+(S.otab===r?' on':'')+'" onclick="S.otab=\''+r+'\';renderAdmin()">'+r+' ('+(APP.org[r]||[]).length+')</button>';}).join('')+'</div>';
   var all=APP.org[S.otab]||[],arr=all.slice(0,50),tot=all.length;
-  if(!tot)return '<div class="mt">조직 순위</div>'+btns+'<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  if(!tot)return '<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
   var subjInc=all.filter(function(x){return x.과목순증>0;}).length;
   var subjPct=tot?Math.round(subjInc/tot*100):0;
   var digInc=all.filter(function(x){return x.디지털순증>0;}).length;
@@ -951,11 +957,11 @@ function adminOrg(){
   var rows='<div class="cl">'
     +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
     +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';}).join('')+'</div>';
-  return '<div class="mt">조직 순위</div>'+btns+sum+rows;
+  return sum+rows;
 }
 
 function adminRank(){
-  if(!APP.teachers.length)return '<div class="mt">교사 순위</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  if(!APP.teachers.length)return '<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
   var top=APP.teachers.slice(0,50);
   var total=APP.meta.total||APP.teachers.length;
   var subjInc=APP.teachers.filter(function(x){return x.과목순증>0;}).length;
@@ -964,7 +970,7 @@ function adminRank(){
   var digPct=total?Math.round(digInc/total*100):0;
   var t1Subj=APP.teachers.reduce(function(m,x){return (!m||x.과목순증>m.과목순증)?x:m;},null);
   var t1Dig=APP.teachers.reduce(function(m,x){return (!m||x.디지털순증>m.디지털순증)?x:m;},null);
-  return '<div class="mt">교사 순위 (상위 50명)</div>'
+  return ''
     +'<div class="sg">'
     +'<div class="sc"><div class="sl">대상자</div><div class="sv">'+total.toLocaleString()+'<span class="unit">명</span></div></div>'
     +'<div class="sc"><div class="m2">'
