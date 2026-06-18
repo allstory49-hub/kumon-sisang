@@ -713,13 +713,15 @@ function info(){
 
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
-  var tabs=[{id:'upload',l:'📤 업로드'},{id:'inc',l:'💰 인센티브'},{id:'sisang',l:'🏆 시상'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
   if(S.atab==='upload')b.innerHTML=upload();
   else if(S.atab==='inc')b.innerHTML=adminInc();
   else if(S.atab==='sisang')b.innerHTML=adminSisang();
-  else b.innerHTML=search();
+  else if(S.atab==='search')b.innerHTML=search();
+  else b.innerHTML=adminSisang();
 }
 function adminSisang(){
   var subs=['교사','지구','지국','사업국','총국'];
