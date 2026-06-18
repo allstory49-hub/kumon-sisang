@@ -322,7 +322,7 @@ input,button{font-family:inherit;font-size:14px}
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'upload',otab:'지구',search:null};
-var UP={teacher:null,org:null};
+var UP={teacher:null,org:null,member:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
@@ -718,7 +718,7 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
-    +'<div class="ib bl">ℹ️ 엑셀 2개를 올려 <b>데이터 반영하기</b>를 누르면 저장되고, 약 1분 뒤 <b>전 직원</b>이 최신 데이터를 조회할 수 있어요.</div>'
+    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브(신규 회원)는 ③ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③을 안 올리면 신규 회원 유입은 직전 값이 유지돼요.</div>'
     +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
@@ -727,6 +727,10 @@ function upload(){
     +'<div class="upz'+(UP.org?' done':'')+'" onclick="document.getElementById(\'of\').click()"><div class="upi'+(UP.org?' done':'')+'">'+(UP.org?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.org?UP.org.name:'파일 선택하기')+'</div><div class="ups'+(UP.org?' done':'')+'">조직별 시상점수 파일</div></div></div>'
     +'<input type="file" id="of" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'org\')">'
+    +'<div class="stl">③ 연령별 회원증감(교사별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
+    +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
+    +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>';
 }
@@ -799,6 +803,28 @@ function classifyOrg(code){
   }
   return null;
 }
+function parseIncentive(teacherData,memberData,prevMap){
+  var wb=XLSX.read(teacherData,{type:'array'});
+  var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var h=mergeHeader(rows);
+  var C={코드:findCol(h,['소속코드']),명:findCol(h,['교사명']),번호:findCol(h,['교사번호','교사코드']),소속:findCol(h,['소속명']),순증:findCol(h,['과목순증']),입회:findCol(h,['입회 관리과목']),당복:findCol(h,['당복'])};
+  var map={};
+  for(var i=2;i<rows.length;i++){var row=rows[i];if(!row||!row[C.명])continue;
+    var nm=String(row[C.명]||'').trim(),code=String(row[C.코드]||'').trim();
+    if(!nm||nm==='지구장'||/^[Xx]/.test(code))continue;
+    var tno=String(row[C.번호]||'').trim().split('.')[0];if(!tno)continue;
+    map[tno]={교사번호:tno,교사명:nm,소속명:String(row[C.소속]||'').trim().replace(/지$/,'지구'),소속코드:code,과목순증:Number(row[C.순증])||0,입회:fmt2((Number(row[C.입회])||0)-(Number(row[C.당복])||0)),유입:(prevMap&&prevMap[tno]?prevMap[tno].유입:0)};
+  }
+  if(memberData){
+    var wb2=XLSX.read(memberData,{type:'array'});
+    var rows2=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{header:1,defval:''});
+    var start=4;for(var i=0;i<20;i++){var r=rows2[i];if(!r)continue;if(/^[A-Za-z]{2}\d{3}$/.test(String(r[0]||'').trim())){start=i;break;}}
+    for(var i=start;i<rows2.length;i++){var row=rows2[i];if(!row)continue;var tno=String(row[2]||'').trim().split('.')[0];if(!tno)continue;if(map[tno])map[tno].유입=Number(row[7])||0;}
+  }
+  var IK=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입'];
+  return Object.keys(map).map(function(k){var o=map[k];return IK.map(function(kk){return o[kk];});});
+}
+
 function parseOrg(data){
   var wb=XLSX.read(data,{type:'array'});
   var ws=wb.Sheets[wb.SheetNames[0]];
@@ -840,20 +866,24 @@ async function doUpload(){
     await tick();
     var oR=parseOrg(UP.org.data);
     await tick();
+    msg.innerHTML='<span style="color:var(--blue)">✓ 인센티브 명단 계산 중...</span>';
+    var incArr=parseIncentive(UP.teacher.data,UP.member?UP.member.data:null,APP.incMap);
+    await tick();
     var now=new Date();now.setDate(now.getDate()-1);
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
     var prev=await getPrevRanks();
-    var payload={t:encT(tR.records),o:oR,m:meta};
+    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr};
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
     var bakedJs='var BAKED='+JSON.stringify(payload)+';';
     await saveToGitHub(bakedJs);
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
+    APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null};
+    UP={teacher:null,org:null,member:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
