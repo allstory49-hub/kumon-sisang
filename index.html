@@ -727,10 +727,20 @@ function adminSisang(){
   var subs=['교사','지구','지국','사업국','총국'];
   if(!S.stab)S.stab='교사';
   var btns='<div class="rtog">'+subs.map(function(s){return '<button class="rtb'+(S.stab===s?' on':'')+'" onclick="S.stab=\''+s+'\';renderAdmin()">'+s+'</button>';}).join('')+'</div>';
-  var body;
-  if(S.stab==='교사')body=adminRank();
-  else{S.otab=S.stab;body=adminOrg();}
-  return '<div class="mt">시상 순위</div>'+btns+body;
+  var body,cntLine='';
+  if(S.stab==='교사'){
+    var T=APP.teachers||[];
+    var q=T.filter(function(r){return (r.과목순증||0)>=0&&(r.디지털순증||0)>=0;}).length;
+    cntLine='<div class="ib gr">✅ 시상 대상 <span style="color:var(--t2)">(과목순증·디지털순증 0 이상)</span> · <b>'+fmt(q)+'명</b> / 전체 '+fmt(T.length)+'명</div>';
+    body=adminRank();
+  }else{
+    S.otab=S.stab;
+    var O=APP.org[S.stab]||[];
+    var q=O.filter(function(r){return (r.과목순증||0)>=0&&(r.디지털순증||0)>=0;}).length;
+    cntLine='<div class="ib gr">✅ 시상 대상 <span style="color:var(--t2)">(과목순증·디지털순증 0 이상)</span> · <b>'+fmt(q)+'개</b> / 전체 '+fmt(O.length)+'개 '+S.stab+'</div>';
+    body=adminOrg();
+  }
+  return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
 }
 function adminInc(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
