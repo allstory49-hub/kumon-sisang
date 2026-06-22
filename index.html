@@ -350,8 +350,9 @@ async function loadData(){
     if(B.m)APP.meta=B.m;
     APP.prevT=B.pt||{};
     APP.prevO=B.po||{};
-    APP.incList=[];APP.incMap={};
-    if(B.inc){var IK=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입'];B.inc.forEach(function(a){var o={};IK.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});}
+    APP.incList=[];APP.incMap={};APP.incJigu=[];APP.incJiguMap={};
+    if(B.inc){var IK=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];B.inc.forEach(function(a){var o={};IK.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});}
+    if(B.incJigu){B.incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});}
     return true;
   }catch(e){return false;}
 }
@@ -458,8 +459,24 @@ function goIncentive(){showPage('ip');renderIncentive();}
 function renderIncentive(){
   var b=document.getElementById('iBody');
   if(S.type==='teacher'){b.innerHTML=teacherInc();return;}
+  if(S.type==='org'&&S.pos==='지구'){b.innerHTML=jiguInc();return;}
   b.innerHTML='<div class="mt">인센티브</div>'
-    +'<div class="ib am">🚧 '+S.pos+' 인센티브 화면은 준비 중입니다. 교사부터 순차적으로 추가하고 있어요.</div>';
+    +'<div class="ib am">🚧 '+S.pos+' 인센티브 화면은 준비 중입니다. 순차적으로 추가하고 있어요.</div>';
+}
+function jiguInc(){
+  var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
+  var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
+  var sn=shortName(u.소속명)||u.소속명;
+  return '<div class="mt">지구 인센티브</div>'
+    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
+    +'<div class="hc" style="margin-bottom:16px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+'</div></div></div></div>'
+    +'<div class="incsec"><div class="incsech">📈 회원순증 인센티브</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+fmt(pay)+'원 지급 대상!':'아직 미달성이에요')+'</div>'
+    +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">회원순증</div><div class="icneed">1 이상 시 <b>순증 × 1만원</b></div></div>'
+    +'<div class="icright"><div class="icnum'+(win?' ok':'')+'">'+fmt(ns)+'</div>'+(win?'<span class="icok">'+fmt(pay)+'원</span>':'<span class="icno">미달</span>')+'</div></div></div>'
+    +(win?'<div class="icgift">🎁 '+fmt(pay)+'원 (회원순증 '+fmt(ns)+' × 1만원)</div>':'')
+    +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계</div>'
+    +'</div>';
 }
 function teacherInc(){
   var u=S.user, inc=APP.incMap[u.교사번호]||u;
@@ -487,8 +504,18 @@ function teacherInc(){
     +'<div class="icright"><div class="icnum'+(ach2?' ok':'')+'">'+fmt(inflow)+'명</div>'+(ach2?'<span class="icok">'+pay+'</span>':'<span class="icno">미달</span>')+'</div></div></div>'
     +'<div class="ib bl" style="margin-bottom:0">· 유입 회원은 당복과 과추 회원을 제외합니다.</div>'
     +'</div>';
+  var ms=inc.마스타순증||0, msAward=inc.마스타시상||'';
+  var msWin=msAward==='전사'||msAward==='총국', msPay=msAward==='전사'?'20만원':msAward==='총국'?'10만원':'';
+  var sec3='<div class="incsec"><div class="incsech">⭐ 마.스.타 순증 인센티브</div>'
+    +'<div class="incres '+(msWin?'win':'lose')+'">'+(msWin?'🎉 '+msAward+' 수상! 시상금 '+msPay:'아직 미선정이에요')+'</div>'
+    +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">마.스.타 과목 순증</div><div class="icneed">최소 <b>10 이상</b></div></div>'
+    +'<div class="icright"><div class="icnum'+(ms>=10?' ok':'')+'">'+fmt(ms)+'</div>'+(msWin?'<span class="icok">'+msAward+'</span>':(ms>=10?'<span class="icok">기준충족</span>':'<span class="icno">미달</span>'))+'</div></div></div>'
+    +'<div class="ictiers" style="margin-top:10px">전사 순위 상위 10명 → <b>시상금 20만원</b><br>총국별 차상위 1명(7명) → <b>시상금 10만원</b></div>'
+    +(msWin?'<div class="icgift">🎁 시상금 + 녹지원 시상식 및 오찬</div>':'<div class="icguide">전사 TOP 10 또는 총국별 차상위에 선정되어야 해요 (마스타 순증 10 이상).</div>')
+    +'<div class="ib bl" style="margin-bottom:0">· 6월 전사 TOP 수상자와 함께 녹지원에서 시상 예정입니다.</div>'
+    +'</div>';
   var notes='<div class="ib am">📌 대상자는 26년 7월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다.<br>· 지급월 기준 재직중인 일반교사에 한해 지급됩니다. · 담당: 영업기획팀 김성희 매니저(02-397-9436)</div>';
-  return head+sec1+sec2+notes;
+  return head+sec1+sec2+sec3+notes;
 }
 function renderUser(){
   var isOrg=S.type==='org';
@@ -759,9 +786,17 @@ function adminInc(){
     +row('신규 회원 · 네이버페이 1만원','유입 3명 이상',n1)
     +row('신규 회원 · 네이버페이 2만원','유입 5명 이상',n2)
     +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
+    +row('마.스.타 순증 인센티브','전사 TOP10 + 총국 차상위 (10↑)',L.filter(function(r){return r.마스타시상;}).length)
     +'</div>'
-    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+na('지구 인센티브')+na('지국 인센티브')+na('사업국 인센티브')+'</div>'
-    +'<div class="ib am">📌 조직(지구·지국·사업국) 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
+    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+jiguStat()+na('지국 인센티브')+na('사업국 인센티브')+'</div>'
+    +'<div class="ib am">📌 지국·사업국 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
+}
+function jiguStat(){
+  var J=APP.incJigu||[];
+  var win=J.filter(function(x){return x.회원순증>=1;});
+  var pay=win.reduce(function(s,x){return s+x.회원순증*10000;},0);
+  if(!J.length)return na('지구 인센티브 (회원순증)');
+  return '<div class="incstat"><div class="isl">지구 인센티브 · 회원순증<span class="issub">회원순증 1↑ → 순증×1만원</span></div><div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+fmt(pay)+'원</span></div></div>';
 }
 
 var ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
