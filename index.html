@@ -427,6 +427,7 @@ function badgeStyle(rank){
   return 'background:hsl('+hue+',54%,'+light+'%);color:'+txt;
 }
 function fmt(n){n=Math.round((Number(n)||0)*10)/10;return n.toLocaleString('en-US',{maximumFractionDigits:1});}
+function fmtD(n){n=Math.round((Number(n)||0)*100)/100;return n.toLocaleString('en-US',{maximumFractionDigits:2});}
 function fmt2(n){return Math.round(n*100)/100;}
 
 function renderBadge(){
@@ -572,7 +573,7 @@ function myTeacher(){
 }
 
 function myOrg(){
-  var r=S.user,sc=fmt(r.지구당),tot=(APP.org[S.pos]||[]).length;
+  var r=S.user,sc=fmtD(r.지구당),tot=(APP.org[S.pos]||[]).length;
   var sn=shortName(r.소속명)||r.소속명;
   var scoreLabel=(S.pos==='지구')?'시상점수':'시상점수(지구당)';
   var code=r.소속코드||'',p1=code.charAt(0),p2=code.slice(0,2);
@@ -591,7 +592,7 @@ function myOrg(){
       +arr.map(function(x){return '<div class="rr"><div class="rn2" style="flex:1">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
-        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';}).join('');
+        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD(x.지구당)+'</div></div></div>';}).join('');
   }
   function teaRows(arr){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
@@ -643,7 +644,7 @@ function myOrg(){
     +oitems.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+((i[1]||0)<0?' r':'')+'">'+fmt(i[1]||0)+'</span></div>';}).join('')
     +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+((r.시상점수||0)<0?' r':'')+'" style="font-size:15px">'+fmt(r.시상점수||0)+'</span></div>'
     +(S.pos!=='지구'?'<div class="cr"><span class="cll">지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
-      +'<div class="cr tot"><span class="cll" style="font-weight:600">지구당 점수</span><span class="cv" style="font-size:15px;color:'+((r.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</span></div>':'')
+      +'<div class="cr tot"><span class="cll" style="font-weight:600">지구당 점수</span><span class="cv" style="font-size:15px;color:'+((r.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmtD(r.지구당)+'</span></div>':'')
     +'</div>';
 
   return '<div class="mt">내 실적</div>'
@@ -712,7 +713,7 @@ function orgRank(){
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
-    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(r.지구당)+'</div></div></div></div>'
+    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD(r.지구당)+'</div></div></div></div>'
     +topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},pos==='총국');
   function block(title,arr){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
@@ -721,7 +722,7 @@ function orgRank(){
       +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabelBr+'</div></div>'
       +arr.map(function(x,idx){
       var im=x.사번&&x.사번===r.사번;
-      return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';
+      return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(idx+1)+'">'+(idx+1)+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD(x.지구당)+'</div></div></div>';
     }).join('')+'</div>';
   }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
@@ -1057,7 +1058,7 @@ function adminOrg(){
     +'</div>';
   var rows='<div class="cl">'
     +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
-    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmt(x.지구당)+'</div></div></div>';}).join('')+'</div>';
+    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD(x.지구당)+'</div></div></div>';}).join('')+'</div>';
   return sum+rows;
 }
 
