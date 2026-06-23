@@ -277,6 +277,9 @@ input,button{font-family:inherit;font-size:14px}
 .snrow{display:flex;gap:8px;margin-top:8px}
 .snin{flex:1;min-width:0;border:1.5px solid var(--bd);border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;background:var(--card)}
 .snbtn{flex:0 0 auto;width:auto;margin-top:0;padding:11px 16px}
+.gradebox{margin-top:10px;border-radius:12px;padding:12px;text-align:center;color:#fff}
+.gradel{font-size:22px;font-weight:900;letter-spacing:1px}
+.grades{font-size:13px;font-weight:700;opacity:.95;margin-top:2px}
 </style>
 </head>
 <body>
@@ -347,7 +350,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},histIndex:[],histCache:{}};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null};
 
@@ -370,6 +373,8 @@ async function loadData(){
     APP.incList=[];APP.incMap={};APP.incJigu=[];APP.incJiguMap={};
     if(B.inc){var IK=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];B.inc.forEach(function(a){var o={};IK.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});}
     if(B.incJigu){B.incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});}
+    APP.incJiguk=[];APP.incJigukMap={};
+    if(B.incJiguk){B.incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});}
     return true;
   }catch(e){return false;}
 }
@@ -534,8 +539,32 @@ function renderIncentive(){
   var b=document.getElementById('iBody');
   if(S.type==='teacher'){b.innerHTML=teacherInc();return;}
   if(S.type==='org'&&S.pos==='지구'){b.innerHTML=jiguInc();return;}
+  if(S.type==='org'&&S.pos==='지국'){b.innerHTML=jigukInc();return;}
   b.innerHTML='<div class="mt">인센티브</div>'
     +'<div class="ib am">🚧 '+S.pos+' 인센티브 화면은 준비 중입니다. 순차적으로 추가하고 있어요.</div>';
+}
+function jigukInc(){
+  var u=S.user, j=APP.incJigukMap[u.소속코드];
+  var sn=shortName(u.소속명)||u.소속명;
+  var head='<div class="mt">지국 인센티브</div>'
+    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
+    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+' · '+(j?j.총국+'총국':'')+'</div></div></div></div>';
+  if(!j)return head+'<div class="ib am">이번 달 지국 마스타 인센티브 명단에 없어요.</div>'+histPersonalInc();
+  var grade=j.등급, ip=j.인당입회, ok=ip>=1;
+  var gradeInfo={Legend:{c:'#7c3aed',m:'순증수 × 2.0만원'},Best:{c:'#2563eb',m:'순증수 × 1.5만원'},Great:{c:'#0f7a4d',m:'순증수 × 1.0만원'},Good:{c:'#b45309',m:'순증수 × 0.5만원'}};
+  var gi=gradeInfo[grade];
+  var win=!!grade;
+  return head+'<div class="incsec"><div class="incsech">⭐ 마.스.타 인당순증 인센티브 <span class="rqbadge">상대평가</span></div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+grade+' 선정! '+fmt(j.시상금)+'원':'아직 미선정이에요')+'</div>'
+    +(win?'<div class="gradebox" style="background:'+gi.c+'"><div class="gradel">'+grade+'</div><div class="grades">'+gi.m+'</div></div>':'')
+    +'<div class="iclist">'
+    +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당순증</div><div class="icneed">순위 기준 지표</div></div><div class="icright"><div class="icnum ok">'+fmtD(j.인당순증)+'</div></div></div>'
+    +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당입회</div><div class="icneed">최소 <b>1 이상</b></div></div><div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmtD(ip)+'</div>'+(ok?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
+    +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 순증수</div><div class="icneed">시상금 산정</div></div><div class="icright"><div class="icnum">'+fmt(j.마스타순증)+'</div></div></div>'
+    +'</div>'
+    +(win?'<div class="icgift">🎁 시상금 '+fmt(j.시상금)+'원 = 순증수 '+fmt(j.마스타순증)+' × '+(grade==='Legend'?'2':grade==='Best'?'1.5':grade==='Great'?'1':'0.5')+'만원</div>':'<div class="icguide">인당순증 순위 + 최소 인당입회 1 이상이어야 선정돼요.</div>')
+    +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 전월 교사수 (둘째자리 절사)<br>· 선정: 전사 Legend 10 → 총국별 Best·Great·Good 차상위<br>· 동률 시 합산과목 달성률 ↑ → D순증(인당) ↑</div>'
+    +'</div>'+histPersonalInc();
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
@@ -897,8 +926,17 @@ function adminInc(){
     +statAmt('마.스.타 순증 인센티브','전사 '+msJ+'명(20만원) · 총국 '+msC+'명(10만원)',msJ+msC,'명',msPay)
     +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
     +'</div>'
-    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+jiguStat()+na('지국 인센티브')+na('사업국 인센티브')+'</div>'
-    +'<div class="ib am">📌 지국·사업국 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
+    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+jiguStat()+jigukStat()+na('사업국 인센티브')+'</div>'
+    +'<div class="ib am">📌 사업국 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
+}
+function jigukStat(){
+  var J=APP.incJiguk||[];
+  if(!J.length)return '<div class="incstat na"><div class="isl">지국 인센티브 (마스타)</div><div class="isrna">준비 중</div></div>';
+  var sel=J.filter(function(x){return x.등급;});
+  var pay=sel.reduce(function(s,x){return s+x.시상금;},0);
+  var jp=(sel.length/J.length*100).toFixed(1)+'%';
+  var byG={Legend:0,Best:0,Great:0,Good:0};sel.forEach(function(x){byG[x.등급]++;});
+  return '<div class="incstat"><div class="isl">지국 인센티브 · 마.스.타<span class="issub">L'+byG.Legend+'·B'+byG.Best+'·G'+byG.Great+'·Gd'+byG.Good+' · 전체 '+fmt(J.length)+'개 지국</span></div><div class="isr"><span class="isn">'+fmt(sel.length)+'개</span><span class="isp">'+jp+'</span><span class="isamt">예상 '+fmt(pay)+'원</span></div></div>';
 }
 function jiguStat(){
   var J=APP.incJigu||[];
