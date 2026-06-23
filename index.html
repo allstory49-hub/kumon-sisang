@@ -511,7 +511,9 @@ function histPersonalSisang(){
   if(!rec)return sec+'<div class="ib am" style="margin-top:6px">'+snap.label+' 기록이 없어요 (당시 명단에 없었어요).</div>';
   var scLabel=isOrg?(S.pos==='지구'?'시상점수':'시상점수(지구당)'):'시상점수';
   var scVal=isOrg?fmtD(rec.d):fmt(rec.s);
-  var rows='<div class="histrow"><span>'+scLabel+'</span><b style="color:var(--green)">'+scVal+'</b></div>'
+  var rows=(rec.mj!=null?'<div class="histrow"><span>과목순증</span><b>'+fmt(rec.mj)+'</b></div>':'')
+    +(rec.dg!=null?'<div class="histrow"><span>디지털순증</span><b>'+fmt(rec.dg)+'</b></div>':'')
+    +'<div class="histrow"><span>'+scLabel+'</span><b style="color:var(--green)">'+scVal+'</b></div>'
     +'<div class="histrow"><span>전사 순위</span><b>'+fmt(rec.n)+'위</b></div>'
     +(S.pos==='총국'?'':'<div class="histrow"><span>총국 순위</span><b>'+fmt(rec.c)+'위</b></div>');
   return sec+'<div class="histcard"><div class="histm">'+snap.label+' 마감 기준</div>'+rows+'</div>';
@@ -846,8 +848,9 @@ function adminHist(){
     var ltog='<div class="rtog" style="margin-top:8px">'+lvs.map(function(l){return '<button class="rtb'+(S.histLv===l?' on':'')+'" onclick="S.histLv=\''+l+'\';renderAdmin()">'+l+'</button>';}).join('')+'</div>';
     var isT=(S.histLv==='교사');
     var arr=isT?(snap.rankT||[]):((snap.rankO&&snap.rankO[S.histLv])||[]);
-    var rows=arr.map(function(r){return '<div class="rr"><div class="rb" style="'+badgeStyle(r.n)+'">'+r.n+'</div><div class="rn2">'+r.nm+'<br><span class="rsb">'+r.so+'</span></div><div class="rcol big"><div class="rcol-v" style="color:var(--green)">'+(isT?fmt(r.s):fmtD(r.d))+'</div></div></div>';}).join('');
-    body=ltog+'<div class="ib gr" style="margin-top:8px">'+snap.label+' · '+S.histLv+' 상위 '+arr.length+' ('+(isT?'시상점수':S.histLv==='지구'?'시상점수':'지구당')+'순)</div><div class="cl">'+(rows||'<div class="empty">데이터 없음</div>')+'</div>';
+    var rows=arr.map(function(r){return '<div class="rr"><div class="rb" style="'+badgeStyle(r.n)+'">'+r.n+'</div><div class="rn2">'+r.nm+'<br><span class="rsb">'+r.so+'</span></div><div class="rcol"><div class="rcol-v"'+(r.mj<0?' style="color:var(--red)"':'')+'>'+fmt(r.mj)+'</div></div><div class="rcol"><div class="rcol-v"'+(r.dg<0?' style="color:var(--red)"':'')+'>'+fmt(r.dg)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:var(--green)">'+(isT?fmt(r.s):fmtD(r.d))+'</div></div></div>';}).join('');
+    var rhead='<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc big">'+(isT?'시상점수':S.histLv==='지구'?'시상점수':'지구당')+'</div></div>';
+    body=ltog+'<div class="ib gr" style="margin-top:8px">'+snap.label+' · '+S.histLv+' 상위 '+arr.length+'</div><div class="cl">'+rhead+(rows||'<div class="empty">데이터 없음</div>')+'</div>';
   }else{
     var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span><span class="isp">'+a.pct+'%</span><span class="isamt">예상 '+fmt(a.amt)+'원</span></div></div>';}).join('');
     body='<div class="ib gr" style="margin-top:8px">'+snap.label+' 인센티브 집계</div><div class="incwrap">'+ir+'</div>';
@@ -966,13 +969,13 @@ async function doSnapshot(){
 }
 function buildSnapshot(m){
   var t=APP.teachers.slice();
-  var snapT={};t.forEach(function(r){snapT[r.교사번호]={s:r.시상계,n:r.순위,c:r.총국순위};});
-  var rankT=t.slice(0,50).map(function(r){return {nm:r.교사명,so:r.소속명,s:r.시상계,n:r.순위,c:r.총국순위};});
+  var snapT={};t.forEach(function(r){snapT[r.교사번호]={s:r.시상계,n:r.순위,c:r.총국순위,mj:r.과목순증,dg:r.디지털순증};});
+  var rankT=t.slice(0,50).map(function(r){return {nm:r.교사명,so:r.소속명,s:r.시상계,n:r.순위,c:r.총국순위,mj:r.과목순증,dg:r.디지털순증};});
   var snapO={},rankO={};
   ['지구','지국','사업국','총국'].forEach(function(rl){
     var arr=(APP.org[rl]||[]);
-    arr.forEach(function(o){snapO[o.소속코드]={d:o.지구당,n:o.순위,c:o.총국순위,lv:rl};});
-    rankO[rl]=arr.slice().sort(function(a,b){return b.지구당-a.지구당;}).slice(0,50).map(function(o){return {nm:o.관리자명||'(공석)',so:o.소속명,d:o.지구당,n:o.순위,c:o.총국순위};});
+    arr.forEach(function(o){snapO[o.소속코드]={d:o.지구당,n:o.순위,c:o.총국순위,lv:rl,mj:o.과목순증,dg:o.디지털순증};});
+    rankO[rl]=arr.slice().sort(function(a,b){return b.지구당-a.지구당;}).slice(0,50).map(function(o){return {nm:o.관리자명||'(공석)',so:o.소속명,d:o.지구당,n:o.순위,c:o.총국순위,mj:o.과목순증,dg:o.디지털순증};});
   });
   var L=APP.incList,n=L.length,snapInc={};
   L.forEach(function(r){var items=[];
