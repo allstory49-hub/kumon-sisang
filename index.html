@@ -274,6 +274,9 @@ input,button{font-family:inherit;font-size:14px}
 .histrow+.histrow{border-top:1px dashed var(--bd)}
 .histrow span{font-size:13px;color:var(--t2)}
 .histrow b{font-size:16px;font-weight:800;color:var(--t1)}
+.snrow{display:flex;gap:8px;margin-top:8px}
+.snin{flex:1;min-width:0;border:1.5px solid var(--bd);border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;background:var(--card)}
+.snbtn{flex:0 0 auto;width:auto;margin-top:0;padding:11px 16px}
 </style>
 </head>
 <body>
@@ -401,6 +404,18 @@ function rankDelta(map,key,cur,field){
   if(d>0)return ' '+lbl+'<span class="rkup">▲'+d+'</span>';
   if(d<0)return ' '+lbl+'<span class="rkdn">▼'+(-d)+'</span>';
   return ' '+lbl+'<span class="rksame">—</span>';
+}
+async function saveFile(path,content,message){
+  var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+path;
+  var hd={'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'};
+  var sha=null;
+  try{var g=await fetch(api+'?t='+Date.now(),{headers:hd,cache:'no-store'});if(g.ok){var gj=await g.json();sha=gj.sha;}}catch(e){}
+  if(!sha){try{var tr=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/git/trees/'+GH.branch+'?recursive=1',{headers:hd,cache:'no-store'});if(tr.ok){var trj=await tr.json();(trj.tree||[]).forEach(function(it){if(it.path===path)sha=it.sha;});}}catch(e){}}
+  var body={message:message,content:b64utf8(content)};
+  if(sha)body.sha=sha;
+  var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+  if(!r.ok){var et=await r.text();throw new Error('저장 실패 ('+r.status+')');}
+  return true;
 }
 async function saveToGitHub(bakedJs){
   var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+GH.path;
@@ -920,7 +935,64 @@ function upload(){
     +'<div><div class="upl">'+(UP.jigu?UP.jigu.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu?' done':'')+'">지구 회원순증 파일</div></div></div>'
     +'<input type="file" id="jif" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
-    +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>';
+    +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
+    +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
+    +'<div class="ib am">매월 마감 후 한 번만 누르세요. 현재 올라가 있는 데이터(시상·인센티브)를 그 달 기록으로 박제합니다. 같은 달을 다시 저장하면 덮어써져요.</div>'
+    +'<div class="snrow"><input id="snm" class="snin" placeholder="저장할 월 (예: 2026-07)" value="'+defaultSnapMonth()+'"><button class="actb snbtn" id="snbtn" onclick="doSnapshot()">이번 달 기록 저장</button></div>'
+    +'<div id="smsg" style="margin-top:8px;font-size:12px;text-align:center;line-height:1.5"></div>';
+}
+function defaultSnapMonth(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);}
+function monthLabel(m){var p=String(m).split('-');return p.length===2?(p[0]+'년 '+parseInt(p[1],10)+'월'):m;}
+async function doSnapshot(){
+  var btn=document.getElementById('snbtn'),msg=document.getElementById('smsg');
+  var m=(document.getElementById('snm').value||'').trim();
+  if(!/^\d{4}-\d{2}$/.test(m)){msg.innerHTML='<span style="color:var(--red)">월 형식은 YYYY-MM 이어야 해요 (예: 2026-07)</span>';return;}
+  if(!APP.teachers.length){msg.innerHTML='<span style="color:var(--red)">먼저 데이터를 반영해주세요.</span>';return;}
+  btn.disabled=true;btn.textContent='저장 중...';msg.innerHTML='<span style="color:var(--blue)">스냅샷 생성 중...</span>';
+  try{
+    var snap=buildSnapshot(m);
+    await tick();
+    msg.innerHTML='<span style="color:var(--blue)">GitHub에 저장 중...</span>';
+    await saveFile('history/'+m+'.json',JSON.stringify(snap),'스냅샷 '+m);
+    // 인덱스 갱신
+    var idx=(APP.histIndex||[]).filter(function(h){return h.month!==m;});
+    idx.push({month:m,label:monthLabel(m),date:APP.meta.date||''});
+    idx.sort(function(a,b){return b.month<a.month?-1:1;});
+    await saveFile('history/index.json',JSON.stringify(idx),'기록 인덱스 '+m);
+    APP.histIndex=idx;APP.histCache[m]=snap;
+    msg.innerHTML='<span style="color:var(--green)">✅ '+monthLabel(m)+' 기록 저장 완료! 약 1분 뒤 조회 화면에 반영돼요.</span>';
+  }catch(e){msg.innerHTML='<span style="color:var(--red)">저장 실패: '+(e.message||e)+'</span>';}
+  btn.disabled=false;btn.textContent='이번 달 기록 저장';
+}
+function buildSnapshot(m){
+  var t=APP.teachers.slice();
+  var snapT={};t.forEach(function(r){snapT[r.교사번호]={s:r.시상계,n:r.순위,c:r.총국순위};});
+  var rankT=t.slice(0,50).map(function(r){return {nm:r.교사명,so:r.소속명,s:r.시상계,n:r.순위,c:r.총국순위};});
+  var snapO={},rankO={};
+  ['지구','지국','사업국','총국'].forEach(function(rl){
+    var arr=(APP.org[rl]||[]);
+    arr.forEach(function(o){snapO[o.소속코드]={d:o.지구당,n:o.순위,c:o.총국순위,lv:rl};});
+    rankO[rl]=arr.slice().sort(function(a,b){return b.지구당-a.지구당;}).slice(0,50).map(function(o){return {nm:o.관리자명||'(공석)',so:o.소속명,d:o.지구당,n:o.순위,c:o.총국순위};});
+  });
+  var L=APP.incList,n=L.length,snapInc={};
+  L.forEach(function(r){var items=[];
+    if(r.과목순증>=5||r.입회>=12)items.push({name:'월 성과',award:'스퀘어가든 3in1 마스터 멀티다지기'});
+    if(r.유입>=5)items.push({name:'신규 회원',award:'네이버페이 2만원'});else if(r.유입>=3)items.push({name:'신규 회원',award:'네이버페이 1만원'});
+    if(r.마스타시상==='전사')items.push({name:'마스타 순증',award:'시상금 20만원 (전사)'});else if(r.마스타시상==='총국')items.push({name:'마스타 순증',award:'시상금 10만원 (총국)'});
+    if(items.length)snapInc[r.교사번호]=items;});
+  var snapJigu={};(APP.incJigu||[]).forEach(function(o){if(o.회원순증>=1)snapJigu[o.소속코드]={ns:o.회원순증,pay:o.회원순증*10000};});
+  var ms=L.filter(function(r){return r.과목순증>=5||r.입회>=12;}).length;
+  var n1=L.filter(function(r){return r.유입>=3;}).length,n2=L.filter(function(r){return r.유입>=5;}).length;
+  var msJ=L.filter(function(r){return r.마스타시상==='전사';}).length,msC=L.filter(function(r){return r.마스타시상==='총국';}).length;
+  var jk=Object.keys(snapJigu),jPay=jk.reduce(function(s,k){return s+snapJigu[k].pay;},0);
+  var jt=(APP.incJigu||[]).length||1;
+  var agg=[
+    {name:'월 성과 인센티브',cnt:ms,pct:(ms/n*100).toFixed(1),amt:ms*21065,unit:'명'},
+    {name:'신규 회원 인센티브',cnt:n1,pct:(n1/n*100).toFixed(1),amt:(n1-n2)*10000+n2*20000,unit:'명'},
+    {name:'마.스.타 순증 인센티브',cnt:msJ+msC,pct:((msJ+msC)/n*100).toFixed(1),amt:msJ*200000+msC*100000,unit:'명'},
+    {name:'지구 인센티브(회원순증)',cnt:jk.length,pct:(jk.length/jt*100).toFixed(1),amt:jPay,unit:'개'}
+  ];
+  return {month:m,label:monthLabel(m),date:APP.meta.date||'',t:snapT,o:snapO,rankT:rankT,rankO:rankO,inc:snapInc,jigu:snapJigu,agg:agg};
 }
 
 function pickFile(input,type){
