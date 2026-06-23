@@ -352,7 +352,7 @@ input,button{font-family:inherit;font-size:14px}
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null};
-var UP={teacher:null,org:null,member:null,masta:null,jigu:null};
+var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
@@ -954,7 +954,7 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
-    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③④⑤를 안 올리면 해당 인센티브는 직전 값이 유지돼요.</div>'
+    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤⑥ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③④⑤⑥을 안 올리면 해당 인센티브는 직전 값이 유지돼요.</div>'
     +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
@@ -975,6 +975,10 @@ function upload(){
     +'<div class="upz'+(UP.jigu?' done':'')+'" onclick="document.getElementById(\'jif\').click()"><div class="upi'+(UP.jigu?' done':'')+'">'+(UP.jigu?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jigu?UP.jigu.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu?' done':'')+'">지구 회원순증 파일</div></div></div>'
     +'<input type="file" id="jif" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu\')">'
+    +'<div class="stl">⑥ 소속별_실적통계.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 마스타 인센티브용</span></div>'
+    +'<div class="upz'+(UP.jik?' done':'')+'" onclick="document.getElementById(\'jkf\').click()"><div class="upi'+(UP.jik?' done':'')+'">'+(UP.jik?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.jik?UP.jik.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik?' done':'')+'">지국 마.스.타 인당순증 파일 (동률기준은 ② 시상파일 사용)</div></div></div>'
+    +'<input type="file" id="jkf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
     +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
@@ -1153,6 +1157,24 @@ function parseJigu(jiguData){
   return out;
 }
 
+function parseJiguk(jikData,orgData){
+  if(!jikData)return (APP.incJiguk||[]).map(function(o){return [o.소속코드,o.소속명,o.관리자,o.총국,o.마스타순증,o.인당순증,o.인당입회,o.등급,o.시상금];});
+  var L2C={J:'동부',K:'서부',M:'남부',N:'북부',R:'충청',S:'호남',T:'경상'};
+  var TO={동부:{best:1,great:4,good:7},서부:{best:2,great:5,good:9},남부:{best:2,great:5,good:8},북부:{best:1,great:4,good:6},충청:{best:1,great:3,good:5},호남:{best:1,great:3,good:5},경상:{best:2,great:6,good:10}};
+  var mult={Legend:20000,Best:15000,Great:10000,Good:5000};
+  var tie={};
+  if(orgData){var wbT=XLSX.read(orgData,{type:'array'});var rT=XLSX.utils.sheet_to_json(wbT.Sheets[wbT.SheetNames[0]],{header:1,defval:''});for(var i=2;i<rT.length;i++){var r=rT[i];if(!r)continue;var cc=String(r[0]||'').trim();var tch=Number(r[4])||0;tie[cc]={달성률:Number(r[37])||0,Dsung:tch>0?(Number(r[42])||0)/tch:0};}}
+  var wb=XLSX.read(jikData,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var start=3;for(var i=0;i<8;i++){if(/^[A-Za-z]{2}\d{3}$/.test(String((rows[i]||[])[0]||'').trim())){start=i;break;}}
+  var cand=[];
+  for(var i=start;i<rows.length;i++){var row=rows[i];if(!row)continue;var cc=String(row[0]||'').trim();if(classifyOrg(cc)!=='지국')continue;var msSung=Number(row[36])||0,tch=Number(row[8])||0,ip=Number(row[33])||0;if(tch<=0)continue;var tt=tie[cc]||{달성률:-1e9,Dsung:-1e9};cand.push({소속코드:cc,소속명:String(row[1]||'').trim().replace(/지$/,'지구'),관리자:String(row[3]||'').trim(),총국:L2C[cc.charAt(0)]||'?',마스타순증:msSung,인당순증:Math.floor(msSung/tch*100)/100,인당입회:ip,달성률:tt.달성률,Dsung:tt.Dsung});}
+  function cmp(a,b){return (b.인당순증-a.인당순증)||(b.달성률-a.달성률)||(b.Dsung-a.Dsung);}
+  var elig=cand.filter(function(x){return x.인당입회>=1;});elig.sort(cmp);
+  var sel={};elig.slice(0,10).forEach(function(x){sel[x.소속코드]='Legend';});
+  ['동부','서부','남부','북부','충청','호남','경상'].forEach(function(ch){var pool=elig.filter(function(x){return x.총국===ch&&!sel[x.소속코드];});var t=TO[ch],idx=0;pool.slice(idx,idx+t.best).forEach(function(x){sel[x.소속코드]='Best';});idx+=t.best;pool.slice(idx,idx+t.great).forEach(function(x){sel[x.소속코드]='Great';});idx+=t.great;pool.slice(idx,idx+t.good).forEach(function(x){sel[x.소속코드]='Good';});});
+  return cand.map(function(x){var g=sel[x.소속코드]||'';return [x.소속코드,x.소속명,x.관리자,x.총국,x.마스타순증,x.인당순증,x.인당입회,g,g?x.마스타순증*mult[g]:0];});
+}
+
 function parseOrg(data){
   var wb=XLSX.read(data,{type:'array'});
   var ws=wb.Sheets[wb.SheetNames[0]];
@@ -1197,13 +1219,14 @@ async function doUpload(){
     msg.innerHTML='<span style="color:var(--blue)">✓ 인센티브 명단 계산 중...</span>';
     var incArr=parseIncentive(UP.teacher.data,UP.member?UP.member.data:null,UP.masta?UP.masta.data:null,APP.incMap);
     var incJigu=parseJigu(UP.jigu?UP.jigu.data:null);
+    var incJiguk=parseJiguk(UP.jik?UP.jik.data:null,UP.org?UP.org.data:null);
     await tick();
     var now=new Date();now.setDate(now.getDate()-1);
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
     var prev=await getPrevRanks();
-    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu};
+    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu,incJiguk:incJiguk};
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
@@ -1212,8 +1235,9 @@ async function doUpload(){
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
+    APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null,member:null,masta:null,jigu:null};
+    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
