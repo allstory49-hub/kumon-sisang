@@ -251,15 +251,16 @@ input,button{font-family:inherit;font-size:14px}
 .ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
 .ictiers b{font-weight:800}
 .incwrap{display:flex;flex-direction:column;gap:8px}
-.incstat{display:flex;justify-content:space-between;align-items:center;padding:12px 13px;border-radius:11px;background:var(--card2);border:1px solid var(--bd)}
+.incstat{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 13px;border-radius:11px;background:var(--card2);border:1px solid var(--bd)}
 .incstat.tot{background:rgba(29,158,117,.10);border-color:rgba(29,158,117,.32)}
 .incstat.na{opacity:.65}
-.isl{font-size:14px;font-weight:700;color:var(--t1);display:flex;flex-direction:column;gap:2px}
+.isl{font-size:14px;font-weight:700;color:var(--t1);display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .issub{font-size:11px;font-weight:500;color:var(--t3)}
-.isr{display:flex;align-items:baseline;gap:9px}
-.isn{font-size:19px;font-weight:900;color:var(--green)}
-.isp{font-size:13px;font-weight:800;color:var(--t2)}
-.isrna{font-size:12px;font-weight:700;color:var(--t3)}
+.isr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:0 0 auto}
+.isn{font-size:20px;font-weight:900;color:var(--green);white-space:nowrap;line-height:1.1}
+.isp{font-size:11.5px;font-weight:700;color:var(--t2);white-space:nowrap;text-align:right}
+.isrna{font-size:12px;font-weight:700;color:var(--t3);flex:0 0 auto}
+.isamt{font-size:11.5px;font-weight:800;color:var(--green);white-space:nowrap;text-align:right}
 .incrank{display:flex;gap:10px;margin-top:12px}
 .irk{flex:1;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:12px 8px;text-align:center}
 .irkl{font-size:12px;font-weight:700;color:var(--t2)}
@@ -795,7 +796,7 @@ function adminInc(){
   var n2=L.filter(function(r){return r.유입>=5;}).length;
   var tot=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12)||(r.유입>=3);}).length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
-  function statAmt(label,sub,cnt,unit,amt){return '<div class="incstat"><div class="isl">'+label+(sub?'<span class="issub">'+sub+'</span>':'')+'</div><div class="isr"><span class="isn">'+fmt(cnt)+unit+'</span><span class="isp">'+pct(cnt)+' · 예상 '+fmt(amt)+'원</span></div></div>';}
+  function statAmt(label,sub,cnt,unit,amt){return '<div class="incstat"><div class="isl">'+label+(sub?'<span class="issub">'+sub+'</span>':'')+'</div><div class="isr"><span class="isn">'+fmt(cnt)+unit+'</span><span class="isp">'+pct(cnt)+'</span><span class="isamt">예상 '+fmt(amt)+'원</span></div></div>';}
   function na(label){return '<div class="incstat na"><div class="isl">'+label+'</div><div class="isrna">준비 중</div></div>';}
   var newPay=(n1-n2)*10000+n2*20000;
   var msJ=L.filter(function(r){return r.마스타시상==='전사';}).length, msC=L.filter(function(r){return r.마스타시상==='총국';}).length;
@@ -804,7 +805,7 @@ function adminInc(){
     +'<div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준 · 전체 대상 '+fmt(n)+'명</div>'
     +'<div class="stl">교사 인센티브</div><div class="incwrap">'
     +statAmt('월 성과 인센티브','순증 5↑ 또는 입회 12↑ · 스퀘어가든 3in1 마스터 멀티다지기 (단가 21,065원)',ms,'명',ms*21065)
-    +'<div class="incstat"><div class="isl">신규 회원 인센티브 (네이버페이)<span class="issub">유입 3↑ '+fmt(n1)+'명(1만원) · 5↑ '+fmt(n2)+'명(2만원)</span></div><div class="isr"><span class="isn">'+fmt(n1)+'명</span><span class="isp">'+pct(n1)+' · 예상 '+fmt(newPay)+'원</span></div></div>'
+    +'<div class="incstat"><div class="isl">신규 회원 인센티브 (네이버페이)<span class="issub">유입 3↑ '+fmt(n1)+'명(1만원) · 5↑ '+fmt(n2)+'명(2만원)</span></div><div class="isr"><span class="isn">'+fmt(n1)+'명</span><span class="isp">'+pct(n1)+'</span><span class="isamt">예상 '+fmt(newPay)+'원</span></div></div>'
     +statAmt('마.스.타 순증 인센티브','전사 '+msJ+'명(20만원) · 총국 '+msC+'명(10만원)',msJ+msC,'명',msPay)
     +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
     +'</div>'
@@ -817,7 +818,7 @@ function jiguStat(){
   var pay=win.reduce(function(s,x){return s+x.회원순증*10000;},0);
   if(!J.length)return '<div class="incstat na"><div class="isl">지구 인센티브 (회원순증)</div><div class="isrna">준비 중</div></div>';
   var jp=J.length?(win.length/J.length*100).toFixed(1)+'%':'-';
-  return '<div class="incstat"><div class="isl">지구 인센티브 · 회원순증<span class="issub">회원순증 1↑ → 순증×1만원 · 전체 '+fmt(J.length)+'개 지구</span></div><div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+jp+' · 예상 '+fmt(pay)+'원</span></div></div>';
+  return '<div class="incstat"><div class="isl">지구 인센티브 · 회원순증<span class="issub">회원순증 1↑ → 순증×1만원 · 전체 '+fmt(J.length)+'개 지구</span></div><div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+jp+'</span><span class="isamt">예상 '+fmt(pay)+'원</span></div></div>';
 }
 
 var ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
