@@ -352,7 +352,7 @@ input,button{font-family:inherit;font-size:14px}
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{}};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null};
-var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null};
+var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
@@ -954,7 +954,7 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
-    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤⑥ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③④⑤⑥을 안 올리면 해당 인센티브는 직전 값이 유지돼요.</div>'
+    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤⑥⑦ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③④⑤⑥⑦을 안 올리면 해당 인센티브는 직전 값이 유지돼요.</div>'
     +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
@@ -979,6 +979,10 @@ function upload(){
     +'<div class="upz'+(UP.jik?' done':'')+'" onclick="document.getElementById(\'jkf\').click()"><div class="upi'+(UP.jik?' done':'')+'">'+(UP.jik?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jik?UP.jik.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik?' done':'')+'">지국 마.스.타 인당순증 파일 (동률기준은 ② 시상파일 사용)</div></div></div>'
     +'<input type="file" id="jkf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik\')">'
+    +'<div class="stl">⑦ 소속별총실적현황.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 마스타 동률기준용</span></div>'
+    +'<div class="upz'+(UP.jik2?' done':'')+'" onclick="document.getElementById(\'jk2f\').click()"><div class="upi'+(UP.jik2?' done':'')+'">'+(UP.jik2?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.jik2?UP.jik2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik2?' done':'')+'">동률 기준(합산과목 달성률·D순증 인당) 파일</div></div></div>'
+    +'<input type="file" id="jk2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik2\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
     +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
@@ -1219,7 +1223,7 @@ async function doUpload(){
     msg.innerHTML='<span style="color:var(--blue)">✓ 인센티브 명단 계산 중...</span>';
     var incArr=parseIncentive(UP.teacher.data,UP.member?UP.member.data:null,UP.masta?UP.masta.data:null,APP.incMap);
     var incJigu=parseJigu(UP.jigu?UP.jigu.data:null);
-    var incJiguk=parseJiguk(UP.jik?UP.jik.data:null,UP.org?UP.org.data:null);
+    var incJiguk=parseJiguk(UP.jik?UP.jik.data:null,UP.jik2?UP.jik2.data:null);
     await tick();
     var now=new Date();now.setDate(now.getDate()-1);
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
@@ -1237,7 +1241,7 @@ async function doUpload(){
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
     APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null};
+    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
