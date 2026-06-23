@@ -1038,9 +1038,9 @@ async function doUpload(){
 function adminOrg(){
   var all=APP.org[S.otab]||[],arr=all.slice(0,50),tot=all.length;
   if(!tot)return '<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
-  var subjInc=all.filter(function(x){return x.과목순증>0;}).length;
+  var subjInc=all.filter(function(x){return x.과목순증>=0;}).length;
   var subjPct=tot?Math.round(subjInc/tot*100):0;
-  var digInc=all.filter(function(x){return x.디지털순증>0;}).length;
+  var digInc=all.filter(function(x){return x.디지털순증>=0;}).length;
   var digPct=tot?Math.round(digInc/tot*100):0;
   var t1S=all.reduce(function(m,x){return (!m||x.과목순증>m.과목순증)?x:m;},null);
   var t1D=all.reduce(function(m,x){return (!m||x.디지털순증>m.디지털순증)?x:m;},null);
@@ -1066,9 +1066,9 @@ function adminRank(){
   if(!APP.teachers.length)return '<div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
   var top=APP.teachers.slice(0,50);
   var total=APP.meta.total||APP.teachers.length;
-  var subjInc=APP.teachers.filter(function(x){return x.과목순증>0;}).length;
+  var subjInc=APP.teachers.filter(function(x){return x.과목순증>=0;}).length;
   var subjPct=total?Math.round(subjInc/total*100):0;
-  var digInc=APP.teachers.filter(function(x){return x.디지털순증>0;}).length;
+  var digInc=APP.teachers.filter(function(x){return x.디지털순증>=0;}).length;
   var digPct=total?Math.round(digInc/total*100):0;
   var t1Subj=APP.teachers.reduce(function(m,x){return (!m||x.과목순증>m.과목순증)?x:m;},null);
   var t1Dig=APP.teachers.reduce(function(m,x){return (!m||x.디지털순증>m.디지털순증)?x:m;},null);
