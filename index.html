@@ -268,6 +268,12 @@ input,button{font-family:inherit;font-size:14px}
 .irkv span{font-size:14px;font-weight:700;margin-left:1px}
 .irkt{font-size:11px;color:var(--t3);margin-top:2px}
 .rqbadge{font-size:10px;font-weight:800;color:#fff;background:var(--amber);border-radius:5px;padding:2px 7px;margin-left:6px;vertical-align:middle}
+.histcard{margin-top:8px;background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:13px 14px}
+.histm{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px}
+.histrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.histrow+.histrow{border-top:1px dashed var(--bd)}
+.histrow span{font-size:13px;color:var(--t2)}
+.histrow b{font-size:16px;font-weight:800;color:var(--t1)}
 </style>
 </head>
 <body>
@@ -338,8 +344,8 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{}};
-var S={user:null,type:'teacher',pos:'',tab:'my',atab:'upload',otab:'지구',search:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},histIndex:[],histCache:{}};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null};
 
 /* ───── GitHub 설정 ───── */
@@ -412,9 +418,24 @@ async function saveToGitHub(bakedJs){
 /* ───── 초기화 ───── */
 (async function init(){
   await loadData();
+  await loadHistIndex();
   renderBadge();
   showPage('lp');
 })();
+
+/* ───── 지난 기록 ───── */
+async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
+async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
+function histBtns(ctx){
+  if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
+  return '<div class="rtog" style="margin-top:6px">'+APP.histIndex.map(function(h){return '<button class="rtb'+(S.histM===h.month?' on':'')+'" onclick="selectHist(\''+h.month+'\',\''+ctx+'\')">'+h.label+'</button>';}).join('')+'</div>';
+}
+async function selectHist(m,ctx){
+  S.histM=(S.histM===m?null:m);
+  if(S.histM&&!APP.histCache[S.histM]){await loadHist(S.histM);}
+  if(ctx==='award')renderUser();else if(ctx==='inc')renderIncentive();else if(ctx==='admin')renderAdmin();
+}
+function histSnap(){return S.histM?APP.histCache[S.histM]:null;}
 
 function showPage(id){['pp','lp','cp','up','ip','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
 function out(){S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
@@ -465,6 +486,33 @@ function doLogin(){
 function goChooser(name){document.getElementById('cNm').textContent=name;showPage('cp');}
 function goAward(){showPage('up');renderUser();}
 function goIncentive(){showPage('ip');renderIncentive();}
+/* 지난 기록 - 개인 시상 */
+function histPersonalSisang(){
+  var sec='<div class="stl" style="margin-top:20px">📅 지난 기록</div>'+histBtns('award');
+  if(!S.histM)return sec;
+  var snap=histSnap();if(!snap)return sec+'<div class="ib bl" style="margin-top:6px">불러오는 중...</div>';
+  var rec, isOrg=(S.type==='org');
+  if(isOrg){rec=snap.o[S.user.소속코드];}else{rec=snap.t[S.user.교사번호];}
+  if(!rec)return sec+'<div class="ib am" style="margin-top:6px">'+snap.label+' 기록이 없어요 (당시 명단에 없었어요).</div>';
+  var scLabel=isOrg?(S.pos==='지구'?'시상점수':'시상점수(지구당)'):'시상점수';
+  var scVal=isOrg?fmtD(rec.d):fmt(rec.s);
+  var rows='<div class="histrow"><span>'+scLabel+'</span><b style="color:var(--green)">'+scVal+'</b></div>'
+    +'<div class="histrow"><span>전사 순위</span><b>'+fmt(rec.n)+'위</b></div>'
+    +(S.pos==='총국'?'':'<div class="histrow"><span>총국 순위</span><b>'+fmt(rec.c)+'위</b></div>');
+  return sec+'<div class="histcard"><div class="histm">'+snap.label+' 마감 기준</div>'+rows+'</div>';
+}
+/* 지난 기록 - 개인 인센티브 */
+function histPersonalInc(){
+  var sec='<div class="stl" style="margin-top:20px">📅 지난 수혜 기록</div>'+histBtns('inc');
+  if(!S.histM)return sec;
+  var snap=histSnap();if(!snap)return sec+'<div class="ib bl" style="margin-top:6px">불러오는 중...</div>';
+  var items, isJigu=(S.type==='org'&&S.pos==='지구');
+  if(isJigu){var j=snap.jigu&&snap.jigu[S.user.소속코드];items=j?[{name:'지구 회원순증',award:fmt(j.pay)+'원 (순증 '+fmt(j.ns)+'×1만원)'}]:[];}
+  else{items=(snap.inc&&snap.inc[S.user.교사번호])||[];}
+  if(!items.length)return sec+'<div class="histcard"><div class="histm">'+snap.label+'</div><div class="ib am" style="margin:0">수혜 내역이 없어요.</div></div>';
+  var rows=items.map(function(it){return '<div class="histrow"><span>'+it.name+'</span><b style="color:var(--green);font-size:13px">'+it.award+'</b></div>';}).join('');
+  return sec+'<div class="histcard"><div class="histm">'+snap.label+' 수혜 내역</div>'+rows+'</div>';
+}
 function renderIncentive(){
   var b=document.getElementById('iBody');
   if(S.type==='teacher'){b.innerHTML=teacherInc();return;}
@@ -485,7 +533,7 @@ function jiguInc(){
     +'<div class="icright"><div class="icnum'+(win?' ok':'')+'">'+fmt(ns)+'</div>'+(win?'<span class="icok">'+fmt(pay)+'원</span>':'<span class="icno">미달</span>')+'</div></div></div>'
     +(win?'<div class="icgift">🎁 '+fmt(pay)+'원 (회원순증 '+fmt(ns)+' × 1만원)</div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계</div>'
-    +'</div>';
+    +'</div>'+histPersonalInc();
 }
 function mastaRank(tno){
   var me=APP.incMap[tno];if(!me)return null;
@@ -534,7 +582,7 @@ function teacherInc(){
     +'<div class="ib bl" style="margin-bottom:0">· 6월 전사 TOP 수상자와 함께 녹지원에서 시상 예정입니다.</div></div>';
   var notes='<div class="ib am">📌 대상자는 26년 7월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다.<br>· 지급월 기준 재직중인 일반교사에 한해 지급됩니다. · 담당: 영업기획팀 김성희 매니저(02-397-9436)</div>';
   var body=S.itab==='월성과'?sec1:S.itab==='신규회원'?sec2:sec3;
-  return head+btns+body+notes;
+  return head+btns+body+notes+histPersonalInc();
 }
 function renderUser(){
   var isOrg=S.type==='org';
@@ -547,7 +595,7 @@ function renderUser(){
                 :[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}];
   document.getElementById('uTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.tab===t.id?' on':'')+'" onclick="S.tab=\''+t.id+'\';renderUser()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('uBody');
-  if(S.tab==='my')b.innerHTML=isOrg?myOrg():myTeacher();
+  if(S.tab==='my')b.innerHTML=(isOrg?myOrg():myTeacher())+histPersonalSisang();
   else if(S.tab==='rank')b.innerHTML=isOrg?orgRank():teacherRank();
   else b.innerHTML=info();
 }
@@ -759,15 +807,37 @@ function info(){
 
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
-  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
   if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
   if(S.atab==='upload')b.innerHTML=upload();
   else if(S.atab==='inc')b.innerHTML=adminInc();
   else if(S.atab==='sisang')b.innerHTML=adminSisang();
+  else if(S.atab==='hist')b.innerHTML=adminHist();
   else if(S.atab==='search')b.innerHTML=search();
   else b.innerHTML=adminSisang();
+}
+function adminHist(){
+  var sec='<div class="mt">지난 기록</div>'+histBtns('admin');
+  if(!S.histM)return sec+'<div class="ib bl" style="margin-top:8px">조회할 월을 선택하세요.</div>';
+  var snap=histSnap();if(!snap)return sec+'<div class="ib bl" style="margin-top:8px">불러오는 중...</div>';
+  if(!S.histView)S.histView='시상';
+  var vtog='<div class="rtog" style="margin-top:10px">'+['시상','인센티브'].map(function(v){return '<button class="rtb'+(S.histView===v?' on':'')+'" onclick="S.histView=\''+v+'\';renderAdmin()">'+v+'</button>';}).join('')+'</div>';
+  var body;
+  if(S.histView==='시상'){
+    var lvs=['교사','지구','지국','사업국','총국'];
+    if(!S.histLv||lvs.indexOf(S.histLv)<0)S.histLv='교사';
+    var ltog='<div class="rtog" style="margin-top:8px">'+lvs.map(function(l){return '<button class="rtb'+(S.histLv===l?' on':'')+'" onclick="S.histLv=\''+l+'\';renderAdmin()">'+l+'</button>';}).join('')+'</div>';
+    var isT=(S.histLv==='교사');
+    var arr=isT?(snap.rankT||[]):((snap.rankO&&snap.rankO[S.histLv])||[]);
+    var rows=arr.map(function(r){return '<div class="rr"><div class="rb" style="'+badgeStyle(r.n)+'">'+r.n+'</div><div class="rn2">'+r.nm+'<br><span class="rsb">'+r.so+'</span></div><div class="rcol big"><div class="rcol-v" style="color:var(--green)">'+(isT?fmt(r.s):fmtD(r.d))+'</div></div></div>';}).join('');
+    body=ltog+'<div class="ib gr" style="margin-top:8px">'+snap.label+' · '+S.histLv+' 상위 '+arr.length+' ('+(isT?'시상점수':S.histLv==='지구'?'시상점수':'지구당')+'순)</div><div class="cl">'+(rows||'<div class="empty">데이터 없음</div>')+'</div>';
+  }else{
+    var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span><span class="isp">'+a.pct+'%</span><span class="isamt">예상 '+fmt(a.amt)+'원</span></div></div>';}).join('');
+    body='<div class="ib gr" style="margin-top:8px">'+snap.label+' 인센티브 집계</div><div class="incwrap">'+ir+'</div>';
+  }
+  return sec+vtog+body;
 }
 function adminSisang(){
   var subs=['교사','지구','지국','사업국','총국'];
