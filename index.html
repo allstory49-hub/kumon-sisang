@@ -630,7 +630,27 @@ function incJuly(){
   if(S.type==='teacher')return julyTeacher();
   if(S.type==='org'&&S.pos==='지구')return julyJigu();
   if(S.type==='org'&&S.pos==='지국')return julyJiguk();
-  return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다. (다음 단계에서 추가)</div>';
+  if(S.type==='org'&&S.pos==='사업국')return julyEop();
+  if(S.type==='org'&&S.pos==='총국')return julyChong();
+  return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다.</div>';
+}
+function julyEop(){
+  var tabs=['퇴회율&마스타','달성률','TOP TOUR','마스타Top'];
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='퇴회율&마스타';
+  var body;
+  if(S.jtab==='퇴회율&마스타')body=jpvCard({h:'📉 퇴회율 & 마.스.타',period:'3분기 7~9월',conds:[{l:'사업국 퇴회율 (순증 1↑)',need:'4.6% 이하'},{l:'마.스.타 누적순증 인당',need:'1.5 이상'}],tiers:'퇴회율 4.6%↓ → <b>50만원</b><br>마.스.타 순증인당 1.5↑ → <b>50만원</b>',note:'· 두 기준은 각각 평가·지급됩니다.'});
+  else if(S.jtab==='달성률')body=jpvCard({h:'🎯 합산과목 달성률',rel:true,period:'7월',conds:[{l:'합산과목 달성률 (순증 1↑)',need:'순위 급간별'}],tiers:'1~3위 → <b>50만원</b><br>4~10위 → <b>30만원</b><br>11~20위 → <b>20만원</b><br>21~30위 → <b>10만원</b>',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
+  else if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR (총국&사업국)',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'사업국장 1~8위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
+  else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 사업국'}],reward:'시상금 50만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
+  return jpvHead()+jSub(tabs,S.jtab)+body;
+}
+function julyChong(){
+  var tabs=['TOP TOUR','커피차'];
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='TOP TOUR';
+  var body;
+  if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'총국장 1~2위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
+  else body=jpvCard({h:'☕ 커피차',rel:true,period:'하반기 7~12월',conds:[{l:'합산과목 달성률 (50%↑)',need:'1위 총국'}],reward:'27년 1월 총국 전략회의 커피차 지원',note:'· 하반기 누적 합산과목 달성률 1위 총국 대상.'});
+  return jpvHead()+jSub(tabs,S.jtab)+body;
 }
 function jSub(tabs,sel,fn){
   return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';renderIncentive()">'+t+'</button>';}).join('')+'</div>';
