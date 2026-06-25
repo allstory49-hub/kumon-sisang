@@ -675,7 +675,7 @@ function julyEop(){
   else if(S.jtab==='달성률')body=jpvCard({h:'🎯 합산과목 달성률',rel:true,period:'7월',conds:[{l:'합산과목 달성률 (순증 1↑)',need:'순위 급간별'}],tiers:'1~3위 → <b>50만원</b><br>4~10위 → <b>30만원</b><br>11~20위 → <b>20만원</b><br>21~30위 → <b>10만원</b>',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR (총국&사업국)',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'사업국장 1~8위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 사업국'}],reward:'시상금 50만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return jpvHead()+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function julyChong(){
   var tabs=['TOP TOUR','커피차'];
@@ -683,7 +683,7 @@ function julyChong(){
   var body;
   if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'총국장 1~2위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else body=jpvCard({h:'☕ 커피차',rel:true,period:'하반기 7~12월',conds:[{l:'합산과목 달성률 (50%↑)',need:'1위 총국'}],reward:'27년 1월 총국 전략회의 커피차 지원',note:'· 하반기 누적 합산과목 달성률 1위 총국 대상.'});
-  return jpvHead()+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function jSub(tabs,sel,fn){
   return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';renderIncentive()">'+t+'</button>';}).join('')+'</div>';
@@ -713,7 +713,7 @@ function julyTeacher(){
   else if(S.jtab==='마스타순증')body=jpvCard({h:'⭐ 마.스.타 순증',period:'7월',conds:[{l:'마.스.타 순증',need:'3 이상 / 5 이상'}],tiers:'마.스.타 순증 3↑ → 네이버페이 <b>1만원</b><br>마.스.타 순증 5↑ → 네이버페이 <b>2만원</b>',note:'· 7월은 급간별 절대평가예요 (순위 무관).'});
   else if(S.jtab==='무퇴회')body=jpvCard({h:'🛡️ 무퇴회 (8월)',period:'8월',conds:[{l:'8월 무퇴회 교사',need:'근무 6개월↑·전월말 과목 60↑'}],tiers:'130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b>',note:'· 8월 한 달간 퇴회가 없는 교사 대상이에요.'});
   else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 순증',need:'30 이상 · 1위 교사'}],reward:'시상금 50만원',note:'· 하반기 마.스.타 순증 1위 교사 시상.<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
-  return jpvHead()+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function julyJigu(){
   var tabs=['회원순증','엘리트지구장','세종클럽','마스타Top'];
@@ -721,18 +721,18 @@ function julyJigu(){
   var body;
   if(S.jtab==='회원순증')body=jpvCard({h:'👥 회원 순증',period:'7월',conds:[{l:'지구 회원 순증',need:'1 이상'}],tiers:'회원순증수 × <b>10,000원</b> (운영비)',note:'· 회원순증 1 이상 달성 시 지급.'});
   else if(S.jtab==='엘리트지구장')body=jpvCard({h:'🏅 엘리트 지구장',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률',need:'100% · D순증 1↑'}],tiers:'전사 상위 <b>20명</b> → 녹지원 행사 + <b>20만원</b>',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
-  else if(S.jtab==='세종클럽')body=sejongPersonal();
+  else if(S.jtab==='세종클럽')body=sejongPersonal('지구');
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return jpvHead()+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function julyJiguk(){
   var tabs=['퇴회율','세종클럽','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='퇴회율';
   var body;
   if(S.jtab==='퇴회율')body=jpvCard({h:'📉 합산과목 퇴회율',period:'3분기 7~9월',conds:[{l:'지국 합산과목 퇴회율',need:'달성률 50%↑ 조건'}],tiers:'3.8%↓ → 교사수 × <b>3.0만</b><br>4.1%↓ → 교사수 × <b>2.0만</b><br>4.4%↓ → 교사수 × <b>1.0만</b><br>4.6%↓ → 교사수 × <b>0.5만</b>',note:'· 3분기 누적 퇴회율 급간별 시상.'});
-  else if(S.jtab==='세종클럽')body=sejongPersonal();
+  else if(S.jtab==='세종클럽')body=sejongPersonal('지국');
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return jpvHead()+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function jigukInc(){
   var u=S.user, j=APP.incJigukMap[u.소속코드];
@@ -1090,21 +1090,24 @@ function sejongCriteria(lv){
     +'<div class="ib bl">최소 45점 · 최대 120점 · 신설/통폐합 조직은 전년 전사 평균 적용</div>'
     +'<div class="stl" style="margin-top:14px">항목별 배점 기준'+(lv?' ('+lv+')':'')+'</div><div class="sjmlist">'+detail+'</div>';
 }
-function sejongPersonal(){
+function sejongPersonal(forceLv){
   var S2=APP.sejong;if(!S2)return '';
-  if(S.type!=='org'||(S.pos!=='지구'&&S.pos!=='지국'))return '';
-  var arr=S2[S.pos]||[];var me=null;for(var i=0;i<arr.length;i++){if(arr[i].code===S.user.소속코드){me=arr[i];break;}}
+  var isOrg=(S.type==='org'&&(S.pos==='지구'||S.pos==='지국'));
+  var lv=isOrg?S.pos:(forceLv||'지국');
   var head='<div class="stl" style="margin-top:20px">🏅 관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7월 미리보기</span></div>'
     +'<div class="ib am">🚧 <b>준비 중</b> · 3분기(2026.07~09) 평가 · 실적 반영 후 점수가 표시됩니다.</div>';
   var grades='<div class="sjgrades">'
     +'<div class="sjg" style="border-color:#7c3aed"><div class="sjgn" style="color:#7c3aed">세종 클럽</div><div class="sjgp">90점<span class="sjup">↑</span></div><div class="sjga" style="color:#7c3aed">20만원</div></div>'
     +'<div class="sjg" style="border-color:#2563eb"><div class="sjgn" style="color:#2563eb">율곡 클럽</div><div class="sjgp">70점<span class="sjup">↑</span></div><div class="sjga" style="color:#2563eb">15만원</div></div>'
     +'<div class="sjg" style="border-color:#0f7a4d"><div class="sjgn" style="color:#0f7a4d">퇴계 클럽</div><div class="sjgp">50점<span class="sjup">↑</span></div><div class="sjga" style="color:#0f7a4d">10만원</div></div></div>';
-  var totalCard='<div class="sjtot"><div class="sjtotl">'+(me?me.name:S.user.소속명)+' · 3분기 예상 합계</div><div class="sjtotv">— <span>/ 120점</span></div><div class="sjtotg">예상 등급 <b>미정</b></div></div>';
-  return head+grades+'<div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>'
-    +'<div class="stl" style="margin-top:14px">'+(me?me.name:S.user.소속명)+' 예상 점수</div>'
-    +totalCard
-    +sejongCriteria(S.pos);
+  var personal='';
+  if(isOrg){
+    var arr=S2[S.pos]||[];var me=null;for(var i=0;i<arr.length;i++){if(arr[i].code===S.user.소속코드){me=arr[i];break;}}
+    var nm=(me?me.name:S.user.소속명);
+    personal='<div class="stl" style="margin-top:14px">'+nm+' 예상 점수</div>'
+      +'<div class="sjtot"><div class="sjtotl">'+nm+' · 3분기 예상 합계</div><div class="sjtotv">— <span>/ 120점</span></div><div class="sjtotg">예상 등급 <b>미정</b></div></div>';
+  }
+  return head+grades+'<div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>'+personal+sejongCriteria(lv);
 }
 function sejongClub(){
   var S2=APP.sejong;
@@ -1170,6 +1173,26 @@ function adminSisang(){
   return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
 }
 function adminInc(){
+  if(!S.imonth)S.imonth='6';
+  var months=[{id:'6',l:'6월'},{id:'7',l:'7월 미리보기'}];
+  var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
+  return mtab+(S.imonth==='7'?adminInc7():adminInc6());
+}
+function adminInc7(){
+  var roles=['교사','지구','지국','사업국','총국'];
+  if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
+  var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
+  S.hideJHead=true;
+  var body;
+  if(S.aincRole==='교사')body=julyTeacher();
+  else if(S.aincRole==='지구')body=julyJigu();
+  else if(S.aincRole==='지국')body=julyJiguk();
+  else if(S.aincRole==='사업국')body=julyEop();
+  else body=julyChong();
+  S.hideJHead=false;
+  return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 역할별 7월 인센티브 규칙이에요. 실적 반영 시 값이 채워집니다.</div>'+rtab+body;
+}
+function adminInc6(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
   var L=APP.incList,n=L.length;
   var ms=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12);}).length;
@@ -1191,7 +1214,7 @@ function adminInc(){
     +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
     +'</div>'
     +'<div class="stl">조직 인센티브</div><div class="incwrap">'+jiguStat()+jigukStat()+na('사업국 인센티브')+'</div>'
-    +'<div class="ib am">📌 사업국 인센티브는 3분기(7~9월) 관리자 세종클럽 시상으로 준비 중입니다.</div>';
+    +'<div class="ib am">📌 데이터 미연동 6월 인센티브(교차관리·신한카드·2분기/상반기 누적 등)는 직원 화면 6월 탭에서 규칙을 확인할 수 있어요.</div>';
 }
 function jigukStat(){
   var J=APP.incJiguk||[];
