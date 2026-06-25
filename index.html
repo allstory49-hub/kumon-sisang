@@ -320,6 +320,33 @@ input,button{font-family:inherit;font-size:14px}
 .sjpmyl{flex:0 0 auto;font-size:10px;font-weight:800;color:var(--amber);background:rgba(217,119,6,.12);border-radius:4px;padding:2px 5px}
 .sjpmyt{flex:1;min-width:0;font-size:10.5px;color:var(--t3);line-height:1.5}
 .sjpmys{flex:0 0 auto;font-size:13px;font-weight:900;color:var(--t3)}
+.sjup{font-size:inherit;font-weight:900;margin-left:1px}
+.sjsum{margin-top:8px;border:1px solid var(--bd);border-radius:11px;overflow:hidden}
+.sjsr{display:flex;align-items:center;font-size:12px;padding:9px 8px}
+.sjsr+.sjsr{border-top:1px solid var(--bd)}
+.sjsr-h{background:var(--card2);font-weight:800;color:var(--t2);font-size:11px}
+.sjsr-f{background:var(--card2);font-weight:800;color:var(--t1)}
+.sjsr-no{width:18px;flex:0 0 auto;color:var(--t3);font-weight:800}
+.sjsr-t{flex:1;min-width:0;font-weight:700;color:var(--t1)}
+.sjsr-w{width:42px;flex:0 0 auto;text-align:center;color:var(--t2)}
+.sjsr-m{width:42px;flex:0 0 auto;text-align:center;font-weight:800;color:var(--green)}
+.sjsr-y{width:46px;flex:0 0 auto;text-align:center;color:var(--amber);font-weight:700}
+.sjmlist{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.sjmcard{background:var(--card2);border:1px solid var(--bd);border-radius:11px;padding:11px 12px}
+.sjmh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sjmt{font-size:13.5px;font-weight:800;color:var(--t1)}
+.sjmno{color:var(--green);font-weight:900;margin-right:4px}
+.sjmw{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:5px;padding:2px 7px}
+.sjchrow{display:flex;flex-wrap:wrap;gap:5px}
+.sjch{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:4px 7px}
+.sjch-k{font-size:11px;color:var(--t2);font-weight:600}
+.sjch-v{font-size:12px;font-weight:900;color:var(--green)}
+.sjch.yoy{background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.3)}
+.sjch.yoy .sjch-v{color:var(--amber)}
+.sjmy{display:flex;align-items:center;gap:6px;margin-top:9px;margin-bottom:6px}
+.sjmyl{flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:var(--amber);border-radius:4px;padding:2px 6px}
+.sjmyt{font-size:11px;color:var(--t2);font-weight:700}
+.sjmysub{color:var(--t3);font-weight:500}
 </style>
 </head>
 <body>
@@ -907,6 +934,32 @@ function renderAdmin(){
   else if(S.atab==='search')b.innerHTML=search();
   else b.innerHTML=adminSisang();
 }
+function sejongCriteria(lv){
+  var toe1=(lv==='지구')?[['3.5%↓',50],['3.7%↓',46],['3.9%↓',42],['4.1%↓',38],['4.3%↓',34],['4.5%↓',30],['4.8%↓',25]]
+                        :[['3.7%↓',50],['3.9%↓',46],['4.1%↓',42],['4.3%↓',38],['4.5%↓',34],['4.7%↓',30],['4.9%↓',25]];
+  var metrics=[
+    {no:'①',t:'합산과목 퇴회율',w:'50%',max:50,grades:toe1,yoyL:'전년比 퇴회 감소율 대체 인정',yoy:[['2.5%↑',35],['2.0%↑',30],['1.5%↑',25],['1.0%↑',20],['0.5%↑',15]],yoyMax:'35',sub:'더 높은 점수로 대체 (분기 5.5%↑ 제외)'},
+    {no:'②',t:'회원 이탈률',w:'20%',max:20,grades:[['2.4%↓',20],['2.7%↓',17],['3.0%↓',14],['3.3%↓',11],['3.6%↓',8],['3.9%↓',5]],yoyL:'전년대비 감소 가산',yoy:[['3%↓','+10'],['2%↓','+8'],['1%↓','+5']],yoyMax:'+10',sub:'기준점수에 가산'},
+    {no:'③',t:'주평균 교재제출장수',w:'15%',max:20,grades:[['20장↑',20],['18장↑',18],['16장↑',15],['14장↑',10],['12장↑',5]],yoy:null,yoyMax:'—'},
+    {no:'④',t:'사이렌 회원 비율',w:'10%',max:10,grades:[['30%미만',10],['33%미만',7],['35%미만',5]],yoyL:'전년대비 10% 감소',yoy:[['10%↓','+5']],yoyMax:'+5',sub:'기준점수에 가산'},
+    {no:'⑤',t:'오답정정률',w:'5%',max:5,grades:[['80%↑',5]],yoy:null,yoyMax:'—'}
+  ];
+  // 요약 표
+  var sumRows=metrics.map(function(m){return '<div class="sjsr"><div class="sjsr-no">'+m.no+'</div><div class="sjsr-t">'+m.t+'</div><div class="sjsr-w">'+m.w+'</div><div class="sjsr-m">'+m.max+'점</div><div class="sjsr-y">'+m.yoyMax+'</div></div>';}).join('');
+  var sum='<div class="sjsum"><div class="sjsr sjsr-h"><div class="sjsr-no"></div><div class="sjsr-t">평가 항목</div><div class="sjsr-w">비중</div><div class="sjsr-m">기준</div><div class="sjsr-y">전년比</div></div>'+sumRows
+    +'<div class="sjsr sjsr-f"><div class="sjsr-no"></div><div class="sjsr-t">합계</div><div class="sjsr-w">100%</div><div class="sjsr-m">105점</div><div class="sjsr-y">~120</div></div></div>';
+  // 항목별 급간 미니표
+  var detail=metrics.map(function(m){
+    var chips=m.grades.map(function(g){return '<div class="sjch"><span class="sjch-k">'+g[0]+'</span><span class="sjch-v">'+g[1]+'</span></div>';}).join('');
+    var yoyHtml='';
+    if(m.yoy){var yc=m.yoy.map(function(g){return '<div class="sjch yoy"><span class="sjch-k">'+g[0]+'</span><span class="sjch-v">'+g[1]+'</span></div>';}).join('');
+      yoyHtml='<div class="sjmy"><span class="sjmyl">전년比</span><span class="sjmyt">'+m.yoyL+'<span class="sjmysub"> · '+(m.sub||'')+'</span></span></div><div class="sjchrow">'+yc+'</div>';}
+    return '<div class="sjmcard"><div class="sjmh"><div class="sjmt"><span class="sjmno">'+m.no+'</span>'+m.t+'</div><div class="sjmw">'+m.w+'</div></div><div class="sjchrow">'+chips+'</div>'+yoyHtml+'</div>';
+  }).join('');
+  return '<div class="stl">평가 항목 한눈에 보기</div>'+sum
+    +'<div class="ib bl">최소 45점 · 최대 120점 · 신설/통폐합 조직은 전년 전사 평균 적용</div>'
+    +'<div class="stl" style="margin-top:14px">항목별 배점 기준'+(lv?' ('+lv+')':'')+'</div><div class="sjmlist">'+detail+'</div>';
+}
 function sejongPersonal(){
   var S2=APP.sejong;if(!S2)return '';
   if(S.type!=='org'||(S.pos!=='지구'&&S.pos!=='지국'))return '';
@@ -914,28 +967,14 @@ function sejongPersonal(){
   var head='<div class="stl" style="margin-top:20px">🏅 관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7월 미리보기</span></div>'
     +'<div class="ib am">🚧 <b>준비 중</b> · 3분기(2026.07~09) 평가 · 실적 반영 후 점수가 표시됩니다.</div>';
   var grades='<div class="sjgrades">'
-    +'<div class="sjg" style="border-color:#7c3aed"><div class="sjgn" style="color:#7c3aed">세종 클럽</div><div class="sjgp"><b>90점</b> 이상</div><div class="sjga" style="color:#7c3aed">20만원</div></div>'
-    +'<div class="sjg" style="border-color:#2563eb"><div class="sjgn" style="color:#2563eb">율곡 클럽</div><div class="sjgp"><b>70점</b> 이상</div><div class="sjga" style="color:#2563eb">15만원</div></div>'
-    +'<div class="sjg" style="border-color:#0f7a4d"><div class="sjgn" style="color:#0f7a4d">퇴계 클럽</div><div class="sjgp"><b>50점</b> 이상</div><div class="sjga" style="color:#0f7a4d">10만원</div></div></div>';
-  var thr=(S.pos==='지국')?'지국 3.7%↓→50점 … 4.9%↓→25점':'지구 3.5%↓→50점 … 4.8%↓→25점';
-  var items=[
-    {t:'① 합산과목 퇴회율',w:'50%',base:thr,yoy:'전년比 퇴회 감소율 대체 인정: 2.5%↑→35 · 2.0%↑→30 · 1.5%↑→25 · 1.0%↑→20 · 0.5%↑→15 (분기퇴회율 5.5%↑ 제외)',yoyL:'전년比 대체'},
-    {t:'② 회원 이탈률',w:'20%',base:'2.4%↓→20점 … 3.9%↓→5점',yoy:'전년대비 감소 가산: 3%↓→+10 · 2%↓→+8 · 1%↓→+5',yoyL:'전년比 가산'},
-    {t:'③ 주평균 교재제출장수',w:'15%',base:'20장↑→20점 … 12장↑→5점',yoy:'',yoyL:''},
-    {t:'④ 사이렌 회원 비율',w:'10%',base:'30%미만→10점 · 33%→7 · 35%→5',yoy:'전년대비 10% 감소 → +5점',yoyL:'전년比 가산'},
-    {t:'⑤ 오답정정률',w:'5%',base:'80%↑→5점',yoy:'',yoyL:''}
-  ];
-  var blocks=items.map(function(it){
-    return '<div class="sjpm"><div class="sjpmh"><div class="sjpmt">'+it.t+' <span class="sjpmw">'+it.w+'</span></div><div class="sjpms">기준 —</div></div>'
-      +'<div class="sjpmd">'+it.base+'</div>'
-      +(it.yoy?'<div class="sjpmy"><span class="sjpmyl">'+it.yoyL+'</span><span class="sjpmyt">'+it.yoy+'</span><span class="sjpmys">—</span></div>':'')
-      +'</div>';
-  }).join('');
+    +'<div class="sjg" style="border-color:#7c3aed"><div class="sjgn" style="color:#7c3aed">세종 클럽</div><div class="sjgp">90점<span class="sjup">↑</span></div><div class="sjga" style="color:#7c3aed">20만원</div></div>'
+    +'<div class="sjg" style="border-color:#2563eb"><div class="sjgn" style="color:#2563eb">율곡 클럽</div><div class="sjgp">70점<span class="sjup">↑</span></div><div class="sjga" style="color:#2563eb">15만원</div></div>'
+    +'<div class="sjg" style="border-color:#0f7a4d"><div class="sjgn" style="color:#0f7a4d">퇴계 클럽</div><div class="sjgp">50점<span class="sjup">↑</span></div><div class="sjga" style="color:#0f7a4d">10만원</div></div></div>';
   var totalCard='<div class="sjtot"><div class="sjtotl">'+(me?me.name:S.user.소속명)+' · 3분기 예상 합계</div><div class="sjtotv">— <span>/ 120점</span></div><div class="sjtotg">예상 등급 <b>미정</b></div></div>';
   return head+grades+'<div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>'
     +'<div class="stl" style="margin-top:14px">'+(me?me.name:S.user.소속명)+' 예상 점수</div>'
-    +totalCard+'<div class="sjpmlist">'+blocks+'</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 기준점수와 전년대비 점수 중 ①은 더 높은 점수로 부여(합산 X), ②④는 기준점수에 가산<br>· 신설·통폐합 조직은 전년도 전사 평균 적용 · 최소 45점 / 최대 120점</div>';
+    +totalCard
+    +sejongCriteria(S.pos);
 }
 function sejongClub(){
   var S2=APP.sejong;
@@ -943,17 +982,10 @@ function sejongClub(){
   var head='<div class="mt">관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7월 미리보기</span></div>'
     +'<div class="ib am">🚧 <b>준비 중 (관리자 전용 미리보기)</b> · 3분기(2026.07~09) 평가 · 대상: 지구·지국<br>실적 데이터가 들어오면 점수가 자동 계산됩니다. 현재는 화면 골격만 표시돼요.</div>';
   // 등급 카드
-  var grades=[{n:'세종 클럽',p:'90점 이상',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점 이상',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점 이상',a:'10만원',c:'#0f7a4d'}];
-  var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'</div><div class="sjga">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
-  // 평가항목 배점
-  var items=[
-    {t:'① 합산과목 퇴회율',w:'50%',d:'(3분기 퇴회합산 ÷ 6말~8말 과목수합산)×100, 둘째자리 절사',max:'기준 50점 + 대체인정 최대 35점'},
-    {t:'② 회원 이탈률',w:'20%',d:'(3분기 이탈합산 ÷ 6말~8말 회원수합산)×100',max:'기준 20점 + 전년대비 가산 10점'},
-    {t:'③ 주평균 교재제출장수',w:'15%',d:'SKN 수학회원 7~9월 주평균(3개월 평균)',max:'최대 20점'},
-    {t:'④ 사이렌 회원 비율',w:'10%',d:'SKN 전체 중 위험신호 회원 비율',max:'기준 10점 + 전년대비 가산 5점'},
-    {t:'⑤ 오답정정률',w:'5%',d:'SKN 수학회원 오답 정정 비율 (80%↑ → 5점)',max:'최대 5점'}
-  ];
-  var ilist='<div class="stl">평가 항목 (5개 합산 · 최소 45점 / 최대 120점)</div><div class="sjitems">'+items.map(function(it){return '<div class="sjit"><div class="sjith"><span class="sjitt">'+it.t+'</span><span class="sjitw">비중 '+it.w+'</span></div><div class="sjitd">'+it.d+'</div><div class="sjitm">'+it.max+'</div></div>';}).join('')+'</div>';
+  var grades=[{n:'세종 클럽',p:'90점',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점',a:'10만원',c:'#0f7a4d'}];
+  var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'<span class="sjup">↑</span></div><div class="sjga" style="color:'+g.c+'">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
+  // 평가항목 표 (지국/지구 토글 기준 ① 반영)
+  var ilist=sejongCriteria(S.sjLv);
   // 대상 명단 (빈값 골격)
   var lvtog='<div class="rtog" style="margin-top:6px">'+['지국','지구'].map(function(l){return '<button class="rtb'+(S.sjLv===l?' on':'')+'" onclick="S.sjLv=\''+l+'\';renderAdmin()">'+l+'</button>';}).join('')+'</div>';
   var listBody;
