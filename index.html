@@ -1160,14 +1160,14 @@ function adminSisang(){
   var body,cntLine='';
   if(S.stab==='교사'){
     var T=APP.teachers||[];
-    var q=T.filter(function(r){return (r.과목순증||0)>=0&&(r.디지털순증||0)>=0;}).length;
-    cntLine='<div class="ib gr">✅ 시상 대상 <span style="color:var(--t2)">(과목순증·디지털순증 0 이상)</span> · <b>'+fmt(q)+'명</b> / 전체 '+fmt(T.length)+'명</div>';
+    var q=T.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
+    cntLine='<div class="ib gr">✅ <b>시상 대상</b> <b style="color:var(--green)">(과목순증·디지털순증 1 이상)</b> · <b>'+fmt(q)+'명</b> / 전체 '+fmt(T.length)+'명</div>';
     body=adminRank();
   }else{
     S.otab=S.stab;
     var O=APP.org[S.stab]||[];
-    var q=O.filter(function(r){return (r.과목순증||0)>=0&&(r.디지털순증||0)>=0;}).length;
-    cntLine='<div class="ib gr">✅ 시상 대상 <span style="color:var(--t2)">(과목순증·디지털순증 0 이상)</span> · <b>'+fmt(q)+'개</b> / 전체 '+fmt(O.length)+'개 '+S.stab+'</div>';
+    var q=O.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
+    cntLine='<div class="ib gr">✅ <b>시상 대상</b> <b style="color:var(--green)">(과목순증·디지털순증 1 이상)</b> · <b>'+fmt(q)+'개</b> / 전체 '+fmt(O.length)+'개 '+S.stab+'</div>';
     body=adminOrg();
   }
   return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
@@ -1288,7 +1288,7 @@ function upload(){
     +'<div class="upz'+(UP.masta?' done':'')+'" onclick="document.getElementById(\'maf\').click()"><div class="upi'+(UP.masta?' done':'')+'">'+(UP.masta?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.masta?UP.masta.name:'파일 선택하기')+'</div><div class="ups'+(UP.masta?' done':'')+'">마.스.타 과목 순증 파일</div></div></div>'
     +'<input type="file" id="maf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'masta\')">'
-    +'<div class="stl">⑧ 회원증감_소속.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
+    +'<div class="stl">⑧ 회원증감_지구/소계사용.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
     +'<div class="upz'+(UP.jigu?' done':'')+'" onclick="document.getElementById(\'jif\').click()"><div class="upi'+(UP.jigu?' done':'')+'">'+(UP.jigu?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jigu?UP.jigu.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu?' done':'')+'">지구 회원순증 파일</div></div></div>'
     +'<input type="file" id="jif" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu\')">'
@@ -1580,8 +1580,8 @@ function adminOrg(){
   var sum='<div class="sg">'
     +'<div class="sc"><div class="sl">대상</div><div class="sv">'+tot.toLocaleString()+'<span class="unit">개</span></div></div>'
     +'<div class="sc"><div class="m2">'
-    +'<div><div class="sl">과목순증</div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+subjPct+'%)</div></div>'
-    +'<div><div class="sl">디지털순증</div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+digPct+'%)</div></div>'
+    +'<div><div class="sl">과목순증 <span style="font-weight:500;color:var(--t3);font-size:9px">0이상</span></div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+subjPct+'%)</div></div>'
+    +'<div><div class="sl">디지털순증 <span style="font-weight:500;color:var(--t3);font-size:9px">0이상</span></div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">개</span></div><div class="subp">('+digPct+'%)</div></div>'
     +'</div></div>'
     +'</div>'
     +'<div class="top1row">'
@@ -1608,8 +1608,8 @@ function adminRank(){
     +'<div class="sg">'
     +'<div class="sc"><div class="sl">대상자</div><div class="sv">'+total.toLocaleString()+'<span class="unit">명</span></div></div>'
     +'<div class="sc"><div class="m2">'
-    +'<div><div class="sl">과목순증</div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+subjPct+'%)</div></div>'
-    +'<div><div class="sl">디지털순증</div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+digPct+'%)</div></div>'
+    +'<div><div class="sl">과목순증 <span style="font-weight:500;color:var(--t3);font-size:9px">0이상</span></div><div class="sv" style="color:var(--green)">'+subjInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+subjPct+'%)</div></div>'
+    +'<div><div class="sl">디지털순증 <span style="font-weight:500;color:var(--t3);font-size:9px">0이상</span></div><div class="sv" style="color:var(--green)">'+digInc.toLocaleString()+'<span class="unit">명</span></div><div class="subp">('+digPct+'%)</div></div>'
     +'</div></div>'
     +'</div>'
     +'<div class="top1row">'
