@@ -4,9 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>KUMON 당월 교사 및 조직 시상 순위</title>
+<title>KUMON 시상 및 인센티브 현황 조회</title>
 <meta name="description" content="이름·사번으로 로그인하여 실적과 순위를 확인하세요.">
-<meta property="og:title" content="KUMON 당월 교사 및 조직 시상 순위">
+<meta property="og:title" content="KUMON 시상 및 인센티브 현황 조회">
 <meta property="og:description" content="이름·사번으로 로그인하여 실적과 순위를 확인하세요.">
 <meta property="og:type" content="website">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
@@ -355,6 +355,7 @@ input,button{font-family:inherit;font-size:14px}
 .monb{flex:1;border:none;background:transparent;border-radius:9px;padding:10px;font-size:14px;font-weight:800;color:var(--t2);font-family:inherit;cursor:pointer}
 .monb.on{background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(29,158,117,.3)}
 .jsub{margin-bottom:14px;flex-wrap:wrap}
+.lhint{font-size:12px;color:var(--t3);text-align:center;margin:2px 0 12px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -370,7 +371,7 @@ input,button{font-family:inherit;font-size:14px}
 <div class="lw"><div class="lc">
   <div class="logo">
     <div class="k">KUMON</div>
-    <div class="s">당월 교사 및 조직 시상 순위</div>
+    <div class="s">시상 및 인센티브 현황 조회</div>
     <div class="d">아이디: 이름 · 비밀번호: 사번</div>
   </div>
   <div class="lcard">
@@ -379,6 +380,7 @@ input,button{font-family:inherit;font-size:14px}
     <input class="fi" id="uid" type="text" placeholder="이름 입력" autocomplete="off">
     <label class="fl">비밀번호 (사번)</label>
     <input class="fi" id="upw" type="password" placeholder="사번 입력" autocomplete="off">
+    <div class="lhint">교사 및 관리자 본인의 이름과 사번을 입력 바랍니다.</div>
     <button class="bg" onclick="doLogin()">로그인</button>
     <div class="err" id="lerr"></div>
   </div>
