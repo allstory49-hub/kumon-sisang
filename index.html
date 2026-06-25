@@ -1148,7 +1148,7 @@ function adminHist(){
     var rhead='<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc big">'+(isT?'시상점수':S.histLv==='지구'?'시상점수':'지구당')+'</div></div>';
     body=ltog+'<div class="ib gr" style="margin-top:8px">'+snap.label+' · '+S.histLv+' 상위 '+arr.length+'</div><div class="cl">'+rhead+(rows||'<div class="empty">데이터 없음</div>')+'</div>';
   }else{
-    var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span><span class="isp">'+a.pct+'%</span><span class="isamt">예상 '+fmt(a.amt)+'원</span></div></div>';}).join('');
+    var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span><span class="isp">'+a.pct+'%</span>'+(a.amt?'<span class="isamt">예상 '+fmt(a.amt)+'원</span>':'')+'</div></div>';}).join('');
     body='<div class="ib gr" style="margin-top:8px">'+snap.label+' 인센티브 집계</div><div class="incwrap">'+ir+'</div>';
   }
   return sec+vtog+body;
@@ -1194,27 +1194,45 @@ function adminInc7(){
 }
 function adminInc6(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
+  var roles=['교사','지구','지국','사업국','총국'];
+  if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
+  var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';renderAdmin()">'+r+'</button>';}).join('')+'</div>';
+  var head='<div class="mt">6월 인센티브 통계</div>'+'<div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
   var L=APP.incList,n=L.length;
-  var ms=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12);}).length;
-  var n1=L.filter(function(r){return r.유입>=3;}).length;
-  var n2=L.filter(function(r){return r.유입>=5;}).length;
-  var tot=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12)||(r.유입>=3);}).length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   function statAmt(label,sub,cnt,unit,amt){return '<div class="incstat"><div class="isl">'+label+(sub?'<span class="issub">'+sub+'</span>':'')+'</div><div class="isr"><span class="isn">'+fmt(cnt)+unit+'</span><span class="isp">'+pct(cnt)+'</span><span class="isamt">예상 '+fmt(amt)+'원</span></div></div>';}
-  function na(label){return '<div class="incstat na"><div class="isl">'+label+'</div><div class="isrna">준비 중</div></div>';}
-  var newPay=(n1-n2)*10000+n2*20000;
-  var msJ=L.filter(function(r){return r.마스타시상==='전사';}).length, msC=L.filter(function(r){return r.마스타시상==='총국';}).length;
-  var msPay=msJ*200000+msC*100000;
-  return '<div class="mt">인센티브 통계</div>'
-    +'<div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준 · 전체 대상 '+fmt(n)+'명</div>'
-    +'<div class="stl">교사 인센티브</div><div class="incwrap">'
-    +statAmt('월 성과 인센티브','순증 5↑ 또는 입회 12↑ · 스퀘어가든 3in1 마스터 멀티다지기 (단가 21,065원)',ms,'명',ms*21065)
-    +'<div class="incstat"><div class="isl">신규 회원 인센티브 (네이버페이)<span class="issub">유입 3↑ '+fmt(n1)+'명(1만원) · 5↑ '+fmt(n2)+'명(2만원)</span></div><div class="isr"><span class="isn">'+fmt(n1)+'명</span><span class="isp">'+pct(n1)+'</span><span class="isamt">예상 '+fmt(newPay)+'원</span></div></div>'
-    +statAmt('마.스.타 순증 인센티브','전사 '+msJ+'명(20만원) · 총국 '+msC+'명(10만원)',msJ+msC,'명',msPay)
-    +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외 (한 가지라도 달성)</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
-    +'</div>'
-    +'<div class="stl">조직 인센티브</div><div class="incwrap">'+jiguStat()+jigukStat()+na('사업국 인센티브')+'</div>'
-    +'<div class="ib am">📌 데이터 미연동 6월 인센티브(교차관리·신한카드·2분기/상반기 누적 등)는 직원 화면 6월 탭에서 규칙을 확인할 수 있어요.</div>';
+  var body;
+  if(S.aincRole==='교사'){
+    var ms=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12);}).length;
+    var n1=L.filter(function(r){return r.유입>=3;}).length, n2=L.filter(function(r){return r.유입>=5;}).length;
+    var tot=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12)||(r.유입>=3);}).length;
+    var newPay=(n1-n2)*10000+n2*20000;
+    var msJ=L.filter(function(r){return r.마스타시상==='전사';}).length, msC=L.filter(function(r){return r.마스타시상==='총국';}).length;
+    body='<div class="incwrap">'
+      +statAmt('월 성과 인센티브','순증 5↑ 또는 입회 12↑ · 단가 21,065원',ms,'명',ms*21065)
+      +'<div class="incstat"><div class="isl">신규 회원 인센티브 (네이버페이)<span class="issub">유입 3↑ '+fmt(n1)+'명(1만원) · 5↑ '+fmt(n2)+'명(2만원)</span></div><div class="isr"><span class="isn">'+fmt(n1)+'명</span><span class="isp">'+pct(n1)+'</span><span class="isamt">예상 '+fmt(newPay)+'원</span></div></div>'
+      +statAmt('마.스.타 순증 인센티브','전사 '+msJ+'명(20만원) · 총국 '+msC+'명(10만원)',msJ+msC,'명',msJ*200000+msC*100000)
+      +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div></div>'
+      +jpvCard({h:'🔄 마.스.타 교차관리',period:'6월',status:J6STATUS,conds:[{l:'마.스.타 교차관리 입회',need:'1건당 지급'}],tiers:'교차관리 입회 1건당 → 네이버페이 <b>1만원</b>',note:'· 교차관리를 보내준 관리(방문)교사 대상 · 마.스.타 입회는 당복 제외'})
+      +jpvCard({h:'👑 마.스.타 TOP (교사)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적순증',need:'1위 교사(30↑)'}],reward:'시상금 500,000원',note:'· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
+  }else if(S.aincRole==='지구'){
+    body='<div class="incwrap">'+jiguStat()+'</div>'
+      +jpvCard({h:'🛡️ 2분기 지구를 지켜라',period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'300%/200%/100%/순증1↑'},{l:'누적 퇴회율',need:'3.9%~5.3% 급간'}],tiers:'달성률×퇴회율 급간별 → 교사수 × <b>1.2만 ~ 5.0만원</b>',note:'· 교사수 5인 이하 조직 제외(5월말 기준)'})
+      +jpvCard({h:'👑 마.스.타 TOP (지구)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지구'}],reward:'시상금 300,000원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓'});
+  }else if(S.aincRole==='지국'){
+    body='<div class="incwrap">'+jigukStat()+'</div>'
+      +jpvCard({h:'🎁 매니저 인센티브',period:'6월',status:J6STATUS,conds:[{l:'지국 합산과목 순증',need:'1 이상 달성'}],reward:'스퀘어가든 3in1 마스터 멀티다지기 (190,000원)',note:'· 겸직 매니저는 한 지국만 달성해도 지급(중복 없음)'})
+      +jpvCard({h:'💳 신한카드 발급',period:'6월',status:J6STATUS,conds:[{l:'신한카드 발급 건수',need:'전용 URL 신청'}],tiers:'발급 건수 × <b>10,000원</b> (운영비)'})
+      +jpvCard({h:'🏢 환경개선',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'마.스.타 인당 누적순증',need:'상위 10개(1.5↑)'}],reward:'교사 신형 사물함 (기보유: 교사수 × 20,000원)',note:'· 최소 2개월 실적 보유 지국만 인정'})
+      +jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10↑ 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)'})
+      +jpvCard({h:'🏆 2분기 Elite 지국장',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'상위 20명(100%↑&D순증1↑)'}],tiers:'전사 10명 → <b>20만원</b><br>총국별 10명 → <b>15만원</b> + 녹지원 오찬'})
+      +jpvCard({h:'👑 마.스.타 TOP (지국)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지국'}],reward:'시상금 300,000원'});
+  }else if(S.aincRole==='사업국'){
+    body=jpvCard({h:'👑 마.스.타 TOP (사업국)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 사업국'}],reward:'시상금 500,000원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓'});
+  }else{
+    body='<div class="ib am">6월 총국 해당 인센티브가 없습니다. (총국 인센티브는 7월 미리보기 참고)</div>';
+  }
+  return head+body;
 }
 function jigukStat(){
   var J=APP.incJiguk||[];
@@ -1330,11 +1348,15 @@ function buildSnapshot(m){
   var msJ=L.filter(function(r){return r.마스타시상==='전사';}).length,msC=L.filter(function(r){return r.마스타시상==='총국';}).length;
   var jk=Object.keys(snapJigu),jPay=jk.reduce(function(s,k){return s+snapJigu[k].pay;},0);
   var jt=(APP.incJigu||[]).length||1;
+  var tot=L.filter(function(r){return (r.과목순증>=5)||(r.입회>=12)||(r.유입>=3);}).length;
+  var JK=APP.incJiguk||[], jkSel=JK.filter(function(x){return x.등급;}), jkPay=jkSel.reduce(function(s,x){return s+x.시상금;},0), jkT=JK.length||1;
   var agg=[
     {name:'월 성과 인센티브',cnt:ms,pct:(ms/n*100).toFixed(1),amt:ms*21065,unit:'명'},
     {name:'신규 회원 인센티브',cnt:n1,pct:(n1/n*100).toFixed(1),amt:(n1-n2)*10000+n2*20000,unit:'명'},
     {name:'마.스.타 순증 인센티브',cnt:msJ+msC,pct:((msJ+msC)/n*100).toFixed(1),amt:msJ*200000+msC*100000,unit:'명'},
-    {name:'지구 인센티브(회원순증)',cnt:jk.length,pct:(jk.length/jt*100).toFixed(1),amt:jPay,unit:'개'}
+    {name:'전체 수혜 교사(중복 제외)',cnt:tot,pct:(tot/n*100).toFixed(1),amt:0,unit:'명'},
+    {name:'지구 인센티브(회원순증)',cnt:jk.length,pct:(jk.length/jt*100).toFixed(1),amt:jPay,unit:'개'},
+    {name:'지국 인센티브(마.스.타)',cnt:jkSel.length,pct:(jkSel.length/jkT*100).toFixed(1),amt:jkPay,unit:'개'}
   ];
   return {month:m,label:monthLabel(m),date:APP.meta.date||'',t:snapT,o:snapO,rankT:rankT,rankO:rankO,inc:snapInc,jigu:snapJigu,agg:agg};
 }
