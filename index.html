@@ -340,13 +340,14 @@ input,button{font-family:inherit;font-size:14px}
 .sjmt{font-size:13.5px;font-weight:800;color:var(--t1)}
 .sjmno{color:var(--green);font-weight:900;margin-right:4px}
 .sjmw{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:5px;padding:2px 7px}
-.sjchrow{display:flex;flex-wrap:wrap;gap:5px}
-.sjch{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--bd);border-radius:7px;padding:4px 7px}
-.sjch-k{font-size:11px;color:var(--t2);font-weight:600}
-.sjch-v{font-size:12px;font-weight:900;color:var(--green)}
-.sjch.yoy{background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.3)}
-.sjch.yoy .sjch-v{color:var(--amber)}
-.sjmy{display:flex;align-items:center;gap:6px;margin-top:9px;margin-bottom:6px}
+.sjladder{display:flex;flex-direction:column;gap:1px;margin-top:4px;border-radius:9px;overflow:hidden}
+.sjlr{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--card)}
+.sjlr-k{flex:0 0 auto;width:64px;font-size:12px;font-weight:700;color:var(--t2)}
+.sjlr-bar{flex:1;height:1px;background:var(--bd)}
+.sjlr-v{flex:0 0 auto;font-size:14px;font-weight:900;color:var(--green);min-width:38px;text-align:right}
+.sjlr.yoy{background:rgba(217,119,6,.06)}
+.sjlr.yoy .sjlr-v{color:var(--amber)}
+.sjmy{display:flex;align-items:center;gap:6px;margin-top:10px;margin-bottom:4px}
 .sjmyl{flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:var(--amber);border-radius:4px;padding:2px 6px}
 .sjmyt{font-size:11px;color:var(--t2);font-weight:700}
 .sjmysub{color:var(--t3);font-weight:500}
@@ -1014,13 +1015,13 @@ function sejongCriteria(lv){
     +'<div class="sjsr-c"><div class="sjsr-b">'+m.maxB+'</div><div class="sjsr-p max">'+m.maxP+'점</div></div></div>';}).join('');
   var sum='<div class="sjsum"><div class="sjsr sjsr-h"><div class="sjsr-no"></div><div class="sjsr-t">평가 항목</div><div class="sjsr-c">최소 점수 기준</div><div class="sjsr-c">최대 점수 기준</div></div>'+sumRows
     +'<div class="sjsr sjsr-f"><div class="sjsr-no"></div><div class="sjsr-t">합계</div><div class="sjsr-c"><div class="sjsr-p min">45점</div></div><div class="sjsr-c"><div class="sjsr-p max">120점</div></div></div></div>';
-  // 항목별 급간 미니표
+  // 항목별 급간 (세로 나열)
   var detail=metrics.map(function(m){
-    var chips=m.grades.map(function(g){return '<div class="sjch"><span class="sjch-k">'+g[0]+'</span><span class="sjch-v">'+g[1]+'</span></div>';}).join('');
+    var rows=m.grades.map(function(g){return '<div class="sjlr"><span class="sjlr-k">'+g[0]+'</span><span class="sjlr-bar"></span><span class="sjlr-v">'+g[1]+'점</span></div>';}).join('');
     var yoyHtml='';
-    if(m.yoy){var yc=m.yoy.map(function(g){return '<div class="sjch yoy"><span class="sjch-k">'+g[0]+'</span><span class="sjch-v">'+g[1]+'</span></div>';}).join('');
-      yoyHtml='<div class="sjmy"><span class="sjmyl">전년比</span><span class="sjmyt">'+m.yoyL+'<span class="sjmysub"> · '+(m.sub||'')+'</span></span></div><div class="sjchrow">'+yc+'</div>';}
-    return '<div class="sjmcard"><div class="sjmh"><div class="sjmt"><span class="sjmno">'+m.no+'</span>'+m.t+'</div></div><div class="sjchrow">'+chips+'</div>'+yoyHtml+'</div>';
+    if(m.yoy){var yr=m.yoy.map(function(g){return '<div class="sjlr yoy"><span class="sjlr-k">'+g[0]+'</span><span class="sjlr-bar"></span><span class="sjlr-v">'+g[1]+(String(g[1]).indexOf('+')<0?'점':'')+'</span></div>';}).join('');
+      yoyHtml='<div class="sjmy"><span class="sjmyl">전년比</span><span class="sjmyt">'+m.yoyL+'<span class="sjmysub"> · '+(m.sub||'')+'</span></span></div><div class="sjladder">'+yr+'</div>';}
+    return '<div class="sjmcard"><div class="sjmh"><div class="sjmt"><span class="sjmno">'+m.no+'</span>'+m.t+'</div></div><div class="sjladder">'+rows+'</div>'+yoyHtml+'</div>';
   }).join('');
   return '<div class="stl">평가 항목 한눈에 보기</div>'+sum
     +'<div class="ib bl">최소 45점 · 최대 120점 · 신설/통폐합 조직은 전년 전사 평균 적용</div>'
