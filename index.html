@@ -429,7 +429,7 @@ input,button{font-family:inherit;font-size:14px}
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{},sejong:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'6',jtab:'월성과',i6tab:'회원순증'};
-var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null};
+var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
@@ -1218,35 +1218,43 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
-    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤⑥⑦ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. ③④⑤⑥⑦을 안 올리면 해당 인센티브는 직전 값이 유지돼요.</div>'
-    +'<div class="stl">① 교사별평가실적일단위.xlsx</div>'
+    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③⑤⑦⑧⑨ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. 안 올린 인센티브 파일은 직전 값이 유지돼요. (④⑥은 추후 연동 예정)</div>'
+    +'<div class="stl">① 교평_일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
     +'<input type="file" id="tf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'teacher\')">'
-    +'<div class="stl">② 소속별총실적현황.xlsx</div>'
+    +'<div class="stl">② 소평_지구/소계사용/5인이하제외.xlsx</div>'
     +'<div class="upz'+(UP.org?' done':'')+'" onclick="document.getElementById(\'of\').click()"><div class="upi'+(UP.org?' done':'')+'">'+(UP.org?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.org?UP.org.name:'파일 선택하기')+'</div><div class="ups'+(UP.org?' done':'')+'">조직별 시상점수 파일</div></div></div>'
     +'<input type="file" id="of" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'org\')">'
-    +'<div class="stl">③ 연령별 회원증감(교사별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
-    +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
-    +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
-    +'<div class="stl">④ 교사별_실적통계.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 마스타 인센티브용</span></div>'
+    +'<div class="stl">③ 소평_지구/소계사용.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
+    +'<div class="upz'+(UP.jik2?' done':'')+'" onclick="document.getElementById(\'jk2f\').click()"><div class="upi'+(UP.jik2?' done':'')+'">'+(UP.jik2?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.jik2?UP.jik2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik2?' done':'')+'">지국 마스타 동률기준(달성률·D순증) 파일</div></div></div>'
+    +'<input type="file" id="jk2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik2\')">'
+    +'<div class="stl">④ 관통_사업국.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 추후 연동</span></div>'
+    +'<div class="upz'+(UP.eop?' done':'')+'" onclick="document.getElementById(\'eopf\').click()"><div class="upi'+(UP.eop?' done':'')+'">'+(UP.eop?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.eop?UP.eop.name:'파일 선택하기')+'</div><div class="ups'+(UP.eop?' done':'')+'">사업국 관리과목 통계 (신규)</div></div></div>'
+    +'<input type="file" id="eopf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'eop\')">'
+    +'<div class="stl">⑤ 관통_지국.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 마스타 인센티브용</span></div>'
+    +'<div class="upz'+(UP.jik?' done':'')+'" onclick="document.getElementById(\'jkf\').click()"><div class="upi'+(UP.jik?' done':'')+'">'+(UP.jik?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.jik?UP.jik.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik?' done':'')+'">지국 마.스.타 인당순증 파일</div></div></div>'
+    +'<input type="file" id="jkf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik\')">'
+    +'<div class="stl">⑥ 관통_지구.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 추후 연동</span></div>'
+    +'<div class="upz'+(UP.jigu2?' done':'')+'" onclick="document.getElementById(\'jg2f\').click()"><div class="upi'+(UP.jigu2?' done':'')+'">'+(UP.jigu2?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.jigu2?UP.jigu2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu2?' done':'')+'">지구 관리과목 통계 (신규)</div></div></div>'
+    +'<input type="file" id="jg2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu2\')">'
+    +'<div class="stl">⑦ 관통_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 마스타 인센티브용</span></div>'
     +'<div class="upz'+(UP.masta?' done':'')+'" onclick="document.getElementById(\'maf\').click()"><div class="upi'+(UP.masta?' done':'')+'">'+(UP.masta?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.masta?UP.masta.name:'파일 선택하기')+'</div><div class="ups'+(UP.masta?' done':'')+'">마.스.타 과목 순증 파일</div></div></div>'
     +'<input type="file" id="maf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'masta\')">'
-    +'<div class="stl">⑤ 연령별 회원증감(소속별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
+    +'<div class="stl">⑧ 회원증감_소속.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
     +'<div class="upz'+(UP.jigu?' done':'')+'" onclick="document.getElementById(\'jif\').click()"><div class="upi'+(UP.jigu?' done':'')+'">'+(UP.jigu?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jigu?UP.jigu.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu?' done':'')+'">지구 회원순증 파일</div></div></div>'
     +'<input type="file" id="jif" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu\')">'
-    +'<div class="stl">⑥ 소속별_실적통계.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 마스타 인센티브용</span></div>'
-    +'<div class="upz'+(UP.jik?' done':'')+'" onclick="document.getElementById(\'jkf\').click()"><div class="upi'+(UP.jik?' done':'')+'">'+(UP.jik?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.jik?UP.jik.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik?' done':'')+'">지국 마.스.타 인당순증 파일 (동률기준은 ② 시상파일 사용)</div></div></div>'
-    +'<input type="file" id="jkf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik\')">'
-    +'<div class="stl">⑦ 소속별총실적현황.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 마스타 동률기준용</span></div>'
-    +'<div class="upz'+(UP.jik2?' done':'')+'" onclick="document.getElementById(\'jk2f\').click()"><div class="upi'+(UP.jik2?' done':'')+'">'+(UP.jik2?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.jik2?UP.jik2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik2?' done':'')+'">동률 기준(합산과목 달성률·D순증 인당) 파일</div></div></div>'
-    +'<input type="file" id="jk2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik2\')">'
+    +'<div class="stl">⑨ 회원증감_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
+    +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
+    +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
     +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
@@ -1505,7 +1513,7 @@ async function doUpload(){
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
     APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null};
+    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
