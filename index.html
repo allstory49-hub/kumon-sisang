@@ -280,6 +280,27 @@ input,button{font-family:inherit;font-size:14px}
 .gradebox{margin-top:10px;border-radius:12px;padding:12px;text-align:center;color:#fff}
 .gradel{font-size:22px;font-weight:900;letter-spacing:1px}
 .grades{font-size:13px;font-weight:700;opacity:.95;margin-top:2px}
+.sjgrades{display:flex;gap:8px;margin-top:8px}
+.sjg{flex:1;background:var(--card2);border:2px solid;border-radius:12px;padding:12px 8px;text-align:center}
+.sjgn{font-size:14px;font-weight:800}
+.sjgp{font-size:11px;color:var(--t3);margin-top:3px}
+.sjga{font-size:17px;font-weight:900;color:var(--t1);margin-top:4px}
+.sjitems{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.sjit{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px}
+.sjith{display:flex;justify-content:space-between;align-items:center}
+.sjitt{font-size:14px;font-weight:800;color:var(--t1)}
+.sjitw{font-size:11px;font-weight:800;color:#fff;background:var(--green);border-radius:5px;padding:2px 7px}
+.sjitd{font-size:11.5px;color:var(--t2);margin-top:5px;line-height:1.5}
+.sjitm{font-size:11px;color:var(--t3);margin-top:3px}
+.sjtable{margin-top:8px;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.sjrh,.sjrow{display:flex;align-items:center;font-size:11px}
+.sjrh{background:var(--card2);font-weight:800;color:var(--t2);padding:8px 6px}
+.sjrow{padding:9px 6px;border-top:1px solid var(--bd)}
+.sjr-no{width:24px;flex:0 0 auto;text-align:center;color:var(--t3)}
+.sjr-nm{flex:1;min-width:0;font-weight:700;font-size:12px;color:var(--t1)}
+.sjr-sc{width:38px;flex:0 0 auto;text-align:center;color:var(--t3)}
+.sjr-tot{width:36px;flex:0 0 auto;text-align:center;font-weight:800;color:var(--t2)}
+.sjr-gr{width:36px;flex:0 0 auto;text-align:center;color:var(--t3)}
 </style>
 </head>
 <body>
@@ -350,8 +371,8 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{}};
-var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},histIndex:[],histCache:{},sejong:null};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null};
 
 /* ───── GitHub 설정 ───── */
@@ -439,12 +460,14 @@ async function saveToGitHub(bakedJs){
 (async function init(){
   await loadData();
   await loadHistIndex();
+  await loadSejong();
   renderBadge();
   showPage('lp');
 })();
 
 /* ───── 지난 기록 ───── */
 async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
+async function loadSejong(){try{var r=await fetch('sejong/orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
   if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
@@ -853,16 +876,46 @@ function info(){
 
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
-  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
   if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
   if(S.atab==='upload')b.innerHTML=upload();
   else if(S.atab==='inc')b.innerHTML=adminInc();
   else if(S.atab==='sisang')b.innerHTML=adminSisang();
+  else if(S.atab==='sejong')b.innerHTML=sejongClub();
   else if(S.atab==='hist')b.innerHTML=adminHist();
   else if(S.atab==='search')b.innerHTML=search();
   else b.innerHTML=adminSisang();
+}
+function sejongClub(){
+  var S2=APP.sejong;
+  if(!S.sjLv)S.sjLv='지국';
+  var head='<div class="mt">관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7월 미리보기</span></div>'
+    +'<div class="ib am">🚧 <b>준비 중 (관리자 전용 미리보기)</b> · 3분기(2026.07~09) 평가 · 대상: 지구·지국<br>실적 데이터가 들어오면 점수가 자동 계산됩니다. 현재는 화면 골격만 표시돼요.</div>';
+  // 등급 카드
+  var grades=[{n:'세종 클럽',p:'90점 이상',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점 이상',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점 이상',a:'10만원',c:'#0f7a4d'}];
+  var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'</div><div class="sjga">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
+  // 평가항목 배점
+  var items=[
+    {t:'① 합산과목 퇴회율',w:'50%',d:'(3분기 퇴회합산 ÷ 6말~8말 과목수합산)×100, 둘째자리 절사',max:'기준 50점 + 대체인정 최대 35점'},
+    {t:'② 회원 이탈률',w:'20%',d:'(3분기 이탈합산 ÷ 6말~8말 회원수합산)×100',max:'기준 20점 + 전년대비 가산 10점'},
+    {t:'③ 주평균 교재제출장수',w:'15%',d:'SKN 수학회원 7~9월 주평균(3개월 평균)',max:'최대 20점'},
+    {t:'④ 사이렌 회원 비율',w:'10%',d:'SKN 전체 중 위험신호 회원 비율',max:'기준 10점 + 전년대비 가산 5점'},
+    {t:'⑤ 오답정정률',w:'5%',d:'SKN 수학회원 오답 정정 비율 (80%↑ → 5점)',max:'최대 5점'}
+  ];
+  var ilist='<div class="stl">평가 항목 (5개 합산 · 최소 45점 / 최대 120점)</div><div class="sjitems">'+items.map(function(it){return '<div class="sjit"><div class="sjith"><span class="sjitt">'+it.t+'</span><span class="sjitw">비중 '+it.w+'</span></div><div class="sjitd">'+it.d+'</div><div class="sjitm">'+it.max+'</div></div>';}).join('')+'</div>';
+  // 대상 명단 (빈값 골격)
+  var lvtog='<div class="rtog" style="margin-top:6px">'+['지국','지구'].map(function(l){return '<button class="rtb'+(S.sjLv===l?' on':'')+'" onclick="S.sjLv=\''+l+'\';renderAdmin()">'+l+'</button>';}).join('')+'</div>';
+  var listBody;
+  if(!S2){listBody='<div class="ib bl">조직 명단을 불러오는 중...</div>';}
+  else{
+    var arr=S2[S.sjLv]||[];
+    var rhead='<div class="sjrh"><div class="sjr-no">No</div><div class="sjr-nm">소속</div><div class="sjr-sc">①퇴회</div><div class="sjr-sc">②이탈</div><div class="sjr-sc">③제출</div><div class="sjr-sc">④사이렌</div><div class="sjr-sc">⑤오답</div><div class="sjr-tot">합계</div><div class="sjr-gr">등급</div></div>';
+    var rows=arr.slice(0,100).map(function(o,i){return '<div class="sjrow"><div class="sjr-no">'+(i+1)+'</div><div class="sjr-nm">'+o.name+'<br><span class="rsb">'+o.chong+'</span></div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-tot">—</div><div class="sjr-gr">미정</div></div>';}).join('');
+    listBody='<div class="ib gr" style="margin-top:8px">'+S.sjLv+' 대상 '+fmt(arr.length)+'개 (점수는 실적 반영 후 표시)</div><div class="sjtable">'+rhead+rows+'</div>'+(arr.length>100?'<div class="ib bl">· 상위 100개만 표시 중 (전체 '+fmt(arr.length)+'개)</div>':'');
+  }
+  return head+gcards+ilist+'<div class="stl" style="margin-top:18px">대상 조직 명단</div>'+lvtog+listBody;
 }
 function adminHist(){
   var sec='<div class="mt">지난 기록</div>'+histBtns('admin');
