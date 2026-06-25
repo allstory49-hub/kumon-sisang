@@ -587,7 +587,7 @@ function jigukInc(){
     +'</div>'
     +(win?'<div class="icgift">🎁 시상금 '+fmt(j.시상금)+'원 = 순증수 '+fmt(j.마스타순증)+' × '+(grade==='Legend'?'2':grade==='Best'?'1.5':grade==='Great'?'1':'0.5')+'만원</div>':'<div class="icguide">인당순증 순위 + 최소 인당입회 1 이상이어야 선정돼요.</div>')
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 전월 교사수 (둘째자리 절사)<br>· 선정: 전사 Legend 10 → 총국별 Best·Great·Good 차상위<br>· 동률 시 합산과목 달성률 ↑ → D순증(인당) ↑</div>'
-    +'</div>'+histPersonalInc();
+    +'</div>'+sejongPersonal()+histPersonalInc();
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
@@ -602,7 +602,7 @@ function jiguInc(){
     +'<div class="icright"><div class="icnum'+(win?' ok':'')+'">'+fmt(ns)+'</div>'+(win?'<span class="icok">'+fmt(pay)+'원</span>':'<span class="icno">미달</span>')+'</div></div></div>'
     +(win?'<div class="icgift">🎁 '+fmt(pay)+'원 (회원순증 '+fmt(ns)+' × 1만원)</div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계</div>'
-    +'</div>'+histPersonalInc();
+    +'</div>'+sejongPersonal()+histPersonalInc();
 }
 function mastaRank(tno){
   var me=APP.incMap[tno];if(!me)return null;
@@ -887,6 +887,23 @@ function renderAdmin(){
   else if(S.atab==='hist')b.innerHTML=adminHist();
   else if(S.atab==='search')b.innerHTML=search();
   else b.innerHTML=adminSisang();
+}
+function sejongPersonal(){
+  var S2=APP.sejong;if(!S2)return '';
+  if(S.type!=='org'||(S.pos!=='지구'&&S.pos!=='지국'))return '';
+  var arr=S2[S.pos]||[];var me=null;for(var i=0;i<arr.length;i++){if(arr[i].code===S.user.소속코드){me=arr[i];break;}}
+  var head='<div class="stl" style="margin-top:20px">🏅 관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7월 미리보기</span></div>'
+    +'<div class="ib am">🚧 <b>준비 중</b> · 3분기(2026.07~09) 평가 · 실적 반영 후 점수가 표시됩니다.</div>';
+  var grades='<div class="sjgrades">'
+    +'<div class="sjg" style="border-color:#7c3aed"><div class="sjgn" style="color:#7c3aed">세종</div><div class="sjgp">90점↑</div><div class="sjga">20만</div></div>'
+    +'<div class="sjg" style="border-color:#2563eb"><div class="sjgn" style="color:#2563eb">율곡</div><div class="sjgp">70점↑</div><div class="sjga">15만</div></div>'
+    +'<div class="sjg" style="border-color:#0f7a4d"><div class="sjgn" style="color:#0f7a4d">퇴계</div><div class="sjgp">50점↑</div><div class="sjga">10만</div></div></div>';
+  var items=[['① 합산과목 퇴회율','50%'],['② 회원 이탈률','20%'],['③ 주평균 교재제출장수','15%'],['④ 사이렌 회원 비율','10%'],['⑤ 오답정정률','5%']];
+  var scoreCard='<div class="histcard"><div class="histm">'+(me?me.name:S.user.소속명)+' · 3분기 예상 점수</div>'
+    +items.map(function(it){return '<div class="histrow"><span>'+it[0]+' <span style="color:var(--t3);font-size:11px">('+it[1]+')</span></span><b style="color:var(--t3)">—</b></div>';}).join('')
+    +'<div class="histrow" style="border-top:2px solid var(--bd)"><span><b>합계</b></span><b style="color:var(--green)">— / 120</b></div>'
+    +'<div class="histrow"><span>예상 등급</span><b style="color:var(--t3)">미정</b></div></div>';
+  return head+grades+scoreCard+'<div class="ib bl" style="margin-bottom:0">· 평가지표: 합산과목 퇴회율·회원이탈률·주평균 교재제출장수·사이렌 회원비율·오답정정률<br>· 최소 45점 / 최대 120점 · 시상금은 10월 운영비로 지급</div>';
 }
 function sejongClub(){
   var S2=APP.sejong;
