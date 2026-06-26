@@ -427,7 +427,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},histIndex:[],histCache:{},sejong:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,histIndex:[],histCache:{},sejong:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'6',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
 
@@ -454,6 +454,8 @@ async function loadData(){
     if(B.incJiguk){B.incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});}
     APP.incManager=[];APP.incManagerMap={};
     if(B.incManager){B.incManager.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],당월과목순증:a[3],달성:a[4]};APP.incManager.push(o);APP.incManagerMap[o.소속코드]=o;});}
+    APP.incEnv=[];APP.incEnvMap={};
+    if(B.incEnv){B.incEnv.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],인당순증:a[3],순증합:a[4],교사평균:a[5],교사6월:a[6],선정:a[7]};APP.incEnv.push(o);APP.incEnvMap[o.소속코드]=o;});}
     return true;
   }catch(e){return false;}
 }
@@ -519,6 +521,7 @@ async function saveToGitHub(bakedJs){
   await loadData();
   await loadHistIndex();
   await loadSejong();
+  await loadCumEnv();
   renderBadge();
   showPage('lp');
 })();
@@ -526,6 +529,7 @@ async function saveToGitHub(bakedJs){
 /* ───── 지난 기록 ───── */
 async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
 async function loadSejong(){try{var r=await fetch('sejong/orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
+async function loadCumEnv(){try{var r=await fetch('cumulative/env_q2.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
 async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
   if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
@@ -659,7 +663,20 @@ function jigukJune(){
       +'<div class="ib bl" style="margin-bottom:0">· 겸직 매니저는 한 지국만 달성해도 지급(중복 없음)<br>· 합산과목 순증은 인정입회·NKU·당복 포함</div></div>';
   }
   else if(S.i6tab==='신한카드')body=jpvCard({h:'💳 신한카드 발급',period:'6월',status:J6STATUS,conds:[{l:'신한카드 발급 건수',need:'전용 URL 신청'}],tiers:'발급 건수 × <b>10,000원</b> (운영비)',note:'· 지국별 신한카드 발급 전용 URL로 신청 시에만 인정'});
-  else if(S.i6tab==='환경개선')body=jpvCard({h:'🏢 환경개선',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'마.스.타 인당 누적순증',need:'상위 10개 지국 (1.5↑)'}],reward:'교사 신형 사물함 (기보유 지국: 교사수 × 20,000원)',note:'· 최소 2개월 실적 보유 지국만 인정<br>· 동률 시: 마.스.타 순증 절대수치 > 과목 달성률 > D순증(인당)'});
+  else if(S.i6tab==='환경개선'){
+    var ev=APP.incEnvMap[S.user.소속코드];
+    var per=ev?ev.인당순증:0, ok=ev?!!ev.선정:false, meet=per>=1.5;
+    var rank=null;if(ev){var sorted=(APP.incEnv||[]).filter(function(x){return x.인당순증>=1.5;}).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});for(var i=0;i<sorted.length;i++){if(sorted[i].소속코드===S.user.소속코드){rank=i+1;break;}}}
+    body='<div class="incsec"><div class="incsech">🏢 환경개선 <span class="rqbadge">상대평가</span></div>'
+      +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 (오늘까지 누적)</div>'
+      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 상위 10개 선정! 신형 사물함 지급':'아직 미선정이에요')+'</div>'
+      +'<div class="iclist">'
+      +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
+      +(ev?'<div class="icrow"><div class="iclt"><div class="icl1">현재 순위</div><div class="icneed">1.5↑ 지국 중</div></div><div class="icright"><div class="icnum">'+(rank?rank+'위':'-')+'</div></div></div>':'')
+      +'</div>'
+      +(ok?'<div class="icgift">🎁 교사 신형 사물함 (기보유 지국: 교사수 × 20,000원)</div>':'<div class="icguide">2분기 인당 누적순증 1.5↑ & 상위 10개 지국에 들어야 해요.</div>')
+      +'<div class="ib bl" style="margin-bottom:0">· 인당 누적순증 = 4~6월 마.스.타 순증 합 ÷ 4~6월 교사수 평균 (둘째자리 절사)<br>· 6월은 오늘 업로드된 실적까지 반영 · 동률 시: 순증 절대수치↑ > 과목 달성률↑ > D순증↑</div></div>';
+  }
   else if(S.i6tab==='10 CLUB')body=jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10 이상 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)',note:'· 매월 마감 기준 선착순 선정<br>· 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓'});
   else if(S.i6tab==='Elite지국장')body=jpvCard({h:'🏆 2분기 Elite 지국장',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'상위 20명 (100%↑ & D순증1↑)'}],tiers:'전사 10명 → <b>20만원</b><br>총국별 10명 → <b>15만원</b> + 녹지원 오찬',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑<br>· 교사수 5인 이하·최소 2개월 미만 제외'});
   else body=jpvCard({h:'👑 마.스.타 TOP',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지국'}],reward:'시상금 30만원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓'});
@@ -1161,7 +1178,7 @@ function adminHist(){
     var rhead='<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc big">'+(isT?'시상점수':S.histLv==='지구'?'시상점수':'지구당')+'</div></div>';
     body=ltog+'<div class="ib gr" style="margin-top:8px">'+snap.label+' · '+S.histLv+' 상위 '+arr.length+'</div><div class="cl">'+rhead+(rows||'<div class="empty">데이터 없음</div>')+'</div>';
   }else{
-    var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span><span class="isp">'+a.pct+'%</span>'+(a.amt?'<span class="isamt">예상 '+fmt(a.amt)+'원</span>':'')+'</div></div>';}).join('');
+    var ir=(snap.agg||[]).map(function(a){return '<div class="incstat"><div class="isl">'+a.name+'</div><div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span>'+(a.pct?'<span class="isp">'+a.pct+(/^[0-9.]+$/.test(a.pct)?'%':'')+'</span>':'')+(a.amt?'<span class="isamt">예상 '+fmt(a.amt)+'원</span>':'')+'</div></div>';}).join('');
     body='<div class="ib gr" style="margin-top:8px">'+snap.label+' 인센티브 집계</div><div class="incwrap">'+ir+'</div>';
   }
   return sec+vtog+body;
@@ -1233,9 +1250,8 @@ function adminInc6(){
       +jpvCard({h:'🛡️ 2분기 지구를 지켜라',period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'300%/200%/100%/순증1↑'},{l:'누적 퇴회율',need:'3.9%~5.3% 급간'}],tiers:'달성률×퇴회율 급간별 → 교사수 × <b>1.2만 ~ 5.0만원</b>',note:'· 교사수 5인 이하 조직 제외(5월말 기준)'})
       +jpvCard({h:'👑 마.스.타 TOP (지구)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지구'}],reward:'시상금 300,000원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓'});
   }else if(S.aincRole==='지국'){
-    body='<div class="incwrap">'+jigukStat()+managerStat()+'</div>'
+    body='<div class="incwrap">'+jigukStat()+managerStat()+envStat()+'</div>'
       +jpvCard({h:'💳 신한카드 발급',period:'6월',status:J6STATUS,conds:[{l:'신한카드 발급 건수',need:'전용 URL 신청'}],tiers:'발급 건수 × <b>10,000원</b> (운영비)'})
-      +jpvCard({h:'🏢 환경개선',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'마.스.타 인당 누적순증',need:'상위 10개(1.5↑)'}],reward:'교사 신형 사물함 (기보유: 교사수 × 20,000원)',note:'· 최소 2개월 실적 보유 지국만 인정'})
       +jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10↑ 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)'})
       +jpvCard({h:'🏆 2분기 Elite 지국장',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'상위 20명(100%↑&D순증1↑)'}],tiers:'전사 10명 → <b>20만원</b><br>총국별 10명 → <b>15만원</b> + 녹지원 오찬'})
       +jpvCard({h:'👑 마.스.타 TOP (지국)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지국'}],reward:'시상금 300,000원'});
@@ -1376,7 +1392,8 @@ function buildSnapshot(m){
     {name:'전체 수혜 교사(중복 제외)',cnt:tot,pct:(tot/n*100).toFixed(1),amt:0,unit:'명'},
     {name:'지구 인센티브(회원순증)',cnt:jk.length,pct:(jk.length/jt*100).toFixed(1),amt:jPay,unit:'개'},
     {name:'지국 인센티브(마.스.타)',cnt:jkSel.length,pct:(jkSel.length/jkT*100).toFixed(1),amt:jkPay,unit:'개'},
-    {name:'매니저 인센티브(다지기)',cnt:(APP.incManager||[]).filter(function(x){return x.달성;}).length,pct:((APP.incManager||[]).length?((APP.incManager||[]).filter(function(x){return x.달성;}).length/(APP.incManager||[]).length*100).toFixed(1):'0'),amt:0,unit:'개'}
+    {name:'매니저 인센티브(다지기)',cnt:(APP.incManager||[]).filter(function(x){return x.달성;}).length,pct:((APP.incManager||[]).length?((APP.incManager||[]).filter(function(x){return x.달성;}).length/(APP.incManager||[]).length*100).toFixed(1):'0'),amt:0,unit:'개'},
+    {name:'환경개선(2분기 상위10)',cnt:(APP.incEnv||[]).filter(function(x){return x.선정;}).length,pct:'',amt:(APP.incEnv||[]).filter(function(x){return x.선정;}).reduce(function(s,x){return s+(x.교사6월||0)*20000;},0),unit:'개'}
   ];
   return {month:m,label:monthLabel(m),date:APP.meta.date||'',t:snapT,o:snapO,rankT:rankT,rankO:rankO,inc:snapInc,jigu:snapJigu,agg:agg};
 }
@@ -1498,6 +1515,26 @@ function parseJigu(jiguData){
   return out;
 }
 
+function parseEnv(jikData){
+  var cum=APP.cumEnv;
+  if(!cum||!jikData)return (APP.incEnv||[]).map(function(o){return [o.소속코드,o.소속명,o.관리자,o.인당순증,o.순증합,o.교사평균,o.교사6월,o.선정];});
+  var wb=XLSX.read(jikData,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var start=3;for(var i=0;i<8;i++){if(/^[A-Za-z]{2}\d{3}$/.test(String((rows[i]||[])[0]||'').trim())){start=i;break;}}
+  var jun6={},nameMap={};
+  for(var i=start;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!=='지국')continue;jun6[cc]={t:Number(r[8])||0,s:Number(r[36])||0};nameMap[cc]={name:String(r[1]||'').trim().replace(/지$/,'지구'),mgr:String(r[3]||'').trim()};}
+  var list=[];
+  Object.keys(cum).forEach(function(cc){var h=cum[cc];var j=jun6[cc]||{t:0,s:0};var avgT=(h.m4t+h.m5t+j.t)/3,sumS=h.m4s+h.m5s+j.s;var per=avgT>0?Math.floor(sumS/avgT*100)/100:0;var nm=(nameMap[cc]||{}).name||cc,mgr=(nameMap[cc]||{}).mgr||'';list.push({code:cc,name:nm,mgr:mgr,per:per,sumS:sumS,avgT:Math.round(avgT*100)/100,m6t:j.t});});
+  var elig=list.filter(function(x){return x.per>=1.5;});elig.sort(function(a,b){return (b.per-a.per)||(b.sumS-a.sumS);});
+  var sel={};elig.slice(0,10).forEach(function(x){sel[x.code]=1;});
+  return list.map(function(x){return [x.code,x.name,x.mgr,x.per,x.sumS,x.avgT,x.m6t,sel[x.code]?1:0];});
+}
+function envStat(){
+  var E=APP.incEnv||[];
+  if(!E.length)return '<div class="incstat na"><div class="isl">환경개선</div><div class="isrna">준비 중</div></div>';
+  var sel=E.filter(function(x){return x.선정;});
+  var cash=sel.reduce(function(s,x){return s+(x.교사6월||0)*20000;},0);
+  return '<div class="incstat"><div class="isl">환경개선 · 마.스.타 인당누적<span class="issub">2분기 1.5↑ 상위 10개 · 사물함(기보유 교사수×2만)</span></div><div class="isr"><span class="isn">'+fmt(sel.length)+'개</span><span class="isp">상위 10</span><span class="isamt">사물함 / 최대 '+fmt(cash)+'원</span></div></div>';
+}
 function parseManager(orgData){
   if(!orgData)return (APP.incManager||[]).map(function(o){return [o.소속코드,o.소속명,o.관리자,o.당월과목순증,o.달성];});
   var wb=XLSX.read(orgData,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -1569,13 +1606,14 @@ async function doUpload(){
     var incJigu=parseJigu(UP.jigu?UP.jigu.data:null);
     var incJiguk=parseJiguk(UP.jik?UP.jik.data:null,UP.jik2?UP.jik2.data:null);
     var incManager=parseManager(UP.jik2?UP.jik2.data:null);
+    var incEnv=parseEnv(UP.jik?UP.jik.data:null);
     await tick();
     var now=new Date();now.setDate(now.getDate()-1);
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
     var prev=await getPrevRanks();
-    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu,incJiguk:incJiguk,incManager:incManager};
+    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu,incJiguk:incJiguk,incManager:incManager,incEnv:incEnv};
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
@@ -1586,6 +1624,7 @@ async function doUpload(){
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
     APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
     APP.incManager=[];APP.incManagerMap={};incManager.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],당월과목순증:a[3],달성:a[4]};APP.incManager.push(o);APP.incManagerMap[o.소속코드]=o;});
+    APP.incEnv=[];APP.incEnvMap={};incEnv.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],인당순증:a[3],순증합:a[4],교사평균:a[5],교사6월:a[6],선정:a[7]};APP.incEnv.push(o);APP.incEnvMap[o.소속코드]=o;});
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
     UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
