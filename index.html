@@ -373,6 +373,10 @@ input,button{font-family:inherit;font-size:14px}
 .r20.me .r20-nm{color:var(--blue)}
 .r20-me{font-size:9px;font-weight:800;color:#fff;background:var(--blue);border-radius:4px;padding:1px 5px;margin-left:4px}
 .r20cut{font-size:10.5px;font-weight:800;color:var(--green);text-align:center;padding:5px;background:rgba(29,158,117,.08);border-top:1px dashed var(--green);border-bottom:1px dashed var(--green)}
+.incgrid4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ig4{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:11px 10px;text-align:center}
+.ig4l{font-size:11px;color:var(--t3);font-weight:600;line-height:1.3}
+.ig4v{font-size:20px;font-weight:900;color:var(--t1);margin-top:4px}
 </style>
 </head>
 <body>
@@ -683,19 +687,26 @@ function jigukJune(){
   else if(S.i6tab==='환경개선'){
     var ev=APP.incEnvMap[S.user.소속코드];
     var per=ev?ev.인당순증:0, ok=ev?!!ev.선정:false, meet=per>=1.5;
-    var sorted=(APP.incEnv||[]).filter(function(x){return x.인당순증>=1.5;}).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});
-    var rank=null;for(var i=0;i<sorted.length;i++){if(sorted[i].소속코드===S.user.소속코드){rank=i+1;break;}}
+    // 전체 지국 기준 순위 (인당순증 desc, 동률 순증합)
+    var all=(APP.incEnv||[]).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});
+    var rank=null;for(var i=0;i<all.length;i++){if(all[i].소속코드===S.user.소속코드){rank=i+1;break;}}
+    // 선정 순위표는 1.5↑ 지국만(선정 기준선 10위 표시)
+    var eligSorted=all.filter(function(x){return x.인당순증>=1.5;});
     body='<div class="incsec"><div class="incsech">🏢 환경개선 <span class="rqbadge">상대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 (오늘까지 누적)</div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 상위 10개 선정! 신형 사물함 지급':'아직 미선정이에요')+'</div>'
       +'<div class="iclist">'
-      +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
-      +(ev?'<div class="icrow"><div class="iclt"><div class="icl1">현재 순위</div><div class="icneed">1.5↑ 지국 중</div></div><div class="icright"><div class="icnum">'+(rank?rank+'위':'-')+'</div></div></div>':'')
+      +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개 선정</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
       +'</div>'
-      +(ev?'<div class="incrank3"><div class="ir3"><div class="ir3l">분기 평균 교사수</div><div class="ir3v">'+fmtD(ev.교사평균)+'</div></div><div class="ir3"><div class="ir3l">분기 누적 마.스.타 순증</div><div class="ir3v">'+fmt(ev.순증합)+'</div></div><div class="ir3"><div class="ir3l">인당</div><div class="ir3v" style="color:var(--green)">'+fmtD(ev.인당순증)+'</div></div></div>':'')
+      +(ev?'<div class="incgrid4">'
+        +'<div class="ig4"><div class="ig4l">분기 평균 교사수</div><div class="ig4v">'+fmt(ev.교사평균)+'</div></div>'
+        +'<div class="ig4"><div class="ig4l">분기 누적 마.스.타 순증</div><div class="ig4v">'+fmt(ev.순증합)+'</div></div>'
+        +'<div class="ig4"><div class="ig4l">인당</div><div class="ig4v" style="color:var(--green)">'+fmtD(ev.인당순증)+'</div></div>'
+        +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 지국)</span></div><div class="ig4v">'+(rank?rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
+        +'</div>':'')
       +(ok?'<div class="icgift">🎁 교사 신형 사물함 (기보유 지국: 교사수 × 20,000원)</div>':'<div class="icguide">2분기 인당 누적순증 1.5↑ & 상위 10개 지국에 들어야 해요.</div>')
-      +rankTop20(sorted,S.user.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},10)
-      +'<div class="ib bl" style="margin-bottom:0">· 인당 누적순증 = 4~6월 마.스.타 순증 합 ÷ 4~6월 교사수 평균 (둘째자리 절사)<br>· 6월은 오늘 업로드된 실적까지 반영 · 동률 시: 순증 절대수치↑ > 과목 달성률↑ > D순증↑</div></div>';
+      +rankTop20(all,S.user.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},10)
+      +'<div class="ib bl" style="margin-bottom:0">· 인당 누적순증 = 4~6월 마.스.타 순증 합 ÷ 4~6월 교사수 평균 (둘째자리 절사)<br>· 현재 순위는 전체 지국 기준 · 6월은 오늘 업로드된 실적까지 반영<br>· 동률 시: 순증 절대수치↑ > 과목 달성률↑ > D순증↑</div></div>';
   }
   else if(S.i6tab==='10 CLUB')body=jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10 이상 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)',note:'· 매월 마감 기준 선착순 선정<br>· 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓'});
   else if(S.i6tab==='Elite지국장')body=jpvCard({h:'🏆 2분기 Elite 지국장',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'상위 20명 (100%↑ & D순증1↑)'}],tiers:'전사 10명 → <b>20만원</b><br>총국별 10명 → <b>15만원</b> + 녹지원 오찬',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑<br>· 교사수 5인 이하·최소 2개월 미만 제외'});
