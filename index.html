@@ -356,6 +356,23 @@ input,button{font-family:inherit;font-size:14px}
 .monb.on{background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(29,158,117,.3)}
 .jsub{margin-bottom:14px;flex-wrap:wrap}
 .lhint{font-size:12px;color:var(--t3);text-align:center;margin:2px 0 12px;line-height:1.5}
+.incrank3{display:flex;gap:8px;margin-top:10px}
+.ir3{flex:1;background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:10px 6px;text-align:center}
+.ir3l{font-size:10.5px;color:var(--t3);font-weight:600;line-height:1.3}
+.ir3v{font-size:18px;font-weight:900;color:var(--t1);margin-top:3px}
+.r20wrap{margin-top:14px;border:1px solid var(--bd);border-radius:11px;overflow:hidden}
+.r20head{background:var(--card2);font-size:12px;font-weight:800;color:var(--t2);padding:9px 11px}
+.r20{display:flex;align-items:center;gap:9px;padding:8px 11px;border-top:1px solid var(--bd);font-size:13px}
+.r20-n{width:22px;flex:0 0 auto;text-align:center;font-weight:800;color:var(--t3)}
+.r20-nm{flex:1;min-width:0;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r20-v{flex:0 0 auto;font-weight:900;color:var(--t1)}
+.r20-u{font-size:10px;font-weight:600;color:var(--t3);margin-left:2px}
+.r20.win{background:rgba(29,158,117,.06)}
+.r20.win .r20-n{color:var(--green)}
+.r20.me{background:rgba(37,99,235,.1)}
+.r20.me .r20-nm{color:var(--blue)}
+.r20-me{font-size:9px;font-weight:800;color:#fff;background:var(--blue);border-radius:4px;padding:1px 5px;margin-left:4px}
+.r20cut{font-size:10.5px;font-weight:800;color:var(--green);text-align:center;padding:5px;background:rgba(29,158,117,.08);border-top:1px dashed var(--green);border-bottom:1px dashed var(--green)}
 </style>
 </head>
 <body>
@@ -666,7 +683,8 @@ function jigukJune(){
   else if(S.i6tab==='환경개선'){
     var ev=APP.incEnvMap[S.user.소속코드];
     var per=ev?ev.인당순증:0, ok=ev?!!ev.선정:false, meet=per>=1.5;
-    var rank=null;if(ev){var sorted=(APP.incEnv||[]).filter(function(x){return x.인당순증>=1.5;}).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});for(var i=0;i<sorted.length;i++){if(sorted[i].소속코드===S.user.소속코드){rank=i+1;break;}}}
+    var sorted=(APP.incEnv||[]).filter(function(x){return x.인당순증>=1.5;}).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});
+    var rank=null;for(var i=0;i<sorted.length;i++){if(sorted[i].소속코드===S.user.소속코드){rank=i+1;break;}}
     body='<div class="incsec"><div class="incsech">🏢 환경개선 <span class="rqbadge">상대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 (오늘까지 누적)</div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 상위 10개 선정! 신형 사물함 지급':'아직 미선정이에요')+'</div>'
@@ -674,7 +692,9 @@ function jigukJune(){
       +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
       +(ev?'<div class="icrow"><div class="iclt"><div class="icl1">현재 순위</div><div class="icneed">1.5↑ 지국 중</div></div><div class="icright"><div class="icnum">'+(rank?rank+'위':'-')+'</div></div></div>':'')
       +'</div>'
+      +(ev?'<div class="incrank3"><div class="ir3"><div class="ir3l">분기 평균 교사수</div><div class="ir3v">'+fmtD(ev.교사평균)+'</div></div><div class="ir3"><div class="ir3l">분기 누적 마.스.타 순증</div><div class="ir3v">'+fmt(ev.순증합)+'</div></div><div class="ir3"><div class="ir3l">인당</div><div class="ir3v" style="color:var(--green)">'+fmtD(ev.인당순증)+'</div></div></div>':'')
       +(ok?'<div class="icgift">🎁 교사 신형 사물함 (기보유 지국: 교사수 × 20,000원)</div>':'<div class="icguide">2분기 인당 누적순증 1.5↑ & 상위 10개 지국에 들어야 해요.</div>')
+      +rankTop20(sorted,S.user.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},10)
       +'<div class="ib bl" style="margin-bottom:0">· 인당 누적순증 = 4~6월 마.스.타 순증 합 ÷ 4~6월 교사수 평균 (둘째자리 절사)<br>· 6월은 오늘 업로드된 실적까지 반영 · 동률 시: 순증 절대수치↑ > 과목 달성률↑ > D순증↑</div></div>';
   }
   else if(S.i6tab==='10 CLUB')body=jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10 이상 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)',note:'· 매월 마감 기준 선착순 선정<br>· 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓'});
@@ -719,6 +739,32 @@ function jSub(tabs,sel,fn){
   return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';'+rf+'()">'+t+'</button>';}).join('')+'</div>';
 }
 function jpvHead(){return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 7월 실적이 반영되면 값이 채워집니다. 현재는 규칙·골격만 표시돼요.</div>';}
+function rankTop20(sorted,myCode,valFn,cutoff){
+  if(!sorted||!sorted.length)return '';
+  var top=sorted.slice(0,20);
+  var rows=top.map(function(x,i){
+    var rk=i+1, me=(x.소속코드===myCode), win=cutoff&&rk<=cutoff;
+    var v=valFn(x);
+    return '<div class="r20'+(me?' me':'')+(win?' win':'')+'">'
+      +'<div class="r20-n">'+rk+'</div>'
+      +'<div class="r20-nm">'+(x.소속명||x.name||'')+(me?' <span class="r20-me">나</span>':'')+'</div>'
+      +'<div class="r20-v">'+v[0]+'<span class="r20-u">'+(v[1]||'')+'</span></div></div>';
+  }).join('');
+  var cutLine=cutoff?'<div class="r20cut">— 선정 기준 '+cutoff+'위 —</div>':'';
+  // 본인이 20위 밖이면 맨 아래 표시
+  var myExtra='';
+  if(myCode){var mi=-1;for(var k=0;k<sorted.length;k++){if(sorted[k].소속코드===myCode){mi=k;break;}}
+    if(mi>=20){var x=sorted[mi],v=valFn(x);myExtra='<div class="r20 me"><div class="r20-n">'+(mi+1)+'</div><div class="r20-nm">'+(x.소속명||x.name)+' <span class="r20-me">나</span></div><div class="r20-v">'+v[0]+'<span class="r20-u">'+(v[1]||'')+'</span></div></div>';}}
+  // cutoff 라인 삽입: cutoff번째 뒤
+  var html='<div class="r20wrap"><div class="r20head">📊 상위 20개 순위</div>';
+  if(cutoff&&cutoff<top.length){
+    var a=top.slice(0,cutoff).map(function(x,i){var me=(x.소속코드===myCode),v=valFn(x);return '<div class="r20 win'+(me?' me':'')+'"><div class="r20-n">'+(i+1)+'</div><div class="r20-nm">'+(x.소속명||x.name)+(me?' <span class="r20-me">나</span>':'')+'</div><div class="r20-v">'+v[0]+'<span class="r20-u">'+(v[1]||'')+'</span></div></div>';}).join('');
+    var b=top.slice(cutoff).map(function(x,i){var me=(x.소속코드===myCode),v=valFn(x);return '<div class="r20'+(me?' me':'')+'"><div class="r20-n">'+(cutoff+i+1)+'</div><div class="r20-nm">'+(x.소속명||x.name)+(me?' <span class="r20-me">나</span>':'')+'</div><div class="r20-v">'+v[0]+'<span class="r20-u">'+(v[1]||'')+'</span></div></div>';}).join('');
+    html+=a+cutLine+b;
+  }else html+=rows;
+  html+=myExtra+'</div>';
+  return html;
+}
 function jpvCard(o){
   var conds=(o.conds||[]).map(function(c){return '<div class="icrow"><div class="iclt"><div class="icl1">'+c.l+'</div><div class="icneed">'+c.need+'</div></div><div class="icright"><div class="icnum">—</div></div></div>';}).join('');
   return '<div class="incsec"><div class="incsech">'+o.h+(o.rel?' <span class="rqbadge">상대평가</span>':'')+'</div>'
@@ -785,7 +831,9 @@ function jigukInc(){
     +'</div>'
     +(win?'<div class="icgift">🎁 시상금 '+fmt(j.시상금)+'원 = 순증수 '+fmt(j.마스타순증)+' × '+(grade==='Legend'?'2':grade==='Best'?'1.5':grade==='Great'?'1':'0.5')+'만원</div>':'<div class="icguide">인당순증 순위 + 최소 인당입회 1 이상이어야 선정돼요.</div>')
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 전월 교사수 (둘째자리 절사)<br>· 선정: 전사 Legend 10 → 총국별 Best·Great·Good 차상위<br>· 동률 시 합산과목 달성률 ↑ → D순증(인당) ↑</div>'
-    +'</div>'+histPersonalInc();
+    +'</div>'
+    +rankTop20((APP.incJiguk||[]).filter(function(x){return x.인당입회>=1;}).slice().sort(function(a,b){return b.인당순증-a.인당순증;}),u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},0)
+    +histPersonalInc();
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
