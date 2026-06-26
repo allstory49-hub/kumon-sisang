@@ -454,6 +454,15 @@ var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:nul
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
+/* ───── 데이터 암호화 (회사 암호 기반 · 링크/파일 유출 시 보호) ───── */
+var KPASS='';
+var _kc={enc:new TextEncoder(),dec:new TextDecoder()};
+function _b64(buf){var b='';var u=new Uint8Array(buf);for(var i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);return btoa(b);}
+function _ub64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+async function _deriveKey(pass,salt){var km=await crypto.subtle.importKey('raw',_kc.enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:150000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function encStr(plain,pass){pass=pass||KPASS;var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));var key=await _deriveKey(pass,salt);var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,_kc.enc.encode(plain));return 'ENCv1:'+_b64(salt)+':'+_b64(iv)+':'+_b64(ct);}
+async function decStr(blob,pass){pass=pass||KPASS;var p=blob.split(':');if(p[0]!=='ENCv1')throw new Error('notenc');var salt=_ub64(p[1]),iv=_ub64(p[2]),ct=_ub64(p[3]);var key=await _deriveKey(pass,salt);var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,ct);return _kc.dec.decode(pt);}
+async function decAuto(txt){txt=(txt||'').trim();if(txt.indexOf('ENCv1:')===0)return await decStr(txt);return txt;}
 
 /* ───── 데이터 로드 (GitHub의 baked.js를 매번 최신으로) ───── */
 async function loadData(){
@@ -461,6 +470,7 @@ async function loadData(){
     var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
     if(!res.ok)return false;
     var txt=await res.text();
+    txt=await decAuto(txt);
     var json=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim();
     var B=JSON.parse(json);
     if(B.t)APP.teachers=rankTeachers(decT(B.t));
@@ -490,6 +500,7 @@ async function getPrevRanks(){
     var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
     if(!res.ok)return null;
     var txt=await res.text();
+    txt=await decAuto(txt);
     var B=JSON.parse(txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim());
     var pt={},po={};
     if(B.t){rankTeachers(decT(B.t)).forEach(function(t){if(t.교사번호)pt[t.교사번호]={n:t.순위,c:t.총국순위};});}
@@ -512,7 +523,8 @@ function rankDelta(map,key,cur,field){
   if(d<0)return ' '+lbl+'<span class="rkdn">▼'+(-d)+'</span>';
   return ' '+lbl+'<span class="rksame">—</span>';
 }
-async function saveFile(path,content,message){
+async function saveFile(path,content,message,encrypt){
+  if(encrypt)content=await encStr(content);
   var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+path;
   var hd={'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'};
   var sha=null;
@@ -538,20 +550,48 @@ async function saveToGitHub(bakedJs){
 }
 
 /* ───── 초기화 ───── */
-(async function init(){
-  await loadData();
+async function bootData(){
+  var ok=await loadData();
+  if(!ok){ // 복호화 실패(암호 오류) 또는 네트워크
+    try{localStorage.removeItem('kpass');}catch(e){}
+    KPASS='';showPassGate('암호가 올바르지 않거나 데이터를 불러오지 못했어요. 다시 입력해주세요.');return;
+  }
   await loadHistIndex();
   await loadSejong();
   await loadCumEnv();
   renderBadge();
   showPage('lp');
+}
+function showPassGate(msg){
+  document.getElementById('pp').innerHTML='<div class="lw"><div class="lc">'
+    +'<div class="logo"><div class="k">KUMON</div><div class="s">보안 접속</div><div class="d">회사 공용 암호를 입력하세요</div></div>'
+    +'<div class="lcard"><label class="fl">공용 암호</label>'
+    +'<input class="fi" id="kpw" type="password" placeholder="공용 암호 입력" autocomplete="off" onkeydown="if(event.key===\'Enter\')submitPass()">'
+    +'<div class="lhint">관리자에게 공용 암호를 안내받으세요. 기기당 한 번만 입력하면 됩니다.</div>'
+    +'<button class="bg" onclick="submitPass()">확인</button>'
+    +'<div class="err" id="kerr">'+(msg||'')+'</div></div>'
+    +'<div class="ftr">© KUMON 실적관리 시스템</div></div></div>';
+  showPage('pp');
+  setTimeout(function(){var e=document.getElementById('kpw');if(e)e.focus();},100);
+}
+function submitPass(){
+  var v=document.getElementById('kpw').value.trim();
+  if(!v){document.getElementById('kerr').textContent='암호를 입력하세요.';return;}
+  KPASS=v;try{localStorage.setItem('kpass',v);}catch(e){}
+  document.getElementById('kerr').textContent='확인 중...';
+  bootData();
+}
+(async function init(){
+  try{KPASS=localStorage.getItem('kpass')||'';}catch(e){KPASS='';}
+  if(!KPASS){showPassGate();return;}
+  await bootData();
 })();
 
 /* ───── 지난 기록 ───── */
 async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
 async function loadSejong(){try{var r=await fetch('sejong/orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadCumEnv(){try{var r=await fetch('cumulative/env_q2.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
-async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
+async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var t=await decAuto(await r.text());APP.histCache[m]=JSON.parse(t);return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
   if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
   return '<div class="rtog" style="margin-top:6px">'+APP.histIndex.map(function(h){return '<button class="rtb'+(S.histM===h.month?' on':'')+'" onclick="selectHist(\''+h.month+'\',\''+ctx+'\')">'+h.label+'</button>';}).join('')+'</div>';
@@ -1414,7 +1454,7 @@ async function doSnapshot(){
     var snap=buildSnapshot(m);
     await tick();
     msg.innerHTML='<span style="color:var(--blue)">GitHub에 저장 중...</span>';
-    await saveFile('history/'+m+'.json',JSON.stringify(snap),'스냅샷 '+m);
+    await saveFile('history/'+m+'.json',JSON.stringify(snap),'스냅샷 '+m,true);
     // 인덱스 갱신
     var idx=(APP.histIndex||[]).filter(function(h){return h.month!==m;});
     idx.push({month:m,label:monthLabel(m),date:APP.meta.date||''});
@@ -1681,7 +1721,7 @@ async function doUpload(){
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
-    var bakedJs='var BAKED='+JSON.stringify(payload)+';';
+    var bakedJs=await encStr(JSON.stringify(payload));
     await saveToGitHub(bakedJs);
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
