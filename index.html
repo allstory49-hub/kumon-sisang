@@ -686,7 +686,8 @@ function julyChong(){
   return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
 function jSub(tabs,sel,fn){
-  return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';renderIncentive()">'+t+'</button>';}).join('')+'</div>';
+  var rf=S.hideJHead?'renderAdmin':'renderIncentive';
+  return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';'+rf+'()">'+t+'</button>';}).join('')+'</div>';
 }
 function jpvHead(){return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 7월 실적이 반영되면 값이 채워집니다. 현재는 규칙·골격만 표시돼요.</div>';}
 function jpvCard(o){
@@ -1179,7 +1180,7 @@ function adminInc(){
   return mtab+(S.imonth==='7'?adminInc7():adminInc6());
 }
 function adminInc7(){
-  var roles=['교사','지구','지국','사업국','총국'];
+  var roles=['교사','지구','지국','사업국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
   S.hideJHead=true;
@@ -1194,7 +1195,7 @@ function adminInc7(){
 }
 function adminInc6(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
-  var roles=['교사','지구','지국','사업국','총국'];
+  var roles=['교사','지구','지국','사업국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';renderAdmin()">'+r+'</button>';}).join('')+'</div>';
   var head='<div class="mt">6월 인센티브 통계</div>'+'<div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
