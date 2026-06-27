@@ -466,9 +466,9 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,histIndex:[],histCache:{},sejong:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},histIndex:[],histCache:{},sejong:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'6',jtab:'월성과',i6tab:'회원순증'};
-var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
+var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['ghp_eqYij','GoVc61iozU5','hv1A76Pii','oAUPH2F0Flh'].join('')};
@@ -495,6 +495,7 @@ async function loadData(){
     if(B.incManager){B.incManager.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],당월과목순증:a[3],달성:a[4]};APP.incManager.push(o);APP.incManagerMap[o.소속코드]=o;});}
     APP.incEnv=[];APP.incEnvMap={};
     if(B.incEnv){B.incEnv.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],인당순증:a[3],순증합:a[4],교사평균:a[5],교사6월:a[6],선정:a[7]};APP.incEnv.push(o);APP.incEnvMap[o.소속코드]=o;});}
+    APP.incCross=B.incCross||{};
     return true;
   }catch(e){return false;}
 }
@@ -942,7 +943,16 @@ function teacherInc(){
   if(S.itab==='월성과')body=sec1;
   else if(S.itab==='신규회원')body=sec2;
   else if(S.itab==='마스타')body=sec3;
-  else if(S.itab==='교차관리')body=jpvCard({h:'🔄 마.스.타 교차관리',period:'6월',status:J6STATUS,conds:[{l:'마.스.타 교차관리 입회',need:'1건당 지급'}],tiers:'교차관리 입회 1건당 → 네이버페이 <b>1만원</b>',note:'· 교차관리를 보내준 관리(방문)교사 대상<br>· 마.스.타 입회는 당복 제외 · 청구일 7/1 기준'});
+  else if(S.itab==='교차관리'){
+    var cnt=(APP.incCross&&APP.incCross[u.교사번호])||0, ok=cnt>0, cpay=cnt*10000;
+    body='<div class="ib gr">📅 기간: <b>26년 6월</b> · 청구일 2026.07.01 기준</div>'
+      +'<div class="incsec"><div class="incsech">🔄 마.스.타 교차관리 인센티브</div>'
+      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 네이버페이 '+fmt(cpay)+'원 지급 대상!':'아직 교차관리 실적이 없어요')+'</div>'
+      +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">마.스.타 교차관리 입회</div><div class="icneed">1건당 <b>네이버페이 1만원</b></div></div>'
+      +'<div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmt(cnt)+'<span style="font-size:13px">건</span></div>'+(ok?'<span class="icok">'+fmt(cpay)+'원</span>':'<span class="icno">0건</span>')+'</div></div></div>'
+      +(ok?'<div class="icgift">🎁 네이버페이 '+fmt(cpay)+'원 ('+fmt(cnt)+'건 × 1만원)</div>':'<div class="icguide">다른 교사의 마.스.타 회원을 받아 관리(방문)하면 건당 1만원이 지급돼요.</div>')
+      +'<div class="ib bl" style="margin-bottom:0">· 마.스.타 과목 교사와 연계과목(방문) 교사가 다른 경우(교차관리)에 지급<br>· 마.스.타 과목 청구일 2026.07.01 기준 · 입회는 당복 제외</div></div>';
+  }
   else body=jpvCard({h:'👑 마.스.타 TOP',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적순증',need:'1위 교사 (누적 30↑)'}],reward:'시상금 500,000원',note:'· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (상반기 누적 기준)'});
   return head+btns+body+notes+histPersonalInc();
 }
@@ -1350,8 +1360,8 @@ function adminInc6(){
       +statAmt('월 성과 인센티브','순증 5↑ 또는 입회 12↑ · 단가 21,065원',ms,'명',ms*21065)
       +'<div class="incstat"><div class="isl">신규 회원 인센티브 (네이버페이)<span class="issub">유입 3↑ '+fmt(n1)+'명(1만원) · 5↑ '+fmt(n2)+'명(2만원)</span></div><div class="isr"><span class="isn">'+fmt(n1)+'명</span><span class="isp">'+pct(n1)+'</span><span class="isamt">예상 '+fmt(newPay)+'원</span></div></div>'
       +statAmt('마.스.타 순증 인센티브','전사 '+msJ+'명(20만원) · 총국 '+msC+'명(10만원)',msJ+msC,'명',msJ*200000+msC*100000)
-      +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div></div>'
-      +jpvCard({h:'🔄 마.스.타 교차관리',period:'6월',status:J6STATUS,conds:[{l:'마.스.타 교차관리 입회',need:'1건당 지급'}],tiers:'교차관리 입회 1건당 → 네이버페이 <b>1만원</b>',note:'· 교차관리를 보내준 관리(방문)교사 대상 · 마.스.타 입회는 당복 제외'})
+      +'<div class="incstat tot"><div class="isl">전체 수혜 교사<span class="issub">중복 제외</span></div><div class="isr"><span class="isn">'+fmt(tot)+'명</span><span class="isp">'+pct(tot)+'</span></div></div>'
+      +crossStat()+'</div>'
       +jpvCard({h:'👑 마.스.타 TOP (교사)',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적순증',need:'1위 교사(30↑)'}],reward:'시상금 500,000원',note:'· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
   }else if(S.aincRole==='지구'){
     body='<div class="incwrap">'+jiguStat()+'</div>'
@@ -1369,6 +1379,11 @@ function adminInc6(){
     body='<div class="ib am">6월 총국 해당 인센티브가 없습니다. (총국 인센티브는 7월 미리보기 참고)</div>';
   }
   return head+body;
+}
+function crossStat(){
+  var X=APP.incCross||{};var ks=Object.keys(X);if(!ks.length)return '<div class="incstat na"><div class="isl">마.스.타 교차관리</div><div class="isrna">준비 중</div></div>';
+  var cnt=ks.reduce(function(s,k){return s+X[k];},0);
+  return '<div class="incstat"><div class="isl">마.스.타 교차관리 (네이버페이)<span class="issub">교차관리 입회 1건당 1만원 · 청구일 7/1</span></div><div class="isr"><span class="isn">'+fmt(ks.length)+'명</span><span class="isp">'+fmt(cnt)+'건</span><span class="isamt">예상 '+fmt(cnt*10000)+'원</span></div></div>';
 }
 function managerStat(){
   var M=APP.incManager||[];
@@ -1439,6 +1454,10 @@ function upload(){
     +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
     +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
+    +'<div class="stl">⑩ 마스타회원리스트.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 교차관리 인센티브용</span></div>'
+    +'<div class="upz'+(UP.cross?' done':'')+'" onclick="document.getElementById(\'crf\').click()"><div class="upi'+(UP.cross?' done':'')+'">'+(UP.cross?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.cross?UP.cross.name:'파일 선택하기')+'</div><div class="ups'+(UP.cross?' done':'')+'">교차관리 입회(마스타↔연계 교사 상이, 청구일 7/1) 파일</div></div></div>'
+    +'<input type="file" id="crf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'cross\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
     +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
@@ -1497,6 +1516,7 @@ function buildSnapshot(m){
     {name:'월 성과 인센티브',cnt:ms,pct:(ms/n*100).toFixed(1),amt:ms*21065,unit:'명'},
     {name:'신규 회원 인센티브',cnt:n1,pct:(n1/n*100).toFixed(1),amt:(n1-n2)*10000+n2*20000,unit:'명'},
     {name:'마.스.타 순증 인센티브',cnt:msJ+msC,pct:((msJ+msC)/n*100).toFixed(1),amt:msJ*200000+msC*100000,unit:'명'},
+    {name:'마.스.타 교차관리',cnt:Object.keys(APP.incCross||{}).length,pct:'',amt:Object.keys(APP.incCross||{}).reduce(function(s,k){return s+APP.incCross[k];},0)*10000,unit:'명'},
     {name:'전체 수혜 교사(중복 제외)',cnt:tot,pct:(tot/n*100).toFixed(1),amt:0,unit:'명'},
     {name:'지구 인센티브(회원순증)',cnt:jk.length,pct:(jk.length/jt*100).toFixed(1),amt:jPay,unit:'개'},
     {name:'지국 인센티브(마.스.타)',cnt:jkSel.length,pct:(jkSel.length/jkT*100).toFixed(1),amt:jkPay,unit:'개'},
@@ -1623,6 +1643,17 @@ function parseJigu(jiguData){
   return out;
 }
 
+function parseCross(data){
+  if(!data)return APP.incCross||{};
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;
+    var mTno=String(r[2]||'').trim().split('.')[0], cTno=String(r[12]||'').trim().split('.')[0];
+    var bill=String(r[7]||'').trim();
+    if(mTno&&cTno&&mTno!==cTno&&bill==='2026.07.01'){m[cTno]=(m[cTno]||0)+1;}
+  }
+  return m;
+}
 function parseEnv(jikData){
   var cum=APP.cumEnv;
   if(!cum||!jikData)return (APP.incEnv||[]).map(function(o){return [o.소속코드,o.소속명,o.관리자,o.인당순증,o.순증합,o.교사평균,o.교사6월,o.선정];});
@@ -1715,13 +1746,14 @@ async function doUpload(){
     var incJiguk=parseJiguk(UP.jik?UP.jik.data:null,UP.jik2?UP.jik2.data:null);
     var incManager=parseManager(UP.jik2?UP.jik2.data:null);
     var incEnv=parseEnv(UP.jik?UP.jik.data:null);
+    var incCross=parseCross(UP.cross?UP.cross.data:null);
     await tick();
     var now=new Date();now.setDate(now.getDate()-1);
     var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
     var prev=await getPrevRanks();
-    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu,incJiguk:incJiguk,incManager:incManager,incEnv:incEnv};
+    var payload={t:encT(tR.records),o:oR,m:meta,inc:incArr,incJigu:incJigu,incJiguk:incJiguk,incManager:incManager,incEnv:incEnv,incCross:incCross};
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
@@ -1733,8 +1765,9 @@ async function doUpload(){
     APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
     APP.incManager=[];APP.incManagerMap={};incManager.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],당월과목순증:a[3],달성:a[4]};APP.incManager.push(o);APP.incManagerMap[o.소속코드]=o;});
     APP.incEnv=[];APP.incEnvMap={};incEnv.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],인당순증:a[3],순증합:a[4],교사평균:a[5],교사6월:a[6],선정:a[7]};APP.incEnv.push(o);APP.incEnvMap[o.소속코드]=o;});
+    APP.incCross=incCross;
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null};
+    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
