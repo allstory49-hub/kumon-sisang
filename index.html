@@ -378,6 +378,23 @@ input,button{font-family:inherit;font-size:14px}
 .ig4l{font-size:11px;color:var(--t3);font-weight:600;line-height:1.3}
 .ig4v{font-size:20px;font-weight:900;color:var(--t1);margin-top:4px}
 .rrsep{text-align:center;color:var(--t3);font-weight:800;padding:4px 0;letter-spacing:2px}
+.hbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}
+.hbg{font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;white-space:nowrap}
+.hbg.ok{background:rgba(29,158,117,.14);color:var(--green)}
+.hbg.no{background:rgba(120,120,120,.12);color:var(--t3)}
+.ic2row{display:flex;align-items:stretch;gap:8px;margin-top:4px}
+.ic2{flex:1;min-width:0;background:var(--card2);border:1px solid var(--bd);border-radius:11px;padding:11px 9px;text-align:center}
+.ic2.ok{background:rgba(29,158,117,.07);border-color:rgba(29,158,117,.35)}
+.ic2l{font-size:11.5px;font-weight:700;color:var(--t2)}
+.ic2n{font-size:24px;font-weight:900;color:var(--t1);margin:4px 0 2px}
+.ic2n.ok{color:var(--green)}
+.ic2need{font-size:10px;color:var(--t3);font-weight:600}
+.ic2b{margin-top:7px;font-size:11px;font-weight:800;border-radius:6px;padding:3px 0}
+.ic2b.ok{background:var(--green);color:#fff}
+.ic2b.no{background:rgba(120,120,120,.12);color:var(--t3)}
+.ic2or{flex:0 0 auto;display:flex;align-items:center;font-size:11px;font-weight:800;color:var(--t3)}
+.icremain{margin-top:10px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--amber);font-weight:600;text-align:center}
+.icremain b{color:var(--amber);font-weight:900}
 </style>
 </head>
 <body>
@@ -882,15 +899,24 @@ function teacherInc(){
     return '<div class="icrow"><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">기준 <b>'+need+' 이상</b></div></div>'
       +'<div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmt(val)+'</div>'+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div>';
   }
+  function cond2(label,val,need,ok,unit){
+    unit=unit||'';var gap=need-val;
+    return '<div class="ic2'+(ok?' ok':'')+'"><div class="ic2l">'+label+'</div>'
+      +'<div class="ic2n'+(ok?' ok':'')+'">'+fmt(val)+unit+'</div>'
+      +'<div class="ic2need">기준 '+need+unit+' 이상</div>'
+      +(ok?'<div class="ic2b ok">달성</div>':'<div class="ic2b no">미달 · '+fmt(gap)+unit+' 남음</div>')+'</div>';
+  }
+  function hbadge(label,ok){return '<span class="hbg '+(ok?'ok':'no')+'">'+label+' '+(ok?'달성':'미달')+'</span>';}
   var tabs=[{id:'월성과',l:'월 성과'},{id:'신규회원',l:'신규 회원'},{id:'마스타',l:'마스타 순증'},{id:'교차관리',l:'교차관리'},{id:'마스타Top',l:'마스타Top'}];
   if(!S.itab||!tabs.some(function(t){return t.id===S.itab;}))S.itab='월성과';
   var btns='<div class="rtog">'+tabs.map(function(t){return '<button class="rtb'+(S.itab===t.id?' on':'')+'" onclick="S.itab=\''+t.id+'\';renderIncentive()">'+t.l+'</button>';}).join('')+'</div>';
   var head='<div class="mt">교사 인센티브</div>'
-    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+inc.교사명+'</div><div class="hsb">'+inc.소속명+'</div></div></div></div>';
+    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+inc.교사명+'</div><div class="hsb">'+inc.소속명+'</div></div></div>'
+    +'<div class="hbadges">'+hbadge('월성과',ach1)+hbadge('신규회원',ach2)+hbadge('마스타',msWin)+'</div></div>';
   var period='<div class="ib gr">📅 기간: <b>26년 6월</b> · 지급월: 26년 7월</div>';
   var sec1=period+'<div class="incsec"><div class="incsech">🏆 월 성과 인센티브</div>'
     +'<div class="incres '+(ach1?'win':'lose')+'">'+(ach1?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
-    +'<div class="iclist">'+cond('합산과목 순증',sj,'5',okS)+'<div class="icor">또는</div>'+cond('합산과목 입회',ip,'12',okI)+'</div>'
+    +'<div class="ic2row">'+cond2('합산과목 순증',sj,5,okS)+'<div class="ic2or">또는</div>'+cond2('합산과목 입회',ip,12,okI)+'</div>'
     +(ach1?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
     +'<div class="giftbox"><img class="giftimg" src="gift.png" alt="시상품"><div class="giftpr">소비자가 190,000원</div></div>'
     +'<div class="ib bl" style="margin-bottom:0">· 합산과목 순증은 인정입회·NKU·당복을 포함합니다.<br>· 합산과목 입회는 인정입회·브플·NKU를 포함하고 당복은 제외합니다.</div></div>';
@@ -898,6 +924,7 @@ function teacherInc(){
     +'<div class="incres '+(ach2?'win':'lose')+'">'+(ach2?'🎉 네이버페이 '+pay+' 지급 대상!':'아직 미달성이에요')+'</div>'
     +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">신규+재학습 유입 회원수</div><div class="ictiers">3명 이상 → <b>1만원</b><br>5명 이상 → <b>2만원</b></div></div>'
     +'<div class="icright"><div class="icnum'+(ach2?' ok':'')+'">'+fmt(inflow)+'명</div>'+(ach2?'<span class="icok">'+pay+'</span>':'<span class="icno">미달</span>')+'</div></div></div>'
+    +(!ach2?'<div class="icremain">🎯 1만원까지 <b>'+fmt(3-inflow)+'명</b> 남음 · 2만원까지 <b>'+fmt(5-inflow)+'명</b> 남음</div>':(tier===1?'<div class="icremain">🎯 2만원까지 <b>'+fmt(5-inflow)+'명</b> 남음</div>':''))
     +'<div class="ib bl" style="margin-bottom:0">· 유입 회원은 당복과 과추 회원을 제외합니다.</div></div>';
   var rk=mastaRank(u.교사번호);
   var rankCard=rk?'<div class="incrank"><div class="irk"><div class="irkl">전사 순위</div><div class="irkv">'+fmt(rk.n)+'<span>위</span></div><div class="irkt">'+fmt(rk.total)+'명 중</div></div><div class="irk"><div class="irkl">총국 순위</div><div class="irkv">'+fmt(rk.c)+'<span>위</span></div><div class="irkt">'+fmt(rk.ctotal)+'명 중</div></div></div>':'';
@@ -905,6 +932,7 @@ function teacherInc(){
     +'<div class="incres '+(msWin?'win':'lose')+'">'+(msWin?'🎉 '+msAward+' 수상! 시상금 '+msPay:'아직 미선정이에요')+'</div>'
     +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">마.스.타 과목 순증</div><div class="icneed">최소 <b>10 이상</b></div></div>'
     +'<div class="icright"><div class="icnum'+(ms>=10?' ok':'')+'">'+fmt(ms)+'</div>'+(msWin?'<span class="icok">'+msAward+'</span>':(ms>=10?'<span class="icok">기준충족</span>':'<span class="icno">미달</span>'))+'</div></div></div>'
+    +(ms<10?'<div class="icremain">🎯 최소 기준(10)까지 <b>'+fmt(10-ms)+'</b> 남음</div>':'')
     +rankCard
     +'<div class="ictiers" style="margin-top:10px">전사 순위 상위 10명 → <b>시상금 20만원</b><br>총국별 차상위 1명(7명) → <b>시상금 10만원</b></div>'
     +(msWin?'<div class="icgift">🎁 시상금 + 녹지원 시상식 및 오찬</div>':'<div class="icguide">전사 TOP 10 또는 총국별 차상위에 선정되어야 해요 (마스타 순증 10 이상).</div>')
