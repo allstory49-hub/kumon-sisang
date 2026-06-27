@@ -395,6 +395,7 @@ input,button{font-family:inherit;font-size:14px}
 .ic2or{flex:0 0 auto;display:flex;align-items:center;font-size:11px;font-weight:800;color:var(--t3)}
 .icremain{margin-top:10px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--amber);font-weight:600;text-align:center}
 .icremain b{color:var(--amber);font-weight:900}
+.rorgrk{font-size:10px;color:var(--blue);font-weight:700}
 </style>
 </head>
 <body>
@@ -1014,7 +1015,8 @@ function myOrg(){
   }
   function orgRows(arr,sl){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+sl+'</div></div>'
-      +arr.map(function(x){return '<div class="rr"><div class="rn2" style="flex:1">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div>'
+      +arr.map(function(x){return '<div class="rr"><div class="rn2" style="flex:1">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span>'
+        +(x.순위!=null?'<br><span class="rorgrk">전사 '+fmt(x.순위)+'위 · 총국 '+fmt(x.총국순위)+'위</span>':'')+'</div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
         +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('');
