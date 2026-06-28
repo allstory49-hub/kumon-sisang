@@ -678,62 +678,78 @@ function incJune(){
   if(S.type==='org'&&S.pos==='사업국')return eopJune();
   return '<div class="mt">인센티브</div><div class="ib am">🚧 '+S.pos+' 6월 인센티브는 준비 중입니다.</div>';
 }
+function globalHbadge(label,ok,okT,noT){return '<span class="hbg '+(ok?'ok':'no')+'">'+label+' '+(ok?(okT||'달성'):(noT||'미달'))+'</span>';}
 function jiguJune(){
+  var u=S.user;
+  var j=APP.incJiguMap[u.소속코드]||{회원순증:0};
+  var ns=j.회원순증||0, win=ns>=1;
+  var sn=shortName(u.소속명)||u.소속명;
+  var head='<div class="mt">지구 인센티브</div>'
+    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
+    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+'</div></div></div>'
+    +'<div class="hbadges">'+globalHbadge('회원순증',win)+'</div></div>';
   var tabs=['회원순증','지구를 지켜라','마스타TOP'];
   if(!S.i6tab||tabs.indexOf(S.i6tab)<0)S.i6tab='회원순증';
   var sub=j6Sub(tabs);
-  if(S.i6tab==='회원순증')return sub+jiguInc()+incNotice();
   var body;
-  if(S.i6tab==='지구를 지켜라')body=jpvCard({h:'🛡️ 2분기 지구를 지켜라',period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'300%/200%/100%/순증1↑'},{l:'누적 퇴회율',need:'3.9%~5.3% 급간'}],tiers:'달성률×퇴회율 급간별 → 교사수 × <b>1.2만 ~ 5.0만원</b>',note:'· 달성률 높을수록·퇴회율 낮을수록 단가↑<br>· 교사수 5인 이하 조직 제외 (교사수는 5월말 기준)'});
+  if(S.i6tab==='회원순증')body=jiguInc();
+  else if(S.i6tab==='지구를 지켜라')body=jpvCard({h:'🛡️ 2분기 지구를 지켜라',period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'300%/200%/100%/순증1↑'},{l:'누적 퇴회율',need:'3.9%~5.3% 급간'}],tiers:'달성률×퇴회율 급간별 → 교사수 × <b>1.2만 ~ 5.0만원</b>',note:'· 달성률 높을수록·퇴회율 낮을수록 단가↑<br>· 교사수 5인 이하 조직 제외 (교사수는 5월말 기준)'});
   else body=jpvCard({h:'👑 마.스.타 TOP',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지구'}],reward:'시상금 30만원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 교사수 5인 이하 조직 제외'});
-  return sub+body+incNotice();
+  return head+sub+body+incNotice()+histPersonalInc();
 }
 function jigukJune(){
+  var u=S.user;
+  var j=APP.incJigukMap[u.소속코드]; var msOk=!!(j&&j.등급);
+  var mg=APP.incManagerMap[u.소속코드]; var mgOk=!!(mg&&mg.달성);
+  var ev=APP.incEnvMap[u.소속코드]; var evOk=!!(ev&&ev.선정);
+  var sn=shortName(u.소속명)||u.소속명;
+  var head='<div class="mt">지국 인센티브</div>'
+    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
+    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+(j?' · '+j.총국+'총국':'')+'</div></div></div>'
+    +'<div class="hbadges">'+globalHbadge('마스타',msOk,'선정','미선정')+globalHbadge('매니저',mgOk)+globalHbadge('환경개선',evOk,'선정','미선정')+'</div></div>';
   var tabs=['마스타','매니저','신한카드','환경개선','10 CLUB','Elite지국장','마스타TOP'];
   if(!S.i6tab||tabs.indexOf(S.i6tab)<0)S.i6tab='마스타';
   var sub=j6Sub(tabs);
-  if(S.i6tab==='마스타')return sub+jigukInc()+incNotice();
   var body;
-  if(S.i6tab==='매니저'){
-    var mg=APP.incManagerMap[S.user.소속코드];
-    var sj=mg?mg.당월과목순증:0, ok=mg?!!mg.달성:false;
+  if(S.i6tab==='마스타')body=jigukInc();
+  else if(S.i6tab==='매니저'){
+    var sj=mg?mg.당월과목순증:0, ok=mgOk;
     body='<div class="incsec"><div class="incsech">🎁 매니저 인센티브</div>'
       +'<div class="ib gr" style="margin-top:0">📅 6월</div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
       +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">지국 합산과목 순증</div><div class="icneed">기준 <b>1 이상</b></div></div>'
       +'<div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmt(sj)+'</div>'+(ok?'<span class="icok">달성</span>':'<span class="icno">미달</span>')+'</div></div></div>'
+      +(!ok?'<div class="icremain">🎯 기준(1)까지 <b>'+fmt(1-sj)+'</b> 남음</div>':'')
       +(ok?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기 (소비자가 190,000원)</div>':'<div class="icguide">지국 합산과목 순증 1 이상이면 지급돼요.</div>')
       +'<div class="ib bl" style="margin-bottom:0">· 겸직 매니저는 한 지국만 달성해도 지급(중복 없음)<br>· 합산과목 순증은 인정입회·NKU·당복 포함</div></div>';
   }
   else if(S.i6tab==='신한카드')body=jpvCard({h:'💳 신한카드 발급',period:'6월',status:J6STATUS,conds:[{l:'신한카드 발급 건수',need:'전용 URL 신청'}],tiers:'발급 건수 × <b>10,000원</b> (운영비)',note:'· 지국별 신한카드 발급 전용 URL로 신청 시에만 인정'});
   else if(S.i6tab==='환경개선'){
-    var ev=APP.incEnvMap[S.user.소속코드];
-    var per=ev?ev.인당순증:0, ok=ev?!!ev.선정:false, meet=per>=1.5;
-    // 전체 지국 기준 순위 (인당순증 desc, 동률 순증합)
+    var ev2=APP.incEnvMap[u.소속코드];
+    var per=ev2?ev2.인당순증:0, ok=ev2?!!ev2.선정:false, meet=per>=1.5;
     var all=(APP.incEnv||[]).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});
-    var rank=null;for(var i=0;i<all.length;i++){if(all[i].소속코드===S.user.소속코드){rank=i+1;break;}}
-    // 선정 순위표는 1.5↑ 지국만(선정 기준선 10위 표시)
-    var eligSorted=all.filter(function(x){return x.인당순증>=1.5;});
+    var rank=null;for(var i=0;i<all.length;i++){if(all[i].소속코드===u.소속코드){rank=i+1;break;}}
     body='<div class="incsec"><div class="incsech">🏢 환경개선 <span class="rqbadge">상대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 (오늘까지 누적)</div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 상위 10개 선정! 신형 사물함 지급':'아직 미선정이에요')+'</div>'
       +'<div class="iclist">'
       +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개 선정</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
       +'</div>'
-      +(ev?'<div class="incgrid4">'
-        +'<div class="ig4"><div class="ig4l">분기 평균 교사수</div><div class="ig4v">'+fmt(ev.교사평균)+'</div></div>'
-        +'<div class="ig4"><div class="ig4l">분기 누적 마.스.타 순증</div><div class="ig4v">'+fmt(ev.순증합)+'</div></div>'
-        +'<div class="ig4"><div class="ig4l">인당</div><div class="ig4v" style="color:var(--green)">'+fmtD(ev.인당순증)+'</div></div>'
+      +(!meet?'<div class="icremain">🎯 최소 기준(1.5)까지 <b>'+fmtD(1.5-per)+'</b> 남음</div>':'')
+      +(ev2?'<div class="incgrid4">'
+        +'<div class="ig4"><div class="ig4l">분기 평균 교사수</div><div class="ig4v">'+fmt(ev2.교사평균)+'</div></div>'
+        +'<div class="ig4"><div class="ig4l">분기 누적 마.스.타 순증</div><div class="ig4v">'+fmt(ev2.순증합)+'</div></div>'
+        +'<div class="ig4"><div class="ig4l">인당</div><div class="ig4v" style="color:var(--green)">'+fmtD(ev2.인당순증)+'</div></div>'
         +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(all.length)+'개 지국 중)</span></div><div class="ig4v">'+(rank?rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
         +'</div>':'')
       +(ok?'<div class="icgift">🎁 교사 신형 사물함 (기보유 지국: 교사수 × 20,000원)</div>':'<div class="icguide">2분기 인당 누적순증 1.5↑ & 상위 10개 지국에 들어야 해요.</div>')
-      +rankTop20(all,S.user.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},10)
+      +rankTop20(all,u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},10)
       +'<div class="ib bl" style="margin-bottom:0">· 인당 누적순증 = 4~6월 마.스.타 순증 합 ÷ 4~6월 교사수 평균 (둘째자리 절사)<br>· 현재 순위는 전체 지국 기준 · 6월은 오늘 업로드된 실적까지 반영<br>· 동률 시: 순증 절대수치↑ > 과목 달성률↑ > D순증↑</div></div>';
   }
   else if(S.i6tab==='10 CLUB')body=jpvCard({h:'🏅 마.스.타 10 CLUB',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'10 이상 상위 5개(선착순)'}],reward:'현판 제막식·오찬·신형 사물함·호텔 숙박권 (6~10호점)',note:'· 매월 마감 기준 선착순 선정<br>· 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓'});
   else if(S.i6tab==='Elite지국장')body=jpvCard({h:'🏆 2분기 Elite 지국장',rel:true,period:'2분기 4~6월',status:J6STATUS,conds:[{l:'합산과목 달성률(누적)',need:'상위 20명 (100%↑ & D순증1↑)'}],tiers:'전사 10명 → <b>20만원</b><br>총국별 10명 → <b>15만원</b> + 녹지원 오찬',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑<br>· 교사수 5인 이하·최소 2개월 미만 제외'});
   else body=jpvCard({h:'👑 마.스.타 TOP',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적 인당순증',need:'1위 지국'}],reward:'시상금 30만원',note:'· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓'});
-  return sub+body+incNotice();
+  return head+sub+body+incNotice()+histPersonalInc();
 }
 function eopJune(){
   var tabs=['마스타TOP'];
@@ -843,18 +859,15 @@ function julyJiguk(){
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
   return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
 }
+function hbadges(items){return '<div class="hbadges">'+items.map(function(b){return '<span class="hbg '+(b.ok?'ok':'no')+'">'+b.label+' '+(b.ok?(b.okText||'달성'):(b.noText||'미달'))+'</span>';}).join('')+'</div>';}
 function jigukInc(){
   var u=S.user, j=APP.incJigukMap[u.소속코드];
-  var sn=shortName(u.소속명)||u.소속명;
-  var head='<div class="mt">지국 인센티브</div>'
-    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
-    +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+' · '+(j?j.총국+'총국':'')+'</div></div></div></div>';
-  if(!j)return head+'<div class="ib am">이번 달 지국 마스타 인센티브 명단에 없어요.</div>'+histPersonalInc();
+  if(!j)return '<div class="ib am">이번 달 지국 마스타 인센티브 명단에 없어요.</div>';
   var grade=j.등급, ip=j.인당입회, ok=ip>=1;
   var gradeInfo={Legend:{c:'#7c3aed',m:'순증수 × 2.0만원'},Best:{c:'#2563eb',m:'순증수 × 1.5만원'},Great:{c:'#0f7a4d',m:'순증수 × 1.0만원'},Good:{c:'#b45309',m:'순증수 × 0.5만원'}};
   var gi=gradeInfo[grade];
   var win=!!grade;
-  return head+'<div class="incsec"><div class="incsech">⭐ 마.스.타 인당순증 인센티브 <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech">⭐ 마.스.타 인당순증 인센티브 <span class="rqbadge">상대평가</span></div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+grade+' 선정! '+fmt(j.시상금)+'원':'아직 미선정이에요')+'</div>'
     +(win?'<div class="gradebox" style="background:'+gi.c+'"><div class="gradel">'+grade+'</div><div class="grades">'+gi.m+'</div></div>':'')
     +'<div class="iclist">'
@@ -862,26 +875,23 @@ function jigukInc(){
     +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당입회</div><div class="icneed">최소 <b>1 이상</b></div></div><div class="icright"><div class="icnum'+(ok?' ok':'')+'">'+fmtD(ip)+'</div>'+(ok?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
     +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 순증수</div><div class="icneed">시상금 산정</div></div><div class="icright"><div class="icnum">'+fmt(j.마스타순증)+'</div></div></div>'
     +'</div>'
+    +(!ok?'<div class="icremain">🎯 인당입회 최소 기준(1)까지 <b>'+fmtD(1-ip)+'</b> 남음</div>':'')
     +(win?'<div class="icgift">🎁 시상금 '+fmt(j.시상금)+'원 = 순증수 '+fmt(j.마스타순증)+' × '+(grade==='Legend'?'2':grade==='Best'?'1.5':grade==='Great'?'1':'0.5')+'만원</div>':'<div class="icguide">인당순증 순위 + 최소 인당입회 1 이상이어야 선정돼요.</div>')
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 전월 교사수 (둘째자리 절사)<br>· 선정: 전사 Legend 10 → 총국별 Best·Great·Good 차상위<br>· 동률 시 합산과목 달성률 ↑ → D순증(인당) ↑</div>'
     +'</div>'
-    +rankTop20((APP.incJiguk||[]).filter(function(x){return x.인당입회>=1;}).slice().sort(function(a,b){return b.인당순증-a.인당순증;}),u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},0)
-    +histPersonalInc();
+    +rankTop20((APP.incJiguk||[]).filter(function(x){return x.인당입회>=1;}).slice().sort(function(a,b){return b.인당순증-a.인당순증;}),u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},0);
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
   var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
-  var sn=shortName(u.소속명)||u.소속명;
-  return '<div class="mt">지구 인센티브</div>'
-    +'<div class="ib gr">📅 기간: <b>26년 6월</b></div>'
-    +'<div class="hc" style="margin-bottom:16px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+u.소속명+'</div><div class="hsb">'+(u.관리자명||'')+'</div></div></div></div>'
-    +'<div class="incsec"><div class="incsech">📈 회원순증 인센티브</div>'
+  return '<div class="incsec"><div class="incsech">📈 회원순증 인센티브</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+fmt(pay)+'원 지급 대상!':'아직 미달성이에요')+'</div>'
     +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">회원순증</div><div class="icneed">1 이상 시 <b>순증 × 1만원</b></div></div>'
     +'<div class="icright"><div class="icnum'+(win?' ok':'')+'">'+fmt(ns)+'</div>'+(win?'<span class="icok">'+fmt(pay)+'원</span>':'<span class="icno">미달</span>')+'</div></div></div>'
+    +(!win?'<div class="icremain">🎯 기준(1)까지 <b>'+fmt(1-ns)+'</b> 남음</div>':'')
     +(win?'<div class="icgift">🎁 '+fmt(pay)+'원 (회원순증 '+fmt(ns)+' × 1만원)</div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계</div>'
-    +'</div>'+histPersonalInc();
+    +'</div>';
 }
 function mastaRank(tno){
   var me=APP.incMap[tno];if(!me)return null;
@@ -908,7 +918,7 @@ function teacherInc(){
       +'<div class="ic2need">기준 '+need+unit+' 이상</div>'
       +(ok?'<div class="ic2b ok">달성</div>':'<div class="ic2b no">미달 · '+fmt(gap)+unit+' 남음</div>')+'</div>';
   }
-  function hbadge(label,ok){return '<span class="hbg '+(ok?'ok':'no')+'">'+label+' '+(ok?'달성':'미달')+'</span>';}
+  function hbadge(label,ok){return globalHbadge(label,ok);}
   var tabs=[{id:'월성과',l:'월 성과'},{id:'신규회원',l:'신규 회원'},{id:'마스타',l:'마스타 순증'},{id:'교차관리',l:'교차관리'},{id:'마스타Top',l:'마스타Top'}];
   if(!S.itab||!tabs.some(function(t){return t.id===S.itab;}))S.itab='월성과';
   var btns='<div class="rtog">'+tabs.map(function(t){return '<button class="rtb'+(S.itab===t.id?' on':'')+'" onclick="S.itab=\''+t.id+'\';renderIncentive()">'+t.l+'</button>';}).join('')+'</div>';
