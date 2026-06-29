@@ -467,7 +467,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTop6:{},histIndex:[],histCache:{},sejong:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},histIndex:[],histCache:{},sejong:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'6',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
 
@@ -564,6 +564,7 @@ async function saveToGitHub(bakedJs){
   await loadSejong();
   await loadCumEnv();
   await loadMastaTopOrg();
+  await loadMastaTopTea();
   renderBadge();
   showPage('lp');
 })();
@@ -573,6 +574,7 @@ async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Dat
 async function loadSejong(){try{var r=await fetch('sejong/orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadCumEnv(){try{var r=await fetch('cumulative/env_q2.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
 async function loadMastaTopOrg(){try{var r=await fetch('cumulative/mastatop_orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.mastaTopOrg=j.orgs||{};}}catch(e){APP.mastaTopOrg=null;}}
+async function loadMastaTopTea(){try{var r=await fetch('cumulative/mastatop_teachers.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
 async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
   if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
@@ -681,6 +683,38 @@ function incJune(){
   return '<div class="mt">인센티브</div><div class="ib am">🚧 '+S.pos+' 6월 인센티브는 준비 중입니다.</div>';
 }
 function globalHbadge(label,ok,okT,noT){return '<span class="hbg '+(ok?'ok':'no')+'">'+label+' '+(ok?(okT||'달성'):(noT||'미달'))+'</span>';}
+function mtoTeaList(){
+  var src=APP.mastaTopTea||{};var arr=[];
+  Object.keys(src).forEach(function(tno){var o=src[tno];
+    var im=APP.incMap[tno];var jun=im?(Number(im.마스타순증)||0):0;
+    arr.push({소속코드:tno,소속명:o.교사명+' · '+o.소속명,교사명:o.교사명,누적5:o.누적순증5||0,jun:jun,total:(o.누적순증5||0)+jun});
+  });
+  arr.sort(function(a,b){return b.total-a.total;});
+  arr.forEach(function(x,i){x.rank=i+1;});
+  return arr;
+}
+function mtoTeaCard(){
+  if(!APP.mastaTopTea)return '<div class="ib am">교사 마.스.타 TOP 기준 데이터를 불러오는 중이거나 없습니다.</div>';
+  var tno=S.user.교사번호;
+  var list=mtoTeaList();
+  var me=null;for(var i=0;i<list.length;i++){if(list[i].소속코드===tno){me=list[i];break;}}
+  var reward=500000, GATE=30;
+  if(!me)return '<div class="incsec"><div class="incsech">👑 마.스.타 TOP (교사) <span class="rqbadge">상대평가</span></div><div class="ib am">이번 교사 마.스.타 TOP 기준 명단에 없어요.</div></div>';
+  var meet=me.total>=GATE, win=(me.rank===1&&meet);
+  return '<div class="incsec"><div class="incsech">👑 마.스.타 TOP (교사) <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 (5월까지 박제 + 6월 실적)</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 전사 1위! 시상금 '+fmt(reward)+'원':'현재 '+me.rank+'위 · 1위(누적 30↑) 시 '+fmt(reward)+'원')+'</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">5월까지 누적 순증</div><div class="ig4v">'+fmt1(me.누적5)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">6월 마.스.타 순증</div><div class="ig4v" style="color:var(--green)">'+fmt1(me.jun)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">상반기 누적 순증</div><div class="ig4v" style="color:var(--blue)">'+fmt1(me.total)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(list.length)+'명 중)</span></div><div class="ig4v">'+me.rank+'<span style="font-size:12px">위</span></div></div>'
+    +'</div>'
+    +(!meet?'<div class="icremain">🎯 최소 기준(누적 30)까지 <b>'+fmt1(GATE-me.total)+'</b> 남음</div>':'')
+    +(win?'<div class="icgift">🎁 시상금 '+fmt(reward)+'원 (상반기 마.스.타 누적 순증 1위)</div>':'<div class="icguide">상반기 누적 순증 <b>전사 1위 + 누적 30 이상</b>이면 시상돼요.</div>')
+    +'<div class="ib bl" style="margin-bottom:0">· 상반기 누적 순증 = 1~5월 누적(박제) + 6월 마.스.타 순증(관통_교사)<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (상반기 누적 기준)</div></div>'
+    +rankTop20(list,tno,function(x){return [fmt1(x.total),''];},1);
+}
 function mto6(code,lv){
   if(lv==='지국'){var j=APP.incJigukMap[code];return j?(Number(j.인당순증)||0):0;}
   return (APP.mastaTop6&&APP.mastaTop6[code]!=null)?APP.mastaTop6[code]:null; // 지구/사업국: 관통_지구/사업국 업로드 시
@@ -1005,7 +1039,7 @@ function teacherInc(){
       +(ok?'<div class="icgift">🎁 네이버페이 '+fmt(cpay)+'원 ('+fmt(cnt)+'건 × 1만원)</div>':'<div class="icguide">다른 교사의 마.스.타 회원을 받아 관리(방문)하면 건당 1만원이 지급돼요.</div>')
       +'<div class="ib bl" style="margin-bottom:0">· 마.스.타 과목 교사와 연계과목(방문) 교사가 다른 경우(교차관리)에 지급<br>· 마.스.타 과목 청구일 2026.07.01 기준 · 입회는 당복 제외</div></div>';
   }
-  else body=jpvCard({h:'👑 마.스.타 TOP',rel:true,period:'상반기 1~6월',status:J6STATUS,conds:[{l:'마.스.타 누적순증',need:'1위 교사 (누적 30↑)'}],reward:'시상금 500,000원',note:'· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (상반기 누적 기준)'});
+  else body=mtoTeaCard();
   return head+btns+body+notes+histPersonalInc();
 }
 function incNotice(contact){
