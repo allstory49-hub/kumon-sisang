@@ -1033,7 +1033,8 @@ function myOrg(){
   }
   function teaRows(arr){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
-      +arr.map(function(t){return '<div class="rr"><div class="rn2" style="flex:1">'+t.교사명+'<br><span class="rsb">'+t.소속명+'</span></div>'
+      +arr.map(function(t){return '<div class="rr"><div class="rn2" style="flex:1">'+t.교사명+'<br><span class="rsb">'+t.소속명+'</span>'
+        +(t.순위!=null?'<br><span class="rorgrk">전사 '+fmt(t.순위)+'위 · 총국 '+fmt(t.총국순위)+'위</span>':'')+'</div>'
         +'<div class="rcol"><div class="rcol-v"'+(t.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(t.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(t.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(t.디지털순증)+'</div></div>'
         +'<div class="rcol big"><div class="rcol-v" style="color:'+(t.시상계<0?'var(--red)':'var(--green)')+'">'+fmt1(t.시상계)+'</div></div></div>';}).join('');
