@@ -835,12 +835,6 @@ function jjkCard(){
     +jjkTable(c.row,c.tier)
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
 }
-    +'</div>'
-    +remain
-    +(win?'<div class="icgift">🎁 시상금 '+fmt(c.시상금)+'원 = 교사수 '+fmt(c.교사수)+' × '+fmtD(c.단가)+'만원 (7월 운영비 일괄)</div>':(c.small?'<div class="icguide">교사수 5인 이하 조직은 인센티브 적용에서 제외돼요.</div>':'<div class="icguide">달성률 100%↑ 또는 순증 1↑ + 퇴회율 급간에 따라 교사수 × 단가가 지급돼요.</div>'))
-    +jjkTable(c.row,c.tier)
-    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
-}
 function jiguJune(){
   var u=S.user;
   var j=APP.incJiguMap[u.소속코드]||{회원순증:0};
