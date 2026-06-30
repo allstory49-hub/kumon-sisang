@@ -396,6 +396,16 @@ input,button{font-family:inherit;font-size:14px}
 .icremain{margin-top:10px;background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--amber);font-weight:600;text-align:center}
 .icremain b{color:var(--amber);font-weight:900}
 .rorgrk{font-size:10px;color:var(--blue);font-weight:700}
+.icnext{margin-top:8px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.22);border-radius:9px;padding:8px 11px;font-size:12px;color:var(--blue);font-weight:600;text-align:center}
+.icnext b{font-weight:900}
+.icnext.win{background:rgba(29,158,117,.09);border-color:rgba(29,158,117,.3);color:var(--green)}
+.jjkwrap{margin-top:12px}
+.jjkttl{font-size:11.5px;font-weight:800;color:var(--t2);margin-bottom:6px}
+.jjktbl{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 1fr;gap:3px;font-size:10.5px}
+.jjc{background:var(--card2);border-radius:5px;padding:6px 2px;text-align:center;font-weight:700;color:var(--t1)}
+.jjc.jjhd{background:rgba(120,120,120,.12);color:var(--t2);font-weight:800;font-size:9.5px}
+.jjc.jjrh{font-weight:800;color:var(--t2);font-size:9.5px}
+.jjc.hot{background:var(--green);color:#fff;font-weight:900;box-shadow:0 0 0 2px rgba(29,158,117,.3)}
 </style>
 </head>
 <body>
@@ -704,15 +714,16 @@ function mtoTeaCard(){
   if(!me)return '<div class="incsec"><div class="incsech">👑 마.스.타 TOP (교사) <span class="rqbadge">상대평가</span></div><div class="ib am">이번 교사 마.스.타 TOP 기준 명단에 없어요.</div></div>';
   var meet=me.total>=GATE, win=(me.rank===1&&meet);
   return '<div class="incsec"><div class="incsech">👑 마.스.타 TOP (교사) <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 (5월까지 박제 + 6월 실적)</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 전사 1위! 시상금 '+fmt(reward)+'원':'현재 '+me.rank+'위 · 1위(누적 30↑) 시 '+fmt(reward)+'원')+'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">5월까지 누적 순증</div><div class="ig4v">'+fmt1(me.누적5)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">1~5월 누적 순증</div><div class="ig4v">'+fmt1(me.누적5)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">6월 마.스.타 순증</div><div class="ig4v" style="color:var(--green)">'+fmt1(me.jun)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">상반기 누적 순증</div><div class="ig4v" style="color:var(--blue)">'+fmt1(me.total)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(list.length)+'명 중)</span></div><div class="ig4v">'+me.rank+'<span style="font-size:12px">위</span></div></div>'
     +'</div>'
     +(!meet?'<div class="icremain">🎯 최소 기준(누적 30)까지 <b>'+fmt1(GATE-me.total)+'</b> 남음</div>':'')
+    +(me.rank>1?'<div class="icnext">⬆️ '+(me.rank-1)+'위까지 <b>'+fmt1(list[me.rank-2].total-me.total)+'</b> 남음</div>':'<div class="icnext win">🥇 현재 전사 1위!</div>')
     +(win?'<div class="icgift">🎁 시상금 '+fmt(reward)+'원 (상반기 마.스.타 누적 순증 1위)</div>':'<div class="icguide">상반기 누적 순증 <b>전사 1위 + 누적 30 이상</b>이면 시상돼요.</div>')
     +'<div class="ib bl" style="margin-bottom:0">· 상반기 누적 순증 = 1~5월 누적(박제) + 6월 마.스.타 순증(관통_교사)<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (상반기 누적 기준)</div></div>'
     +rankTop20(list,tno,function(x){return [fmt1(x.total),''];},1);
@@ -740,17 +751,18 @@ function mtoCard(lv){
   var win=me&&me.rank===1;
   var anyJun=list.some(function(x){return x.has6;});
   var head='<div class="incsec"><div class="incsech">👑 마.스.타 TOP ('+lv+') <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 (5월까지 박제 + 6월 실적)</div>';
+    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적</div>';
   if(!me)return head+'<div class="ib am">이번 '+lv+' 마.스.타 TOP 기준 명단에 없어요.</div></div>'+(lv==='사업국'?'':'');
   var body=head
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+lv+' 1위! 시상금 '+fmt(reward)+'원':'현재 '+me.rank+'위 · 1위 시 '+fmt(reward)+'원')+'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">5월까지 누적 인당</div><div class="ig4v">'+fmtD2(me.누적5)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">1~5월 누적 인당</div><div class="ig4v">'+fmtD2(me.누적5)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">6월 인당'+(me.has6?'':' <span style="font-size:9px;color:var(--amber)">(미반영)</span>')+'</div><div class="ig4v" style="color:var(--green)">'+(me.has6?fmtD2(me.jun):'-')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">상반기 누적 인당</div><div class="ig4v" style="color:var(--blue)">'+fmtD2(me.total)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(list.length)+'개 '+lv+' 중)</span></div><div class="ig4v">'+me.rank+'<span style="font-size:12px">위</span></div></div>'
     +'</div>'
     +(win?'<div class="icgift">🎁 시상금 '+fmt(reward)+'원 ('+lv+' 상반기 마.스.타 누적 인당순증 1위)</div>':'<div class="icguide">상반기 누적 인당순증 '+lv+' 1위가 시상 대상이에요.</div>')
+    +(me.rank>1?'<div class="icnext">⬆️ '+(me.rank-1)+'위까지 <b>'+fmtD2(list[me.rank-2].total-me.total)+'</b> 남음</div>':'<div class="icnext win">🥇 현재 '+lv+' 1위!</div>')
     +(!anyJun?'<div class="icremain">ℹ️ 현재 6월 실적은 '+(lv==='지국'?'반영됨':'관통_'+lv+' 업로드 시 반영')+'</div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 상반기 누적 인당 = 1~5월 누적 인당(박제) + 6월 인당(마.스.타 순증 ÷ 교사수)<br>· 동률 시: 상반기 달성률↑ > D순증(인당)↑ > 퇴회율↓</div></div>'
     +rankTop20(list,code,function(x){return [fmtD2(x.total),'인당'];},1);
@@ -782,15 +794,36 @@ function jjkCalc(code){
   var unit=(tier>=0)?JJK_RATE[row].p[tier]:0;
   var small=(tno<=5);
   var pay=(tier>=0&&!small)?Math.round(tno*unit*10000):0;
-  return {소속명:b.소속명,퇴회율:toiRate,달성률:achRate,순증:sunHap,교사수:tno,tier:tier,단가:unit,시상금:pay,small:small,toiHap:toiHap,gwaHap:gwaHap,sunHap:sunHap,mokHap:mokHap};
+  return {소속명:b.소속명,퇴회율:toiRate,달성률:achRate,순증:sunHap,교사수:tno,tier:tier,row:row,단가:unit,시상금:pay,small:small,toiHap:toiHap,gwaHap:gwaHap,sunHap:sunHap,mokHap:mokHap};
+}
+function jjkTable(curRow,curTier){
+  var achH=['300%↑','200%↑','100%↑','순증1↑'];
+  var rowL=['3.9%↓','4.2%↓','4.5%↓','4.8%↓','5.2%↓','5.3%↑'];
+  var html='<div class="jjkwrap"><div class="jjkttl">📋 단가표 (교사수 × 만원)</div><div class="jjktbl">'
+    +'<div class="jjc jjhd jjrh">퇴회율\\달성률</div>'+achH.map(function(a){return '<div class="jjc jjhd">'+a+'</div>';}).join('');
+  JJK_RATE.forEach(function(r,ri){
+    html+='<div class="jjc jjrh">'+rowL[ri]+'</div>'+r.p.map(function(p,ti){var hot=(ri===curRow&&ti===curTier);return '<div class="jjc'+(hot?' hot':'')+'">'+fmtD(p)+'</div>';}).join('');
+  });
+  html+='</div></div>';return html;
 }
 function jjkCard(){
   if(!APP.jjk45)return '<div class="ib am">2분기 지구를 지켜라 데이터를 불러오는 중이거나 없습니다.</div>';
   var u=S.user, c=jjkCalc(u.소속코드);
   if(!c)return '<div class="incsec"><div class="incsech">🛡️ 2분기 지구를 지켜라</div><div class="ib am">이번 지구를 지켜라 명단에 없어요.</div></div>';
   var win=c.시상금>0, achLabel=c.tier===0?'300%↑':c.tier===1?'200%↑':c.tier===2?'100%↑':c.tier===3?'순증 1↑':'미달';
+  // 다음 급간까지 잔여
+  var remain='';
+  if(!c.small){
+    var parts=[];
+    // 달성률 축 (단가 한 단계 ↑)
+    if(c.tier===-1){parts.push('달성률: 순증 <b>'+fmt1(1-c.sunHap)+'</b> 더 (또는 달성률 100%↑)');}
+    else if(c.tier>0){var nextT=(c.tier===1?300:c.tier===2?200:100);var needSun=Math.ceil((nextT*c.mokHap/100)-c.sunHap);parts.push('달성률 <b>+'+fmt1(nextT-c.달성률)+'%p</b>'+(needSun>0?' (순증 '+fmt(needSun)+'↑)':''));}
+    // 퇴회율 축 (단가 한 단계 ↑)
+    if(c.row>0){var nextM=JJK_RATE[c.row-1].max;var redToi=Math.ceil(c.toiHap-(nextM*c.gwaHap/100));parts.push('퇴회율 <b>-'+fmtD2(c.퇴회율-nextM)+'%p</b>'+(redToi>0?' (퇴회 '+fmt(redToi)+'↓)':''));}
+    if(parts.length)remain='<div class="icnext">⬆️ 다음 단가까지: '+parts.join(' &nbsp;또는&nbsp; ')+'</div>';
+  }
   return '<div class="incsec"><div class="incsech">🛡️ 2분기 지구를 지켜라</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 누적 (5월까지 박제 + 6월 실적)</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 누적</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(c.교사수)+' × '+fmtD(c.단가)+'만원 = '+fmt(c.시상금)+'원':(c.small?'교사수 5인 이하로 제외 대상이에요':'아직 시상 기준 미달이에요'))+'</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">누적 합산과목 달성률</div><div class="ig4v" style="color:'+(c.tier>=0&&c.tier<3?'var(--green)':'var(--t1)')+'">'+fmt1(c.달성률)+'<span style="font-size:12px">%</span></div></div>'
@@ -798,8 +831,10 @@ function jjkCard(){
       +'<div class="ig4"><div class="ig4l">달성률 급간</div><div class="ig4v" style="font-size:15px">'+achLabel+'</div></div>'
       +'<div class="ig4"><div class="ig4l">교사수 <span style="font-size:9px;color:var(--t3)">(5월말)</span></div><div class="ig4v">'+fmt(c.교사수)+'</div></div>'
     +'</div>'
+    +remain
     +(win?'<div class="icgift">🎁 시상금 '+fmt(c.시상금)+'원 = 교사수 '+fmt(c.교사수)+' × '+fmtD(c.단가)+'만원 (7월 운영비 일괄)</div>':(c.small?'<div class="icguide">교사수 5인 이하 조직은 인센티브 적용에서 제외돼요.</div>':'<div class="icguide">달성률 100%↑ 또는 순증 1↑ + 퇴회율 급간에 따라 교사수 × 단가가 지급돼요.</div>'))
-    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 단가표(만원): 달성률↑·퇴회율↓일수록 높음 · 5.3%↑는 일괄 1.2만<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
+    +jjkTable(c.row,c.tier)
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
 }
 function jiguJune(){
   var u=S.user;
@@ -852,7 +887,7 @@ function jigukJune(){
     var all=(APP.incEnv||[]).slice().sort(function(a,b){return (b.인당순증-a.인당순증)||(b.순증합-a.순증합);});
     var rank=null;for(var i=0;i<all.length;i++){if(all[i].소속코드===u.소속코드){rank=i+1;break;}}
     body='<div class="incsec"><div class="incsech">🏢 환경개선 <span class="rqbadge">상대평가</span></div>'
-      +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 (오늘까지 누적)</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 누적</div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 상위 10개 선정! 신형 사물함 지급':'아직 미선정이에요')+'</div>'
       +'<div class="iclist">'
       +'<div class="icrow"><div class="iclt"><div class="icl1">마.스.타 인당 누적순증</div><div class="icneed">최소 <b>1.5 이상</b> · 상위 10개 선정</div></div><div class="icright"><div class="icnum'+(meet?' ok':'')+'">'+fmtD(per)+'</div>'+(meet?'<span class="icok">충족</span>':'<span class="icno">미달</span>')+'</div></div>'
