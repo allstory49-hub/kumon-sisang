@@ -406,6 +406,13 @@ input,button{font-family:inherit;font-size:14px}
 .jjc.jjhd{background:rgba(120,120,120,.12);color:var(--t2);font-weight:800;font-size:9.5px}
 .jjc.jjrh{font-weight:800;color:var(--t2);font-size:9.5px}
 .jjc.hot{background:var(--green);color:#fff;font-weight:900;box-shadow:0 0 0 2px rgba(29,158,117,.3)}
+.clublocked{margin-top:12px;border:1px solid var(--bd);border-radius:11px;overflow:hidden}
+.cllk-t{background:var(--card2);font-size:12px;font-weight:800;color:var(--t2);padding:9px 11px}
+.cllk-r{display:flex;align-items:center;gap:9px;padding:8px 11px;border-top:1px solid var(--bd);font-size:13px}
+.cllk-r.me{background:rgba(37,99,235,.1)}
+.cllk-ho{flex:0 0 auto;font-weight:900;color:var(--green);width:42px}
+.cllk-nm{flex:1;font-weight:700;color:var(--t1)}
+.cllk-wh{flex:0 0 auto;font-size:11px;color:var(--t3);font-weight:600}
 </style>
 </head>
 <body>
@@ -841,10 +848,17 @@ function jjkCard(){
     +jjkTable(c.row,c.tier)
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
 }
+var CLUB_LOCKED={
+  SA050:{ho:1,when:'25년 8월',nm:'익산지국'},
+  SI050:{ho:2,when:'25년 10월',nm:'신제주지국'},
+  JH050:{ho:3,when:'25년 10월',nm:'신강남지국'},
+  SA060:{ho:4,when:'25년 11월',nm:'동익산지국'},
+  NK070:{ho:5,when:'26년 4월',nm:'홍천지국'}
+};
 function club10List(){
   var src=APP.club10||{};var arr=[];
   Object.keys(src).forEach(function(code){var o=src[code];var j=APP.incJigukMap[code];var jun=j?(Number(j.인당순증)||0):0;
-    arr.push({소속코드:code,소속명:o.소속,성명:o.성명,총국:o.총국,누적5:o.누적인당5||0,jun:jun,total:(o.누적인당5||0)+jun});
+    arr.push({소속코드:code,소속명:o.소속,성명:o.성명,총국:o.총국,누적5:o.누적인당5||0,jun:jun,total:(o.누적인당5||0)+jun,locked:!!CLUB_LOCKED[code]});
   });
   arr.sort(function(a,b){return b.total-a.total;});
   arr.forEach(function(x,i){x.rank=i+1;});
@@ -853,29 +867,42 @@ function club10List(){
 function club10Card(){
   if(!APP.club10)return '<div class="ib am">마.스.타 10 CLUB 데이터를 불러오는 중이거나 없습니다.</div>';
   var u=S.user, code=u.소속코드;
+  var lockedHtml='<div class="clublocked"><div class="cllk-t">🏅 기선정 1~5호점</div>'
+    +Object.keys(CLUB_LOCKED).sort(function(a,b){return CLUB_LOCKED[a].ho-CLUB_LOCKED[b].ho;}).map(function(c){var L=CLUB_LOCKED[c];return '<div class="cllk-r'+(c===code?' me':'')+'"><span class="cllk-ho">'+L.ho+'호점</span><span class="cllk-nm">'+L.nm+(c===code?' <span class="r20-me">나</span>':'')+'</span><span class="cllk-wh">'+L.when+' 달성</span></div>';}).join('')+'</div>';
+  // 본인이 기선정 1~5호점
+  if(CLUB_LOCKED[code]){var L=CLUB_LOCKED[code];
+    return '<div class="incsec"><div class="incsech">🏅 마.스.타 10 CLUB <span class="rqbadge">상대평가</span></div>'
+      +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적</div>'
+      +'<div class="incres win">🎖️ 이미 '+L.ho+'호점으로 선정되었습니다! ('+L.when+' 달성)</div>'
+      +'<div class="icgift">🎁 현판 제막식·오찬·신형 사물함·호텔 숙박권 · 기보유 지국은 교사수×2만원</div>'
+      +lockedHtml
+      +'<div class="ib bl" style="margin-bottom:0">· 1~5호점은 기선정 완료 · 이번 인센티브는 6~10호점 선정이에요.</div></div>';
+  }
   var list=club10List();
   var me=null;for(var i=0;i<list.length;i++){if(list[i].소속코드===code){me=list[i];break;}}
-  if(!me)return '<div class="incsec"><div class="incsech">🏅 마.스.타 10 CLUB <span class="rqbadge">상대평가</span></div><div class="ib am">이번 10 CLUB 기준 명단에 없어요.</div></div>';
-  // 선정: 누적 10↑ 상위 5개(선착순=누적순)
-  var elig=list.filter(function(x){return x.total>=10;});
+  if(!me)return '<div class="incsec"><div class="incsech">🏅 마.스.타 10 CLUB <span class="rqbadge">상대평가</span></div><div class="ib am">이번 10 CLUB 기준 명단에 없어요.</div>'+lockedHtml+'</div>';
+  // 6~10호점 경쟁: 기선정 제외 + 누적 10↑ 상위 5개
+  var open=list.filter(function(x){return !x.locked;});
+  var elig=open.filter(function(x){return x.total>=10;});
   var selRank=-1;for(var i=0;i<elig.length;i++){if(elig[i].소속코드===code){selRank=i+1;break;}}
   var meet=me.total>=10, win=meet&&selRank>0&&selRank<=5;
   var remain='';
   if(!meet){remain='<div class="icremain">🎯 최소 기준(누적 10)까지 <b>'+fmtD2(10-me.total)+'</b> 남음</div>';}
-  else if(!win){var above=elig[4];remain='<div class="icnext">⬆️ 5위 안(상위 5개 선정)까지 <b>'+fmtD2((above?above.total:me.total)-me.total)+'</b> 남음 · 현재 자격 '+selRank+'위</div>';}
+  else if(!win){var above=elig[4];remain='<div class="icnext">⬆️ 6~10호점(상위 5개)까지 <b>'+fmtD2((above?above.total:me.total)-me.total)+'</b> 남음 · 현재 자격 '+selRank+'위</div>';}
   return '<div class="incsec"><div class="incsech">🏅 마.스.타 10 CLUB <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적</div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 6~10호점 선정! (자격 '+selRank+'위)':(meet?'기준 충족 · 현재 자격 '+selRank+'위 (상위 5개 선정)':'아직 누적 10 미달이에요'))+'</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 · <b>6~10호점</b> 선정</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 6~10호점 선정권! (6~10호점 자격 '+selRank+'위)':(meet?'기준 충족 · 6~10호점 자격 '+selRank+'위 (상위 5개 선정)':'아직 누적 10 미달이에요'))+'</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">1~5월 누적 인당</div><div class="ig4v">'+fmtD2(me.누적5)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">6월 인당</div><div class="ig4v" style="color:var(--green)">'+fmtD2(me.jun)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">상반기 누적 인당</div><div class="ig4v" style="color:var(--blue)">'+fmtD2(me.total)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(list.length)+'개 중)</span></div><div class="ig4v">'+me.rank+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">6~10호점 순위 <span style="font-size:9px;color:var(--t3)">(기선정 제외)</span></div><div class="ig4v">'+(selRank>0?selRank:'-')+'<span style="font-size:12px">위</span></div></div>'
     +'</div>'
     +remain
-    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함·호텔 숙박권 · 기보유 지국은 교사수×2만원</div>':'<div class="icguide">상반기 누적 인당순증 <b>10 이상</b> + 상위 5개(선착순)에 들면 선정돼요.</div>')
-    +rankTop20(list,code,function(x){return [fmtD2(x.total),'인당'];},5)
-    +'<div class="ib bl" style="margin-bottom:0">· 누적 인당순증 = 1~5월 누적(박제) + 6월 인당(마.스.타 순증 ÷ 전월 교사수)<br>· 매월 마감 기준 선착순 · 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓</div></div>';
+    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함·호텔 숙박권 · 기보유 지국은 교사수×2만원</div>':'<div class="icguide">상반기 누적 인당순증 <b>10 이상</b> + 6~10호점 상위 5개(선착순)에 들면 선정돼요.</div>')
+    +rankTop20(open,code,function(x){return [fmtD2(x.total),'인당'];},5)
+    +lockedHtml
+    +'<div class="ib bl" style="margin-bottom:0">· 누적 인당순증 = 1~5월 누적(박제) + 6월 인당(마.스.타 순증 ÷ 전월 교사수)<br>· 1~5호점 기선정 완료 · 이번은 6~10호점 선정 · 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓</div></div>';
 }
 function eliteCalc(code){
   var b=(APP.elite45||{})[code], j=(APP.elite6||{})[code];
