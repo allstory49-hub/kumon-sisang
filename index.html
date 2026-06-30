@@ -647,11 +647,11 @@ function histPersonalSisang(){
   if(isOrg){rec=snap.o[S.user.소속코드];}else{rec=snap.t[S.user.교사번호];}
   if(!rec)return sec+'<div class="ib am" style="margin-top:6px">'+snap.label+' 기록이 없어요 (당시 명단에 없었어요).</div>';
   var scLabel=isOrg?(S.pos==='지구'?'시상점수':'시상점수(지구당)'):'시상점수';
-  var scVal=isOrg?fmtD2(rec.d):fmt1(rec.s);
+  var scVal=isOrg?(S.pos==='지구'?fmt1(rec.d):fmtD2(rec.d)):fmt1(rec.s);
   var rows=(rec.mj!=null?'<div class="histrow"><span>과목순증</span><b>'+fmt1(rec.mj)+'</b></div>':'')
     +(rec.dg!=null?'<div class="histrow"><span>디지털순증</span><b>'+fmt(rec.dg)+'</b></div>':'')
     +'<div class="histrow"><span>'+scLabel+'</span><b style="color:var(--green)">'+scVal+'</b></div>'
-    +'<div class="histrow"><span>전사 순위</span><b>'+fmt(rec.n)+'위</b></div>'
+    +(S.pos==='총국'?'':'<div class="histrow"><span>전사 순위</span><b>'+fmt(rec.n)+'위</b></div>')
     +(S.pos==='총국'?'':'<div class="histrow"><span>총국 순위</span><b>'+fmt(rec.c)+'위</b></div>');
   return sec+'<div class="histcard"><div class="histm">'+snap.label+' 마감 기준</div>'+rows+'</div>';
 }
@@ -1084,7 +1084,7 @@ function myTeacher(){
 }
 
 function myOrg(){
-  var r=S.user,sc=fmtD2(r.지구당),tot=(APP.org[S.pos]||[]).length;
+  var r=S.user,sc=(S.pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당)),tot=(APP.org[S.pos]||[]).length;
   var sn=shortName(r.소속명)||r.소속명;
   var scoreLabel=(S.pos==='지구')?'시상점수':'시상점수(지구당)';
   var code=r.소속코드||'',p1=code.charAt(0),p2=code.slice(0,2);
@@ -1099,12 +1099,13 @@ function myOrg(){
     return best;
   }
   function orgRows(arr,sl){
+    var d1=(sl==='시상점수');
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+sl+'</div></div>'
       +arr.map(function(x){return '<div class="rr"><div class="rn2" style="flex:1">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span>'
         +(x.순위!=null?'<br><span class="rorgrk">전사 '+fmt(x.순위)+'위 · 총국 '+fmt(x.총국순위)+'위</span>':'')+'</div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
-        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('');
+        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(d1?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';}).join('');
   }
   function teaRows(arr){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
@@ -1146,7 +1147,7 @@ function myOrg(){
   }
 
   var rankRow=(S.pos==='총국')
-    ?'<div class="sr2"><div class="sb flip" style="flex:1"><div class="slb">전사 순위<br>('+S.pos+' '+tot.toLocaleString()+'개 중)</div><div class="sn y">'+r.순위+'위'+rankDeltaBr(APP.prevO,r.소속코드,r.순위)+'</div></div></div>'
+    ?''
     :'<div class="sr2">'
       +'<div class="sb flip"><div class="slb">전사 순위<br>('+S.pos+' '+tot.toLocaleString()+'개 중)</div><div class="sn y">'+r.순위+'위'+rankDeltaBr(APP.prevO,r.소속코드,r.순위)+'</div></div>'
       +'<div class="sb flip"><div class="slb">총국 순위<br>('+S.pos+' '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 중)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDeltaBr(APP.prevO,r.소속코드,r.총국순위,'c')+'</div></div></div>';
@@ -1229,17 +1230,17 @@ function orgRank(){
   var avgSubj=all.reduce(function(s,x){return s+x.과목순증;},0)/n;
   var avgDig=all.reduce(function(s,x){return s+x.디지털순증;},0)/n;
   var avgScore=all.reduce(function(s,x){return s+x.지구당;},0)/n;
-  var sum='<div class="sg">'
-    +'<div class="sc"'+(pos==='총국'?' style="flex:1"':'')+'><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div><div class="ss">'+pos+' '+all.length.toLocaleString()+'개 중</div></div>'
-    +(pos==='총국'?'':'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div><div class="ss">'+pos+' '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 중</div></div>')
-    +'</div>'
+  var sum=(pos==='총국'?'':'<div class="sg">'
+    +'<div class="sc"><div class="sl">전사순위</div><div class="sv" style="color:var(--amber)">'+r.순위+'위'+rankDelta(APP.prevO,r.소속코드,r.순위)+'</div><div class="ss">'+pos+' '+all.length.toLocaleString()+'개 중</div></div>'
+    +'<div class="sc"><div class="sl">총국순위</div><div class="sv" style="color:var(--blue)">'+(r.총국순위||'-')+'위'+rankDelta(APP.prevO,r.소속코드,r.총국순위,'c')+'</div><div class="ss">'+pos+' '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 중</div></div>'
+    +'</div>')
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt1(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
-    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(r.지구당)+'</div></div></div></div>'
-    +topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},pos==='총국');
+    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>'
+    +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
   function block(title,arr,full){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
@@ -1253,9 +1254,9 @@ function orgRank(){
       +rows+myExtra+'</div>';
   }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +block('전사 순위',national,nationalFull)
-    +(pos==='총국'?'':block('총국 순위',chong,chongFull))
-    +((pos==='사업국'||pos==='총국')?'':block('사업국 순위',saup,saupFull));
+    +(pos==='총국'?'<div class="ib am">총국은 시상점수 순위를 제공하지 않습니다.</div>':block('전사 순위',national,nationalFull)
+    +block('총국 순위',chong,chongFull)
+    +(pos==='사업국'?'':block('사업국 순위',saup,saupFull)));
 }
 
 function info(){
