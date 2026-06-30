@@ -799,7 +799,7 @@ function jjkCalc(code){
 function jjkTable(curRow,curTier){
   var achH=['300%↑','200%↑','100%↑','순증1↑'];
   var rowL=['3.9%↓','4.2%↓','4.5%↓','4.8%↓','5.2%↓','5.3%↑'];
-  var html='<div class="jjkwrap"><div class="jjkttl">📋 단가표 (교사수 × 만원)</div><div class="jjktbl">'
+  var html='<div class="jjkwrap"><div class="jjkttl">📋 급간표 (교사수 × 만원)</div><div class="jjktbl">'
     +'<div class="jjc jjhd jjrh">퇴회율\\달성률</div>'+achH.map(function(a){return '<div class="jjc jjhd">'+a+'</div>';}).join('');
   JJK_RATE.forEach(function(r,ri){
     html+='<div class="jjc jjrh">'+rowL[ri]+'</div>'+r.p.map(function(p,ti){var hot=(ri===curRow&&ti===curTier);return '<div class="jjc'+(hot?' hot':'')+'">'+fmtD(p)+'</div>';}).join('');
@@ -811,16 +811,15 @@ function jjkCard(){
   var u=S.user, c=jjkCalc(u.소속코드);
   if(!c)return '<div class="incsec"><div class="incsech">🛡️ 2분기 지구를 지켜라</div><div class="ib am">이번 지구를 지켜라 명단에 없어요.</div></div>';
   var win=c.시상금>0, achLabel=c.tier===0?'300%↑':c.tier===1?'200%↑':c.tier===2?'100%↑':c.tier===3?'순증 1↑':'미달';
+  var toiLabel=['3.9%↓','4.2%↓','4.5%↓','4.8%↓','5.2%↓','5.3%↑'][c.row]||'-';
   // 다음 급간까지 잔여
   var remain='';
   if(!c.small){
     var parts=[];
-    // 달성률 축 (단가 한 단계 ↑)
     if(c.tier===-1){parts.push('달성률: 순증 <b>'+fmt1(1-c.sunHap)+'</b> 더 (또는 달성률 100%↑)');}
     else if(c.tier>0){var nextT=(c.tier===1?300:c.tier===2?200:100);var needSun=Math.ceil((nextT*c.mokHap/100)-c.sunHap);parts.push('달성률 <b>+'+fmt1(nextT-c.달성률)+'%p</b>'+(needSun>0?' (순증 '+fmt(needSun)+'↑)':''));}
-    // 퇴회율 축 (단가 한 단계 ↑)
     if(c.row>0){var nextM=JJK_RATE[c.row-1].max;var redToi=Math.ceil(c.toiHap-(nextM*c.gwaHap/100));parts.push('퇴회율 <b>-'+fmtD2(c.퇴회율-nextM)+'%p</b>'+(redToi>0?' (퇴회 '+fmt(redToi)+'↓)':''));}
-    if(parts.length)remain='<div class="icnext">⬆️ 다음 단가까지: '+parts.join(' &nbsp;또는&nbsp; ')+'</div>';
+    if(parts.length)remain='<div class="icnext">⬆️ 다음 급간까지: '+parts.join(' &nbsp;또는&nbsp; ')+'</div>';
   }
   return '<div class="incsec"><div class="incsech">🛡️ 2분기 지구를 지켜라</div>'
     +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 누적</div>'
@@ -828,8 +827,14 @@ function jjkCard(){
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">누적 합산과목 달성률</div><div class="ig4v" style="color:'+(c.tier>=0&&c.tier<3?'var(--green)':'var(--t1)')+'">'+fmt1(c.달성률)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">누적 퇴회율</div><div class="ig4v" style="color:'+(c.퇴회율<=4.8?'var(--green)':'var(--amber)')+'">'+fmtD2(c.퇴회율)+'<span style="font-size:12px">%</span></div></div>'
-      +'<div class="ig4"><div class="ig4l">달성률 급간</div><div class="ig4v" style="font-size:15px">'+achLabel+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">교사수 <span style="font-size:9px;color:var(--t3)">(5월말)</span></div><div class="ig4v">'+fmt(c.교사수)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">달성률 급간</div><div class="ig4v" style="font-size:16px;color:var(--blue)">'+achLabel+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:16px;color:var(--blue)">'+toiLabel+'</div></div>'
+    +'</div>'
+    +remain
+    +(win?'<div class="icgift">🎁 시상금 '+fmt(c.시상금)+'원 = 교사수 '+fmt(c.교사수)+' × '+fmtD(c.단가)+'만원 (7월 운영비 일괄)</div>':(c.small?'<div class="icguide">교사수 5인 이하 조직은 인센티브 적용에서 제외돼요.</div>':'<div class="icguide">달성률 100%↑ 또는 순증 1↑ + 퇴회율 급간에 따라 교사수 × 급간 단가가 지급돼요.</div>'))
+    +jjkTable(c.row,c.tier)
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 과목순증 합 ÷ 목표 합 × 100 (첫째자리 절사)<br>· 퇴회율 = 4~6월 퇴회 합 ÷ 전월말 관리과목 합 × 100 (둘째자리 절사)<br>· 6월 실적은 오늘 업로드 기준 · 교사수 5인 이하 제외</div></div>';
+}
     +'</div>'
     +remain
     +(win?'<div class="icgift">🎁 시상금 '+fmt(c.시상금)+'원 = 교사수 '+fmt(c.교사수)+' × '+fmtD(c.단가)+'만원 (7월 운영비 일괄)</div>':(c.small?'<div class="icguide">교사수 5인 이하 조직은 인센티브 적용에서 제외돼요.</div>':'<div class="icguide">달성률 100%↑ 또는 순증 1↑ + 퇴회율 급간에 따라 교사수 × 단가가 지급돼요.</div>'))
