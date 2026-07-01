@@ -485,7 +485,7 @@ input,button{font-family:inherit;font-size:14px}
 </div>
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,histIndex:[],histCache:{},sejong:null};
-var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'6',jtab:'월성과',i6tab:'회원순증'};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'7',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
 
 /* ───── GitHub 설정 ───── */
@@ -698,8 +698,8 @@ function histPersonalInc(){
 }
 function renderIncentive(){
   var b=document.getElementById('iBody');
-  if(!S.imonth)S.imonth='6';
-  var months=[{id:'6',l:'6월'},{id:'7',l:'7월 미리보기'}];
+  if(!S.imonth)S.imonth='7';
+  var months=[{id:'7',l:'7월'},{id:'6',l:'6월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderIncentive()">'+m.l+'</button>';}).join('')+'</div>';
   var body=S.imonth==='7'?incJuly():incJune();
   b.innerHTML=mtab+body;
@@ -1071,6 +1071,7 @@ function jSub(tabs,sel,fn){
   return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';'+rf+'()">'+t+'</button>';}).join('')+'</div>';
 }
 function jpvHead(){return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 7월 실적이 반영되면 값이 채워집니다. 현재는 규칙·골격만 표시돼요.</div>';}
+function jul7Head(){return '<div class="mt">7월 인센티브</div>';}
 function rankTop20(sorted,myCode,valFn,cutoff){
   if(!sorted||!sorted.length)return '';
   var top=sorted.slice(0,20);
@@ -1116,12 +1117,34 @@ var J6STATUS='📋 데이터 미연동 · 규칙 안내 (별도 집계 항목)';
 function julyTeacher(){
   var tabs=['월성과','마스타순증','무퇴회','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
+  var inc=APP.incMap[S.user.교사번호];
   var body;
-  if(S.jtab==='월성과')body=jpvCard({h:'🏆 월 성과',period:'7월',conds:[{l:'합산과목 순증',need:'5 이상'}],reward:'일리 아르모 원터치 그늘막 텐트 (소비자가 120,000원)',note:'· 6월과 달리 입회 조건 없이 합산과목 순증 5 이상 기준이에요.'});
-  else if(S.jtab==='마스타순증')body=jpvCard({h:'⭐ 마.스.타 순증',period:'7월',conds:[{l:'마.스.타 순증',need:'3 이상 / 5 이상'}],tiers:'마.스.타 순증 3↑ → 네이버페이 <b>1만원</b><br>마.스.타 순증 5↑ → 네이버페이 <b>2만원</b>',note:'· 7월은 급간별 절대평가예요 (순위 무관).'});
-  else if(S.jtab==='무퇴회')body=jpvCard({h:'🛡️ 무퇴회 (8월)',period:'8월',conds:[{l:'8월 무퇴회 교사',need:'근무 6개월↑·전월말 과목 60↑'}],tiers:'130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b>',note:'· 8월 한 달간 퇴회가 없는 교사 대상이에요.'});
-  else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 순증',need:'30 이상 · 1위 교사'}],reward:'시상금 50만원',note:'· 하반기 마.스.타 순증 1위 교사 시상.<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
-  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
+  if(S.jtab==='월성과'){
+    var sj=inc?(Number(inc.과목순증)||0):0;var ok=sj>=5;
+    body='<div class="incsec"><div class="incsech">🏆 월 성과</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
+      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 달성! 그늘막 텐트 대상이에요':'합산과목 순증 5까지 '+fmt1(5-sj)+' 남음')+'</div>'
+      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">합산과목 순증</div><div class="ig4v" style="color:'+(sj<0?'var(--red)':ok?'var(--green)':'var(--t1)')+'">'+fmt1(sj)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">달성 기준</div><div class="ig4v" style="font-size:16px">5 이상</div></div></div>'
+      +(ok?'<div class="icgift">🎁 일리 아르모 원터치 그늘막 텐트 (소비자가 120,000원)</div>':'<div class="icremain">🎯 합산과목 순증 5까지 <b>'+fmt1(5-sj)+'</b> 남음</div>')
+      +'<div class="ib bl" style="margin-bottom:0">· 7월은 입회 조건 없이 합산과목 순증 5 이상 단일 기준이에요.<br>· 텐트는 실물 시상이에요.</div></div>';
+  }
+  else if(S.jtab==='마스타순증'){
+    var ms=inc?(Number(inc.마스타순증)||0):0;
+    var reward=ms>=5?20000:ms>=3?10000:0;var win=reward>0;
+    var remain=ms<3?'Npay 1만(순증 3)까지 <b>'+fmt1(3-ms)+'</b> 남음':ms<5?'Npay 2만(순증 5)까지 <b>'+fmt1(5-ms)+'</b> 남음':'';
+    body='<div class="incsec"><div class="incsech">⭐ 마.스.타 순증 <span class="rqbadge" style="background:var(--green)">절대평가</span></div>'
+      +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
+      +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 네이버페이 '+fmt(reward)+'원 대상!':'아직 시상 기준(순증 3) 미달이에요')+'</div>'
+      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">마.스.타 순증</div><div class="ig4v" style="color:'+(ms<0?'var(--red)':win?'var(--green)':'var(--t1)')+'">'+fmt1(ms)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(ms>=5?'Npay 2만':ms>=3?'Npay 1만':'미달')+'</div></div></div>'
+      +(remain?'<div class="icremain">🎯 '+remain+'</div>':'')
+      +'<div class="ictiers" style="margin-top:10px">마.스.타 순증 3↑ → 네이버페이 <b>1만원</b><br>마.스.타 순증 5↑ → 네이버페이 <b>2만원</b></div>'
+      +'<div class="ib bl" style="margin-bottom:0">· 7월은 급간별 절대평가예요 (순위 무관).</div></div>';
+  }
+  else if(S.jtab==='무퇴회')body=jpvCard({h:'🛡️ 무퇴회 (8월)',period:'8월',status:'8월 집계 예정',conds:[{l:'8월 무퇴회 교사',need:'근무 6개월↑·전월말 과목 60↑'}],tiers:'130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b>',note:'· 8월 한 달간 퇴회가 없는 교사 대상이에요.'});
+  else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',status:'하반기 누적 집계 예정',conds:[{l:'마.스.타 순증',need:'30 이상 · 1위 교사'}],reward:'시상금 50만원',note:'· 하반기 마.스.타 순증 1위 교사 시상.<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body;
 }
 function julyJigu(){
   var tabs=['회원순증','엘리트지구장','세종클럽','마스타Top'];
@@ -1618,8 +1641,8 @@ function adminSisang(){
   return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
 }
 function adminInc(){
-  if(!S.imonth)S.imonth='6';
-  var months=[{id:'6',l:'6월'},{id:'7',l:'7월 미리보기'}];
+  if(!S.imonth)S.imonth='7';
+  var months=[{id:'7',l:'7월'},{id:'6',l:'6월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
   return mtab+(S.imonth==='7'?adminInc7():adminInc6());
 }
