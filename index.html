@@ -602,6 +602,7 @@ async function loadClubElite(){
   try{var r4=await fetch('cumulative/mastatop6.json?t='+Date.now(),{cache:'no-store'});if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
   try{var r5=await fetch('cumulative/frozen_jik_jun.json?t='+Date.now(),{cache:'no-store'});if(r5.ok)APP.frozenJik6=(await r5.json()).jun||{};}catch(e){}
   try{var r6=await fetch('cumulative/frozen_tea_jun.json?t='+Date.now(),{cache:'no-store'});if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
+  try{var r7=await fetch('cumulative/env_final.json?t='+Date.now(),{cache:'no-store'});if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
 }
 async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
