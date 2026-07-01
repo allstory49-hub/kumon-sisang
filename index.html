@@ -599,6 +599,7 @@ async function loadClubElite(){
   try{var r=await fetch('cumulative/club10.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.club10=(await r.json()).jiguk||{};}catch(e){APP.club10=null;}
   try{var r2=await fetch('cumulative/elite.json?t='+Date.now(),{cache:'no-store'});if(r2.ok)APP.elite45=(await r2.json()).jiguk||{};}catch(e){APP.elite45=null;}
   try{var r3=await fetch('cumulative/elite_jun.json?t='+Date.now(),{cache:'no-store'});if(r3.ok)APP.elite6=(await r3.json()).jiguk||{};}catch(e){APP.elite6=null;}
+  try{var r4=await fetch('cumulative/mastatop6.json?t='+Date.now(),{cache:'no-store'});if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
 }
 async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
@@ -1967,6 +1968,12 @@ function envStat(){
   var cash=sel.reduce(function(s,x){return s+(x.교사6월||0)*20000;},0);
   return '<div class="incstat"><div class="isl">환경개선 · 마.스.타 인당누적<span class="issub">2분기 1.5↑ 상위 10개 · 사물함(기보유 교사수×2만)</span></div><div class="isr"><span class="isn">'+fmt(sel.length)+'개</span><span class="isp">상위 10</span><span class="isamt">사물함 / 최대 '+fmt(cash)+'원</span></div></div>';
 }
+function parseMastaTop6One(data,level){
+  if(!data)return null;
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!==level)continue;var t=Number(r[8])||0,s=Number(r[36])||0;m[cc]=t>0?Math.floor(s/t*100)/100:0;}
+  return m;
+}
 function parseElite6(orgData){
   if(!orgData)return null;
   var wb=XLSX.read(orgData,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -2074,6 +2081,8 @@ async function doUpload(){
     if(jjk6){try{await saveFile('cumulative/jigujikyeora_jun.json',JSON.stringify({asof:meta.date,months:'6월',jigu:jjk6}),'jigu defend june update');APP.jjk6=jjk6;}catch(e){}}
     var elite6=parseElite6(UP.jik2?UP.jik2.data:null);
     if(elite6){try{await saveFile('cumulative/elite_jun.json',JSON.stringify({asof:meta.date,jiguk:elite6}),'elite june update');APP.elite6=elite6;}catch(e){}}
+    var mt6={};var mg6=parseMastaTop6One(UP.jigu2?UP.jigu2.data:null,'지구');if(mg6)Object.assign(mt6,mg6);var me6=parseMastaTop6One(UP.eop?UP.eop.data:null,'사업국');if(me6)Object.assign(mt6,me6);
+    if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
