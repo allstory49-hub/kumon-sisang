@@ -1048,15 +1048,43 @@ function incJuly(){
   if(S.type==='org'&&S.pos==='총국')return julyChong();
   return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다.</div>';
 }
+function eopDalseongCard(){
+  var arr=(APP.org['사업국']||[]).slice();
+  if(!arr.length)return '<div class="ib am">사업국 달성률 데이터가 없습니다.</div>';
+  arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.과목순증-a.과목순증);});
+  arr.forEach(function(x,i){x.dRank=i+1;});
+  var code=S.user.소속코드;var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  if(!me)return '<div class="incsec"><div class="incsech">🎯 합산과목 달성률 <span class="rqbadge">상대평가</span></div><div class="ib am">이번 사업국 달성률 명단에 없어요.</div></div>';
+  function rw(rk){return rk<=3?500000:rk<=10?300000:rk<=20?200000:rk<=30?100000:0;}
+  var eligible=(me.과목순증>=1);
+  var reward=eligible?rw(me.dRank):0;var win=reward>0;
+  var tierLabel=me.dRank<=3?'1~3위':me.dRank<=10?'4~10위':me.dRank<=20?'11~20위':me.dRank<=30?'21~30위':'31위~';
+  var remain='';
+  if(!eligible){remain='<div class="icremain">🎯 시상 자격(과목순증 1↑)까지 <b>'+fmt1(1-me.과목순증)+'</b> 남음</div>';}
+  else if(win&&me.dRank>1){var above=arr[me.dRank-2];var nextCut=me.dRank<=3?null:me.dRank<=10?3:me.dRank<=20?10:20;if(nextCut){var target=arr[nextCut-1];remain='<div class="icnext">⬆️ '+nextCut+'위(상위 급간)까지 달성률 <b>'+fmtD(target.달성률-me.달성률)+'%p</b> 남음</div>';}}
+  return '<div class="incsec"><div class="incsech">🎯 합산과목 달성률 <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+tierLabel+' · 시상금 '+fmt(reward)+'원':(eligible?'현재 '+me.dRank+'위 (시상 21~30위까지)':'과목순증 1 미달로 아직 시상 대상 아니에요'))+'</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(me.달성률<0?'var(--red)':'var(--green)')+'">'+fmtD2(me.달성률)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(사업국 '+fmt(arr.length)+'개)</span></div><div class="ig4v">'+me.dRank+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">순위 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+tierLabel+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">과목순증</div><div class="ig4v" style="color:'+(me.과목순증<0?'var(--red)':'var(--t1)')+'">'+fmt1(me.과목순증)+'</div></div>'
+    +'</div>'
+    +remain
+    +'<div class="ictiers" style="margin-top:10px">1~3위 → <b>50만원</b> · 4~10위 → <b>30만원</b> · 11~20위 → <b>20만원</b> · 21~30위 → <b>10만원</b></div>'
+    +rankTop20(arr.map(function(x){return {소속코드:x.소속코드,소속명:x.소속명,달성률:x.달성률};}),code,function(x){return [fmtD2(x.달성률),'%'];},3)
+    +'<div class="ib bl" style="margin-bottom:0">· 합산과목 달성률 순위 급간별 시상 (단, 과목순증 1↑)<br>· 7월 중간 실적 기준 · 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
+}
 function julyEop(){
   var tabs=['퇴회율&마스타','달성률','TOP TOUR','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='퇴회율&마스타';
   var body;
   if(S.jtab==='퇴회율&마스타')body=jpvCard({h:'📉 퇴회율 & 마.스.타',period:'3분기 7~9월',conds:[{l:'사업국 퇴회율 (순증 1↑)',need:'4.6% 이하'},{l:'마.스.타 누적순증 인당',need:'1.5 이상'}],tiers:'퇴회율 4.6%↓ → <b>50만원</b><br>마.스.타 순증인당 1.5↑ → <b>50만원</b>',note:'· 두 기준은 각각 평가·지급됩니다.'});
-  else if(S.jtab==='달성률')body=jpvCard({h:'🎯 합산과목 달성률',rel:true,period:'7월',conds:[{l:'합산과목 달성률 (순증 1↑)',need:'순위 급간별'}],tiers:'1~3위 → <b>50만원</b><br>4~10위 → <b>30만원</b><br>11~20위 → <b>20만원</b><br>21~30위 → <b>10만원</b>',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
+  else if(S.jtab==='달성률')body=eopDalseongCard();
   else if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR (총국&사업국)',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'사업국장 1~8위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 사업국'}],reward:'시상금 50만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body;
 }
 function julyChong(){
   var tabs=['TOP TOUR','커피차'];
@@ -1064,7 +1092,7 @@ function julyChong(){
   var body;
   if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'총국장 1~2위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else body=jpvCard({h:'☕ 커피차',rel:true,period:'하반기 7~12월',conds:[{l:'합산과목 달성률 (50%↑)',need:'1위 총국'}],reward:'27년 1월 총국 전략회의 커피차 지원',note:'· 하반기 누적 합산과목 달성률 1위 총국 대상.'});
-  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body;
 }
 function jSub(tabs,sel,fn){
   var rf=S.hideJHead?'renderAdmin':'renderIncentive';
@@ -1154,7 +1182,7 @@ function julyJigu(){
   else if(S.jtab==='엘리트지구장')body=jpvCard({h:'🏅 엘리트 지구장',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률',need:'100% · D순증 1↑'}],tiers:'전사 상위 <b>20명</b> → 녹지원 행사 + <b>20만원</b>',note:'· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
   else if(S.jtab==='세종클럽')body=sejongPersonal('지구');
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body;
 }
 function julyJiguk(){
   var tabs=['퇴회율','세종클럽','마스타Top'];
@@ -1163,7 +1191,7 @@ function julyJiguk(){
   if(S.jtab==='퇴회율')body=jpvCard({h:'📉 합산과목 퇴회율',period:'3분기 7~9월',conds:[{l:'지국 합산과목 퇴회율',need:'달성률 50%↑ 조건'}],tiers:'3.8%↓ → 교사수 × <b>3.0만</b><br>4.1%↓ → 교사수 × <b>2.0만</b><br>4.4%↓ → 교사수 × <b>1.0만</b><br>4.6%↓ → 교사수 × <b>0.5만</b>',note:'· 3분기 누적 퇴회율 급간별 시상.'});
   else if(S.jtab==='세종클럽')body=sejongPersonal('지국');
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
-  return (S.hideJHead?'':jpvHead())+jSub(tabs,S.jtab)+body;
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body;
 }
 function hbadges(items){return '<div class="hbadges">'+items.map(function(b){return '<span class="hbg '+(b.ok?'ok':'no')+'">'+b.label+' '+(b.ok?(b.okText||'달성'):(b.noText||'미달'))+'</span>';}).join('')+'</div>';}
 function jigukInc(){
