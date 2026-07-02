@@ -494,11 +494,10 @@ var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main'
 /* ───── 데이터 로드 (GitHub의 baked.js를 매번 최신으로) ───── */
 async function loadData(){
   try{
-    var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
+    var res=await dfetch('baked.js?t='+Date.now());
     if(!res.ok)return false;
     var txt=await res.text();
-    var json=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim();
-    var B=JSON.parse(json);
+    var B=parseBaked(txt);
     if(B.t)APP.teachers=rankTeachers(decT(B.t));
     if(B.o)APP.org=B.o;
     if(B.m)APP.meta=B.m;
@@ -520,14 +519,37 @@ async function loadData(){
 
 /* ───── GitHub에 baked.js 저장 (관리자 업로드 시) ───── */
 function b64utf8(s){return btoa(unescape(encodeURIComponent(s)));}
+/* ───── 공용암호 암호화 (XOR + base64) ───── */
+var PASS='';
+function xorEnc(str,key){var s=unescape(encodeURIComponent(str)),o='';for(var i=0;i<s.length;i++){o+=String.fromCharCode(s.charCodeAt(i)^key.charCodeAt(i%key.length));}return btoa(o);}
+function xorDec(b64,key){var s=atob(b64),o='';for(var i=0;i<s.length;i++){o+=String.fromCharCode(s.charCodeAt(i)^key.charCodeAt(i%key.length));}return decodeURIComponent(escape(o));}
+function decJSON(text){text=(text||'').trim();if(text.indexOf('ENC1:')===0)return JSON.parse(xorDec(text.slice(5),PASS));return JSON.parse(text);}
+function encContent(text){return 'ENC1:'+xorEnc(text,PASS);}
+function parseBaked(txt){var raw=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim();if(raw.charAt(0)==='"'||raw.charAt(0)==="'")raw=JSON.parse(raw);if(typeof raw==='string'&&raw.indexOf('ENC1:')===0)return JSON.parse(xorDec(raw.slice(5),PASS));return JSON.parse(raw);}
+async function dfetch(path){var r=await fetch(path,{cache:'no-store'});var t=r.ok?await r.text():'';return {ok:r.ok,_t:t,text:function(){return Promise.resolve(this._t);},json:function(){return Promise.resolve(decJSON(this._t));}};}
+async function verifyPass(pw){try{var r=await fetch('auth.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return true;var t=(await r.text()).trim();if(t.indexOf('ENC1:')!==0)return true;try{return xorDec(t.slice(5),pw)==='KUMON_OK';}catch(e){return false;}}catch(e){return true;}}
+function gate(){return new Promise(function(resolve){
+  var ov=document.createElement('div');ov.id='gateOv';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px';
+  ov.innerHTML='<div style="font-size:34px">🔒</div><div style="font-size:19px;font-weight:800;color:var(--t1)">시상·인센티브 현황 조회</div>'
+    +'<div style="font-size:13px;color:var(--t3)">공용 암호를 입력하세요</div>'
+    +'<input id="gatePw" type="password" placeholder="공용 암호" style="width:100%;max-width:280px;padding:13px 15px;border:1px solid var(--bd);border-radius:11px;background:var(--card);color:var(--t1);font-size:15px;text-align:center" />'
+    +'<button id="gateBtn" style="width:100%;max-width:280px;padding:13px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer">확인</button>'
+    +'<div id="gateErr" style="font-size:12px;color:var(--red);min-height:16px"></div>';
+  document.body.appendChild(ov);
+  var inp=ov.querySelector('#gatePw'),btn=ov.querySelector('#gateBtn'),err=ov.querySelector('#gateErr');
+  async function submit(){btn.disabled=true;err.textContent='확인 중...';var pw=inp.value.trim();var ok=await verifyPass(pw);if(ok){PASS=pw;ov.remove();resolve();}else{err.textContent='암호가 올바르지 않습니다.';btn.disabled=false;inp.select();}}
+  btn.onclick=submit;inp.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
+  setTimeout(function(){inp.focus();},100);
+});}
 
 /* ───── 직전(전일) 순위 추출 ───── */
 async function getPrevRanks(){
   try{
-    var res=await fetch('baked.js?t='+Date.now(),{cache:'no-store'});
+    var res=await dfetch('baked.js?t='+Date.now());
     if(!res.ok)return null;
     var txt=await res.text();
-    var B=JSON.parse(txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/;\s*$/,'').trim());
+    var B=parseBaked(txt);
     var pt={},po={};
     if(B.t){rankTeachers(decT(B.t)).forEach(function(t){if(t.교사번호)pt[t.교사번호]={n:t.순위,c:t.총국순위};});}
     if(B.o){['지구','지국','사업국','총국'].forEach(function(rl){(B.o[rl]||[]).forEach(function(o){if(o.소속코드)po[o.소속코드]={n:o.순위,c:o.총국순위};});});}
@@ -555,7 +577,7 @@ async function saveFile(path,content,message){
   var sha=null;
   try{var g=await fetch(api+'?t='+Date.now(),{headers:hd,cache:'no-store'});if(g.ok){var gj=await g.json();sha=gj.sha;}}catch(e){}
   if(!sha){try{var tr=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/git/trees/'+GH.branch+'?recursive=1',{headers:hd,cache:'no-store'});if(tr.ok){var trj=await tr.json();(trj.tree||[]).forEach(function(it){if(it.path===path)sha=it.sha;});}}catch(e){}}
-  var body={message:message,content:b64utf8(content)};
+  var body={message:message,content:b64utf8(encContent(content))};
   if(sha)body.sha=sha;
   var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
   if(!r.ok){var et=await r.text();throw new Error('저장 실패 ('+r.status+')');}
@@ -576,6 +598,7 @@ async function saveToGitHub(bakedJs){
 
 /* ───── 초기화 ───── */
 (async function init(){
+  await gate();
   await loadData();
   await loadHistIndex();
   await loadSejong();
@@ -589,26 +612,26 @@ async function saveToGitHub(bakedJs){
 })();
 
 /* ───── 지난 기록 ───── */
-async function loadHistIndex(){try{var r=await fetch('history/index.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
-async function loadSejong(){try{var r=await fetch('sejong/orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
-async function loadCumEnv(){try{var r=await fetch('cumulative/env_q2.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
-async function loadMastaTopOrg(){try{var r=await fetch('cumulative/mastatop_orgs.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.mastaTopOrg=j.orgs||{};}}catch(e){APP.mastaTopOrg=null;}}
-async function loadMastaTopTea(){try{var r=await fetch('cumulative/mastatop_teachers.json?t='+Date.now(),{cache:'no-store'});if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
-async function loadJjk(){try{var r=await fetch('cumulative/jigujikyeora.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.jjk45=(await r.json()).jigu||{};}var r2=await fetch('cumulative/jigujikyeora_jun.json?t='+Date.now(),{cache:'no-store'});if(r2.ok){APP.jjk6=(await r2.json()).jigu||{};}}catch(e){APP.jjk45=APP.jjk45||{};APP.jjk6=APP.jjk6||{};}}
+async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Date.now());if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
+async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
+async function loadCumEnv(){try{var r=await dfetch('cumulative/env_q2.json?t='+Date.now());if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
+async function loadMastaTopOrg(){try{var r=await dfetch('cumulative/mastatop_orgs.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopOrg=j.orgs||{};}}catch(e){APP.mastaTopOrg=null;}}
+async function loadMastaTopTea(){try{var r=await dfetch('cumulative/mastatop_teachers.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
+async function loadJjk(){try{var r=await dfetch('cumulative/jigujikyeora.json?t='+Date.now());if(r.ok){APP.jjk45=(await r.json()).jigu||{};}var r2=await dfetch('cumulative/jigujikyeora_jun.json?t='+Date.now());if(r2.ok){APP.jjk6=(await r2.json()).jigu||{};}}catch(e){APP.jjk45=APP.jjk45||{};APP.jjk6=APP.jjk6||{};}}
 async function loadClubElite(){
-  try{var r=await fetch('cumulative/club10.json?t='+Date.now(),{cache:'no-store'});if(r.ok)APP.club10=(await r.json()).jiguk||{};}catch(e){APP.club10=null;}
-  try{var r2=await fetch('cumulative/elite.json?t='+Date.now(),{cache:'no-store'});if(r2.ok)APP.elite45=(await r2.json()).jiguk||{};}catch(e){APP.elite45=null;}
-  try{var r3=await fetch('cumulative/elite_jun.json?t='+Date.now(),{cache:'no-store'});if(r3.ok)APP.elite6=(await r3.json()).jiguk||{};}catch(e){APP.elite6=null;}
-  try{var r4=await fetch('cumulative/mastatop6.json?t='+Date.now(),{cache:'no-store'});if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
-  try{var r5=await fetch('cumulative/frozen_jik_jun.json?t='+Date.now(),{cache:'no-store'});if(r5.ok)APP.frozenJik6=(await r5.json()).jun||{};}catch(e){}
-  try{var r6=await fetch('cumulative/frozen_tea_jun.json?t='+Date.now(),{cache:'no-store'});if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
-  try{var r7=await fetch('cumulative/env_final.json?t='+Date.now(),{cache:'no-store'});if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
-  try{var q1=await fetch('cumulative/q3cur.json?t='+Date.now(),{cache:'no-store'});if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
-  try{var q2=await fetch('cumulative/q3cum.json?t='+Date.now(),{cache:'no-store'});if(q2.ok)APP.q3cum=(await q2.json()).org||{};}catch(e){APP.q3cum={};}
-  try{var q3=await fetch('cumulative/q3cur_tea.json?t='+Date.now(),{cache:'no-store'});if(q3.ok)APP.q3curTea=(await q3.json()).tea||{};}catch(e){APP.q3curTea={};}
-  try{var q4=await fetch('cumulative/q3cum_tea.json?t='+Date.now(),{cache:'no-store'});if(q4.ok)APP.q3cumTea=(await q4.json()).tea||{};}catch(e){APP.q3cumTea={};}
+  try{var r=await dfetch('cumulative/club10.json?t='+Date.now());if(r.ok)APP.club10=(await r.json()).jiguk||{};}catch(e){APP.club10=null;}
+  try{var r2=await dfetch('cumulative/elite.json?t='+Date.now());if(r2.ok)APP.elite45=(await r2.json()).jiguk||{};}catch(e){APP.elite45=null;}
+  try{var r3=await dfetch('cumulative/elite_jun.json?t='+Date.now());if(r3.ok)APP.elite6=(await r3.json()).jiguk||{};}catch(e){APP.elite6=null;}
+  try{var r4=await dfetch('cumulative/mastatop6.json?t='+Date.now());if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
+  try{var r5=await dfetch('cumulative/frozen_jik_jun.json?t='+Date.now());if(r5.ok)APP.frozenJik6=(await r5.json()).jun||{};}catch(e){}
+  try{var r6=await dfetch('cumulative/frozen_tea_jun.json?t='+Date.now());if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
+  try{var r7=await dfetch('cumulative/env_final.json?t='+Date.now());if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
+  try{var q1=await dfetch('cumulative/q3cur.json?t='+Date.now());if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
+  try{var q2=await dfetch('cumulative/q3cum.json?t='+Date.now());if(q2.ok)APP.q3cum=(await q2.json()).org||{};}catch(e){APP.q3cum={};}
+  try{var q3=await dfetch('cumulative/q3cur_tea.json?t='+Date.now());if(q3.ok)APP.q3curTea=(await q3.json()).tea||{};}catch(e){APP.q3curTea={};}
+  try{var q4=await dfetch('cumulative/q3cum_tea.json?t='+Date.now());if(q4.ok)APP.q3cumTea=(await q4.json()).tea||{};}catch(e){APP.q3cumTea={};}
 }
-async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await fetch('history/'+m+'.json?t='+Date.now(),{cache:'no-store'});if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
+async function loadHist(m){if(APP.histCache[m])return APP.histCache[m];try{var r=await dfetch('history/'+m+'.json?t='+Date.now());if(r.ok){APP.histCache[m]=await r.json();return APP.histCache[m];}}catch(e){}return null;}
 function histBtns(ctx){
   if(!APP.histIndex||!APP.histIndex.length)return '<div class="ib bl" style="margin-top:6px;margin-bottom:0">저장된 지난 기록이 아직 없어요.</div>';
   return '<div class="rtog" style="margin-top:6px">'+APP.histIndex.map(function(h){return '<button class="rtb'+(S.histM===h.month?' on':'')+'" onclick="selectHist(\''+h.month+'\',\''+ctx+'\')">'+h.label+'</button>';}).join('')+'</div>';
@@ -2231,7 +2254,7 @@ async function doUpload(){
     if(prev){payload.pt=prev.pt;payload.po=prev.po;}
     msg.innerHTML='<span style="color:var(--blue)">✓ GitHub에 저장 중... (잠시만요)</span>';
     await tick();
-    var bakedJs='var BAKED='+JSON.stringify(payload)+';';
+    var bakedJs='var BAKED='+JSON.stringify('ENC1:'+xorEnc(JSON.stringify(payload),PASS))+';';
     await saveToGitHub(bakedJs);
     var jjk6=parseJjk6(UP.jik2?UP.jik2.data:null);
     if(jjk6){try{await saveFile('cumulative/jigujikyeora_jun.json',JSON.stringify({asof:meta.date,months:'6월',jigu:jjk6}),'jigu defend june update');APP.jjk6=jjk6;}catch(e){}}
