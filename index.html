@@ -413,6 +413,12 @@ input,button{font-family:inherit;font-size:14px}
 .cllk-ho{flex:0 0 auto;font-weight:900;color:var(--green);width:42px}
 .cllk-nm{flex:1;font-weight:700;color:var(--t1)}
 .cllk-wh{flex:0 0 auto;font-size:11px;color:var(--t3);font-weight:600}
+.iccrit{margin-top:10px;background:rgba(120,120,120,.06);border:1px solid var(--bd);border-radius:11px;padding:11px 13px}
+.iccrit-l{font-size:11px;font-weight:800;color:var(--t3);margin-bottom:4px}
+.iccrit-v{font-size:14px;font-weight:600;color:var(--t1);line-height:1.5}
+.icrew{margin-top:9px;background:linear-gradient(135deg,rgba(29,158,117,.09),rgba(29,158,117,.03));border:1px solid rgba(29,158,117,.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:13px}
+.icrew-t{font-size:13.5px;font-weight:700;color:var(--t1);line-height:1.5}
+.icrew-s{font-size:11.5px;font-weight:600;color:var(--t3)}
 </style>
 </head>
 <body>
@@ -1025,15 +1031,16 @@ function eliteJiguCard(){
   else if(!win&&me){var above=list[me.rank-2];if(above)remain='<div class="icnext">⬆️ '+(me.rank-1)+'위까지 달성률 <b>'+fmtD(above.달성률-ach)+'%p</b> 남음</div>';}
   return '<div class="incsec"><div class="incsech">🏆 엘리트 지구장 <span class="rqbadge">상대평가</span></div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 전사 T/O 선정권! 시상금 20만원 (현재 '+me.rank+'위)':(me?'자격 충족 · 현재 '+me.rank+'위 (상위 20명)':'아직 시상 기준 미달이에요'))+'</div>'
+    +critBlock('합산과목 달성률 <b>100%↑</b> & D순증 <b>1↑</b> · 달성률 상위 20명')
+    +'<div class="ictiers">전사 상위 20명 → <b>20만원</b> + 녹지원 행사</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(ach>=100?'var(--green)':'var(--t1)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">D순증</div><div class="ig4v" style="color:'+(f.D순증>=1?'var(--green)':'var(--t1)')+'">'+fmtD(f.D순증)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(f.교사수)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(자격자 '+fmt(list.length)+'명)</span></div><div class="ig4v">'+(me?me.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
     +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 전사 T/O 선정권! 시상금 20만원 (현재 '+me.rank+'위)':(me?'자격 충족 · 현재 '+me.rank+'위 (상위 20명)':'아직 시상 기준 미달이에요'))+'</div>'
     +remain
-    +(win?'<div class="icgift">🎁 시상금 20만원 + 녹지원 행사</div>':'<div class="icguide">달성률 100%↑ & D순증 1↑ + 달성률 상위 20명(전사)에 들면 시상돼요.</div>')
     +rankTop20(list,code,function(x){return [fmtD2(x.달성률),'%'];},20)
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 3분기 합산과목 순증 ÷ 목표 (둘째자리 절사) · 7월부터 누적<br>· 교사수 5인 이하 제외 · 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
 }
@@ -1054,15 +1061,16 @@ function jikToiCard(){
   else if(row>0){var nextMax=JIKTOI[row-1].max;remain='<div class="icnext">⬆️ '+nextMax+'% 급간까지 퇴회율 <b>-'+fmtD2(toi-nextMax)+'%p</b> 남음</div>';}
   return '<div class="incsec"><div class="incsech">📉 지국 퇴회율</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(eligible?'현재 퇴회율 급간 미해당':'달성률 50% 미달로 아직 대상 아니에요'))+'</div>'
+    +critBlock('합산과목 퇴회율 급간 (단, 달성률 <b>50%↑</b>)')
+    +'<div class="ictiers">3.8%↓ → 교사수×<b>3.0만</b> · 4.1%↓ → <b>2.0만</b> · 4.4%↓ → <b>1.0만</b> · 4.6%↓ → <b>0.5만</b></div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">합산과목 퇴회율</div><div class="ig4v" style="color:'+(toi<=4.6?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">달성률 <span style="font-size:9px;color:var(--t3)">(50%↑ 조건)</span></div><div class="ig4v" style="color:'+(ach>=50?'var(--green)':'var(--red)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(row>=0?JIKTOI[row].max+'%↓':'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(f.교사수)+'</div></div>'
     +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(eligible?'현재 퇴회율 급간 미해당':'달성률 50% 미달로 아직 대상 아니에요'))+'</div>'
     +remain
-    +'<div class="ictiers" style="margin-top:10px">3.8%↓ → 교사수×<b>3.0만</b> · 4.1%↓ → <b>2.0만</b> · 4.4%↓ → <b>1.0만</b> · 4.6%↓ → <b>0.5만</b></div>'
     +'<div class="ib bl" style="margin-bottom:0">· 퇴회율 = 3분기 퇴회 ÷ 전월말 과목수 (둘째자리 절사) · 7월부터 누적<br>· 단, 합산과목 달성률 50% 이상 조직만 대상</div></div>';
 }
 // ===== 사업국 퇴회율 & 마스타 (3분기) =====
@@ -1075,16 +1083,17 @@ function eopToiMastaCard(){
   var total=(toiOk?500000:0)+(mOk?500000:0);
   return '<div class="incsec"><div class="incsech">📉 퇴회율 & 마.스.타 (사업국)</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
-    +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'마.스.타':'')+')':'아직 시상 기준 미달이에요')+'</div>'
+    +critBlock('퇴회율 <b>4.6%↓</b>(순증 1↑) · 마.스.타 누적 인당 <b>1.5↑</b>')
+    +'<div class="ictiers">퇴회율 4.6%↓(순증1↑) → <b>50만원</b> · 마.스.타 인당 1.5↑ → <b>50만원</b> (각각)</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">퇴회율 <span style="font-size:9px;color:var(--t3)">(순증1↑)</span></div><div class="ig4v" style="color:'+(toiOk?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 4.6%↓</div><div class="ig4v" style="font-size:15px;color:'+(toiOk?'var(--green)':'var(--t2)')+'">'+(toiOk?'✅ 50만':(toi<=4.6?'순증 미달':'미달'))+'</div></div>'
       +'<div class="ig4"><div class="ig4l">마.스.타 누적 인당</div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">인당 1.5↑</div><div class="ig4v" style="font-size:15px;color:'+(mOk?'var(--green)':'var(--t2)')+'">'+(mOk?'✅ 50만':'미달')+'</div></div>'
     +'</div>'
+    +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'마.스.타':'')+')':'아직 시상 기준 미달이에요')+'</div>'
     +(!toiOk&&toi>4.6?'<div class="icremain">🎯 퇴회율 4.6%까지 <b>-'+fmtD2(toi-4.6)+'%p</b> 남음</div>':'')
     +(!mOk?'<div class="icremain">🎯 마.스.타 인당 1.5까지 <b>'+fmtD2(1.5-mPer)+'</b> 남음</div>':'')
-    +(total>0?'<div class="icgift">🎁 시상금 '+fmt(total)+'원 (각 기준 50만원 개별 지급)</div>':'<div class="icguide">퇴회율 4.6%↓(순증1↑) 50만 · 마.스.타 누적 인당순증 1.5↑ 50만 (각각)</div>')
     +'<div class="ib bl" style="margin-bottom:0">· 3분기 7월부터 누적 · 두 기준은 각각 평가·지급돼요.</div></div>';
 }
 function jiguJune(){
@@ -1189,17 +1198,18 @@ function eopDalseongCard(){
   else if(win&&me.dRank>1){var above=arr[me.dRank-2];var nextCut=me.dRank<=3?null:me.dRank<=10?3:me.dRank<=20?10:20;if(nextCut){var target=arr[nextCut-1];remain='<div class="icnext">⬆️ '+nextCut+'위(상위 급간)까지 달성률 <b>'+fmtD(target.달성률-me.달성률)+'%p</b> 남음</div>';}}
   return '<div class="incsec"><div class="incsech">🎯 합산과목 달성률 <span class="rqbadge">상대평가</span></div>'
     +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+tierLabel+' · 시상금 '+fmt(reward)+'원':(eligible?'현재 '+me.dRank+'위 (시상 21~30위까지)':'과목순증 1 미달로 아직 시상 대상 아니에요'))+'</div>'
+    +critBlock('합산과목 달성률 순위 (단, 과목순증 1↑)')
+    +'<div class="ictiers">1~3위 → <b>50만원</b> · 4~10위 → <b>30만원</b> · 11~20위 → <b>20만원</b> · 21~30위 → <b>10만원</b></div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(me.달성률<0?'var(--red)':'var(--green)')+'">'+fmtD2(me.달성률)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(사업국 '+fmt(arr.length)+'개)</span></div><div class="ig4v">'+me.dRank+'<span style="font-size:12px">위</span></div></div>'
       +'<div class="ig4"><div class="ig4l">순위 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+tierLabel+'</div></div>'
       +'<div class="ig4"><div class="ig4l">과목순증</div><div class="ig4v" style="color:'+(me.과목순증<0?'var(--red)':'var(--t1)')+'">'+fmt1(me.과목순증)+'</div></div>'
     +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+tierLabel+' · 시상금 '+fmt(reward)+'원':(eligible?'현재 '+me.dRank+'위 (시상 21~30위까지)':'과목순증 1 미달로 아직 시상 대상 아니에요'))+'</div>'
     +remain
-    +'<div class="ictiers" style="margin-top:10px">1~3위 → <b>50만원</b> · 4~10위 → <b>30만원</b> · 11~20위 → <b>20만원</b> · 21~30위 → <b>10만원</b></div>'
     +rankTop20(arr.map(function(x){return {소속코드:x.소속코드,소속명:x.소속명,달성률:x.달성률};}),code,function(x){return [fmtD2(x.달성률),'%'];},3)
-    +'<div class="ib bl" style="margin-bottom:0">· 합산과목 달성률 순위 급간별 시상 (단, 과목순증 1↑)<br>· 7월 중간 실적 기준 · 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 합산과목 달성률 순위 급간별 시상 (단, 과목순증 1↑)<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
 }
 function julyEop(){
   var tabs=['퇴회율&마스타','달성률','TOP TOUR','마스타Top'];
@@ -1225,6 +1235,17 @@ function jSub(tabs,sel,fn){
 }
 function jpvHead(){return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 7월 실적이 반영되면 값이 채워집니다. 현재는 규칙·골격만 표시돼요.</div>';}
 function jul7Head(){return '<div class="mt">7월 인센티브</div>';}
+var TENT_SVG='<svg viewBox="0 0 120 96" width="82" height="66" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto">'
+  +'<line x1="24" y1="52" x2="20" y2="90" stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"/>'
+  +'<line x1="96" y1="52" x2="100" y2="90" stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"/>'
+  +'<line x1="60" y1="30" x2="60" y2="88" stroke="#b8c0c8" stroke-width="2.5" stroke-linecap="round"/>'
+  +'<path d="M8 54 Q60 14 112 54 Z" fill="var(--green)"/>'
+  +'<path d="M60 20 Q60 40 60 54 L112 54 Q60 14 60 20 Z" fill="#178f69"/>'
+  +'<path d="M8 54 h104 l-8 12 -9 -9 -9 12 -9 -12 -9 12 -9 -12 -9 12 -9 -9 -8 12 Z" fill="#22b083"/>'
+  +'<circle cx="60" cy="20" r="4" fill="#ffd23f"/>'
+  +'</svg>';
+function critBlock(html){return '<div class="iccrit"><div class="iccrit-l">🎯 달성 기준</div><div class="iccrit-v">'+html+'</div></div>';}
+function rewardBlock(html,svg){return '<div class="icrew">'+(svg||'')+'<div class="icrew-t">'+html+'</div></div>';}
 function rankTop20(sorted,myCode,valFn,cutoff){
   if(!sorted||!sorted.length)return '';
   var top=sorted.slice(0,20);
@@ -1276,11 +1297,13 @@ function julyTeacher(){
     var sj=inc?(Number(inc.과목순증)||0):0;var ok=sj>=5;
     body='<div class="incsec"><div class="incsech">🏆 월 성과</div>'
       +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
-      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 달성! 그늘막 텐트 대상이에요':'합산과목 순증 5까지 '+fmt1(5-sj)+' 남음')+'</div>'
-      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">합산과목 순증</div><div class="ig4v" style="color:'+(sj<0?'var(--red)':ok?'var(--green)':'var(--t1)')+'">'+fmt1(sj)+'</div></div>'
+      +critBlock('합산과목 순증 <b>5 이상</b>')
+      +rewardBlock('일리 아르모 원터치 그늘막 텐트<br><span class="icrew-s">소비자가 120,000원 · 실물 시상</span>',TENT_SVG)
+      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">현재 합산과목 순증</div><div class="ig4v" style="color:'+(sj<0?'var(--red)':ok?'var(--green)':'var(--t1)')+'">'+fmt1(sj)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">달성 기준</div><div class="ig4v" style="font-size:16px">5 이상</div></div></div>'
-      +(ok?'<div class="icgift">🎁 일리 아르모 원터치 그늘막 텐트 (소비자가 120,000원)</div>':'<div class="icremain">🎯 합산과목 순증 5까지 <b>'+fmt1(5-sj)+'</b> 남음</div>')
-      +'<div class="ib bl" style="margin-bottom:0">· 7월은 입회 조건 없이 합산과목 순증 5 이상 단일 기준이에요.<br>· 텐트는 실물 시상이에요.</div></div>';
+      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 달성! 그늘막 텐트 대상이에요':'아직 미달이에요')+'</div>'
+      +(ok?'':'<div class="icremain">🎯 합산과목 순증 5까지 <b>'+fmt1(5-sj)+'</b> 남음</div>')
+      +'<div class="ib bl" style="margin-bottom:0">· 텐트는 실물로 시상돼요.</div></div>';
   }
   else if(S.jtab==='마스타순증'){
     var ms=inc?(Number(inc.마스타순증)||0):0;
@@ -1288,12 +1311,13 @@ function julyTeacher(){
     var remain=ms<3?'Npay 1만(순증 3)까지 <b>'+fmt1(3-ms)+'</b> 남음':ms<5?'Npay 2만(순증 5)까지 <b>'+fmt1(5-ms)+'</b> 남음':'';
     body='<div class="incsec"><div class="incsech">⭐ 마.스.타 순증 <span class="rqbadge" style="background:var(--green)">절대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
-      +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 네이버페이 '+fmt(reward)+'원 대상!':'아직 시상 기준(순증 3) 미달이에요')+'</div>'
-      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">마.스.타 순증</div><div class="ig4v" style="color:'+(ms<0?'var(--red)':win?'var(--green)':'var(--t1)')+'">'+fmt1(ms)+'</div></div>'
+      +critBlock('마.스.타 순증 <b>3 이상</b> 또는 <b>5 이상</b> (급간별)')
+      +'<div class="ictiers">마.스.타 순증 3↑ → 네이버페이 <b>1만원</b><br>마.스.타 순증 5↑ → 네이버페이 <b>2만원</b></div>'
+      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">현재 마.스.타 순증</div><div class="ig4v" style="color:'+(ms<0?'var(--red)':win?'var(--green)':'var(--t1)')+'">'+fmt1(ms)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(ms>=5?'Npay 2만':ms>=3?'Npay 1만':'미달')+'</div></div></div>'
+      +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 네이버페이 '+fmt(reward)+'원 대상!':'아직 시상 기준(순증 3) 미달이에요')+'</div>'
       +(remain?'<div class="icremain">🎯 '+remain+'</div>':'')
-      +'<div class="ictiers" style="margin-top:10px">마.스.타 순증 3↑ → 네이버페이 <b>1만원</b><br>마.스.타 순증 5↑ → 네이버페이 <b>2만원</b></div>'
-      +'<div class="ib bl" style="margin-bottom:0">· 7월은 급간별 절대평가예요 (순위 무관).</div></div>';
+      +'<div class="ib bl" style="margin-bottom:0">· 급간별 절대평가예요 (순위 무관).</div></div>';
   }
   else if(S.jtab==='무퇴회')body=jpvCard({h:'🛡️ 무퇴회 (8월)',period:'8월',status:'8월 집계 예정',conds:[{l:'8월 무퇴회 교사',need:'근무 6개월↑·전월말 과목 60↑'}],tiers:'130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b>',note:'· 8월 한 달간 퇴회가 없는 교사 대상이에요.'});
   else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',status:'하반기 누적 집계 예정',conds:[{l:'마.스.타 순증',need:'30 이상 · 1위 교사'}],reward:'시상금 50만원',note:'· 하반기 마.스.타 순증 1위 교사 시상.<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
