@@ -1304,6 +1304,34 @@ function shinhanJulyCard(){
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+fmt(cnt)+'건 × 3만원 = '+fmt(pay)+'원':'7월 신한카드 발급 실적이 없어요')+'</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 전용 URL로 접수된 건만 인정 · 시상금은 8월 운영비 일괄 지급</div></div>';
 }
+function mastaTopJulyCard(){
+  var arr=(APP.incList||[]).slice().sort(function(a,b){
+    var d=(b.마스타순증||0)-(a.마스타순증||0);
+    if(d)return d;
+    return (b.과목순증||0)-(a.과목순증||0);
+  });
+  arr.forEach(function(x,i){x.mtRank=i+1;});
+  var tno=S.user.교사번호;
+  var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].교사번호===tno){mi=k;break;}}
+  var myRank=mi>=0?arr[mi].mtRank:null;
+  var myMs=mi>=0?(arr[mi].마스타순증||0):0;
+  function row(x,im){
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(x.mtRank)+'">'+x.mtRank+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol big"><div class="rcol-v" style="color:'+((x.마스타순증||0)<0?'var(--red)':'var(--green)')+'">'+fmt(x.마스타순증)+'</div></div></div>';
+  }
+  var top20=arr.slice(0,20);
+  var rows=top20.map(function(x){return row(x,x.교사번호===tno);}).join('');
+  var myExtra='';
+  if(mi>=20){myExtra='<div class="rrsep">···</div>'+row(arr[mi],true);}
+  var board='<div class="rkstl" style="border-left-color:var(--amber)">현재 순위 (7월 기준 · 잠정) <span class="rkstlsub">마.스.타 순증순</span></div>'
+    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc">마.스.타 순증</div></div>'+rows+myExtra+'</div>';
+  return '<div class="incsec"><div class="incsech">👑 마.스.타 Top (전직책) <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월</div>'
+    +'<div class="incres '+(myRank===1?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 마.스.타 순증 '+fmt1(myMs):'집계 대상 데이터가 없어요')+'</div>'
+    +'<div class="ictiers">마.스.타 순증 30 이상 · 1위 교사 → <b>시상금 50만원</b></div>'
+    +board
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 최종 시상은 7~12월 하반기 누적 마.스.타 순증 기준으로 확정돼요. 지금은 7월 한 달 실적만 반영된 잠정 순위예요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 마.스.타 순증→과목순증 순으로만 정렬)</div></div>';
+}
 function julyTeacher(){
   var tabs=['월성과','마스타순증','무퇴회','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
@@ -1336,7 +1364,7 @@ function julyTeacher(){
       +'<div class="ib bl" style="margin-bottom:0">· 급간별 절대평가예요 (순위 무관).</div></div>';
   }
   else if(S.jtab==='무퇴회')body=jpvCard({h:'🛡️ 무퇴회 (8월)',period:'8월',status:'8월 집계 예정',conds:[{l:'8월 무퇴회 교사',need:'근무 6개월↑·전월말 과목 60↑'}],tiers:'130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b>',note:'· 8월 한 달간 퇴회가 없는 교사 대상이에요.'});
-  else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',status:'하반기 누적 집계 예정',conds:[{l:'마.스.타 순증',need:'30 이상 · 1위 교사'}],reward:'시상금 50만원',note:'· 하반기 마.스.타 순증 1위 교사 시상.<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓'});
+  else body=mastaTopJulyCard();
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 김성희 매니저 (02-397-9436)');
 }
 function julyJigu(){
