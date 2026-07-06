@@ -1373,7 +1373,7 @@ function julyJigu(){
   var tabs=['회원순증','엘리트지구장','세종클럽','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='회원순증';
   var body;
-  if(S.jtab==='회원순증')body=jpvCard({h:'👥 회원 순증',period:'7월',conds:[{l:'지구 회원 순증',need:'1 이상'}],tiers:'회원순증수 × <b>10,000원</b> (운영비)',note:'· 회원순증 1 이상 달성 시 지급.'});
+  if(S.jtab==='회원순증')body=jiguMemberJuly();
   else if(S.jtab==='엘리트지구장')body=eliteJiguCard();
   else if(S.jtab==='세종클럽')body=sejongPersonal('지구');
   else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
@@ -1411,6 +1411,20 @@ function jigukInc(){
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 전월 교사수 (둘째자리 절사)<br>· 선정: 전사 Legend 10 → 총국별 Best·Great·Good 차상위<br>· 동률 시 합산과목 달성률 ↑ → D순증(인당) ↑</div>'
     +'</div>'
     +rankTop20((APP.incJiguk||[]).filter(function(x){return x.인당입회>=1;}).slice().sort(function(a,b){return b.인당순증-a.인당순증;}),u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},0);
+}
+function jiguMemberJuly(){
+  var u=S.user, j=APP.incJiguMap[u.소속코드];
+  if(!j)return '<div class="incsec"><div class="incsech">👥 회원 순증</div><div class="ib gr" style="margin-top:0">📅 7월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑧ 회원증감_지구 파일 반영 필요)</div></div>';
+  var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
+  return '<div class="incsec"><div class="incsech">👥 회원 순증</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 7월</div>'
+    +critBlock('지구 회원 순증 <b>1 이상</b>')
+    +'<div class="ictiers">회원순증수 × <b>10,000원</b> (운영비)</div>'
+    +'<div class="incgrid4"><div class="ig4"><div class="ig4l">현재 회원순증</div><div class="ig4v" style="color:'+(ns<0?'var(--red)':win?'var(--green)':'var(--t1)')+'">'+fmt(ns)+'</div></div>'
+    +'<div class="ig4"><div class="ig4l">지급액</div><div class="ig4v" style="color:'+(win?'var(--green)':'var(--t1)')+'">'+fmt(pay)+'원</div></div></div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+fmt(pay)+'원 지급 대상! (순증 '+fmt(ns)+' × 1만원)':'아직 회원순증 1 미달이에요')+'</div>'
+    +(!win?'<div class="icremain">🎯 기준(1)까지 <b>'+fmt(1-ns)+'</b> 남음</div>':'')
+    +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계</div></div>';
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
@@ -2026,10 +2040,6 @@ function upload(){
     +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
     +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
-    +'<div class="stl">⑩ 마스타회원리스트.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 교차관리 인센티브용</span></div>'
-    +'<div class="upz'+(UP.cross?' done':'')+'" onclick="document.getElementById(\'crf\').click()"><div class="upi'+(UP.cross?' done':'')+'">'+(UP.cross?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.cross?UP.cross.name:'파일 선택하기')+'</div><div class="ups'+(UP.cross?' done':'')+'">교차관리 입회(마스타↔연계 교사 상이, 청구일 7/1) 파일</div></div></div>'
-    +'<input type="file" id="crf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'cross\')">'
     +'<div class="stl">⑪ 8월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
     +'<div class="upz'+(UP.toi8?' done':'')+'" onclick="document.getElementById(\'t8f\').click()"><div class="upi'+(UP.toi8?' done':'')+'">'+(UP.toi8?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.toi8?UP.toi8.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi8?' done':'')+'">8월 예상퇴회·전월말과목 파일</div></div></div>'
