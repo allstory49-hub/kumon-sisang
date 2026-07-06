@@ -492,7 +492,7 @@ input,button{font-family:inherit;font-size:14px}
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'7',jtab:'월성과',i6tab:'회원순증'};
-var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
+var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi8:null,toi9:null};
 
 /* ───── GitHub 설정 ───── */
 var GH={owner:'allstory49-hub',repo:'kumon-sisang',path:'baked.js',branch:'main',token:['github_pat_11CGDEJUQ0Od','vAdhINRTCH_VWWSJ8Kz8GnK','Hl7aEt3z33y7rvA6N3eIhNV','x2EsQD4mFPGA67GJQevpCYMM'].join('')};
@@ -621,7 +621,7 @@ async function saveToGitHub(bakedJs){
 /* ───── 지난 기록 ───── */
 async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Date.now());if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
 async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
-async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok)APP.sejongToi=(await r.json()).data;}catch(e){APP.sejongToi=null;}}
+async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongToi=j.data;APP.sejongToiRaw=j.raw||null;}}catch(e){APP.sejongToi=null;APP.sejongToiRaw=null;}}
 async function loadCumEnv(){try{var r=await dfetch('cumulative/env_q2.json?t='+Date.now());if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
 async function loadMastaTopOrg(){try{var r=await dfetch('cumulative/mastatop_orgs.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopOrg=j.orgs||{};}}catch(e){APP.mastaTopOrg=null;}}
 async function loadMastaTopTea(){try{var r=await dfetch('cumulative/mastatop_teachers.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
@@ -1989,7 +1989,7 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
-    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③⑤⑦⑧⑨ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. 안 올린 인센티브 파일은 직전 값이 유지돼요. (④⑥은 추후 연동 예정)</div>'
+    +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③⑤⑦⑧⑨ 파일이 필요해요. <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. 안 올린 인센티브 파일은 직전 값이 유지돼요. (④⑥은 추후 연동 예정 · ⑪⑫는 세종클럽 퇴회율용, 올린 달만 갱신)</div>'
     +'<div class="stl">① 교평_일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.teacher?UP.teacher.name:'파일 선택하기')+'</div><div class="ups'+(UP.teacher?' done':'')+'">교사별 시상점수 파일</div></div></div>'
@@ -2030,7 +2030,15 @@ function upload(){
     +'<div class="upz'+(UP.cross?' done':'')+'" onclick="document.getElementById(\'crf\').click()"><div class="upi'+(UP.cross?' done':'')+'">'+(UP.cross?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.cross?UP.cross.name:'파일 선택하기')+'</div><div class="ups'+(UP.cross?' done':'')+'">교차관리 입회(마스타↔연계 교사 상이, 청구일 7/1) 파일</div></div></div>'
     +'<input type="file" id="crf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'cross\')">'
-    +'<button class="actb" id="ubtn" onclick="doUpload()" '+(UP.teacher&&UP.org?'':'disabled')+'>데이터 반영하기</button>'
+    +'<div class="stl">⑪ 8월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
+    +'<div class="upz'+(UP.toi8?' done':'')+'" onclick="document.getElementById(\'t8f\').click()"><div class="upi'+(UP.toi8?' done':'')+'">'+(UP.toi8?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.toi8?UP.toi8.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi8?' done':'')+'">8월 예상퇴회·전월말과목 파일</div></div></div>'
+    +'<input type="file" id="t8f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi8\')">'
+    +'<div class="stl">⑫ 9월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
+    +'<div class="upz'+(UP.toi9?' done':'')+'" onclick="document.getElementById(\'t9f\').click()"><div class="upi'+(UP.toi9?' done':'')+'">'+(UP.toi9?ICON_OK:ICON_UP)+'</div>'
+    +'<div><div class="upl">'+(UP.toi9?UP.toi9.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi9?' done':'')+'">9월 예상퇴회·전월말과목 파일</div></div></div>'
+    +'<input type="file" id="t9f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi9\')">'
+    +'<button class="actb" id="ubtn" onclick="doUpload()" '+((UP.teacher&&UP.org)||UP.toi8||UP.toi9?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
     +'<div class="stl" style="margin-top:24px">📸 월 마감 기록 저장</div>'
     +'<div class="ib am">매월 마감 후 한 번만 누르세요. 현재 올라가 있는 데이터(시상·인센티브)를 그 달 기록으로 박제합니다. 같은 달을 다시 저장하면 덮어써져요.</div>'
@@ -2215,6 +2223,41 @@ function parseJigu(jiguData){
   return out;
 }
 
+var SEJONG_TOI_GRADES_JIGU=[[3.5,50],[3.7,46],[3.9,42],[4.1,38],[4.3,34],[4.5,30],[4.8,25]];
+var SEJONG_TOI_GRADES_OTH=[[3.7,50],[3.9,46],[4.1,42],[4.3,38],[4.5,34],[4.7,30],[4.9,25]];
+function sejongToiScore(rate,lv){var t=(lv==='지구')?SEJONG_TOI_GRADES_JIGU:SEJONG_TOI_GRADES_OTH;for(var i=0;i<t.length;i++){if(rate<=t[i][0])return t[i][1];}return 0;}
+function parseToiFile(data){
+  // 예상퇴회 파일: 소속코드(0) 전월말과목(4) 예상퇴회(6). header 2줄.
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;m[cc]={toi:Number(r[6])||0,gwa:Number(r[4])||0};}
+  return m;
+}
+function buildSejongToi(){
+  // 대상: sejong/orgs.json 지구·지국. baseline 7월=APP.q3cur(퇴회·과목수).
+  var sej=APP.sejong;if(!sej)return null;
+  var base=APP.q3cur||{};
+  var aug=UP.toi8?parseToiFile(UP.toi8.data):(APP.sejongToiRaw&&APP.sejongToiRaw.aug)||null;
+  var sep=UP.toi9?parseToiFile(UP.toi9.data):(APP.sejongToiRaw&&APP.sejongToiRaw.sep)||null;
+  var targets={};(sej.지구||[]).forEach(function(o){targets[o.code]='지구';});(sej.지국||[]).forEach(function(o){targets[o.code]='지국';});
+  var out={};
+  Object.keys(targets).forEach(function(code){
+    var lv=targets[code];
+    var b=base[code]||{};
+    var m7t=Number(b.퇴회)||0,m7g=Number(b.과목수)||0;
+    var m7r=m7g?q3flr(m7t/m7g*100,2):0;
+    var a=aug&&aug[code];
+    var m8t=a?a.toi:0, m8g=a?a.gwa:m7g;
+    var m8r=m8g?q3flr(m8t/m8g*100,2):0;
+    var c8t=m7t+m8t,c8g=m7g+m8g,c8r=c8g?q3flr(c8t/c8g*100,2):0;
+    var s=sep&&sep[code];
+    var m9t=s?s.toi:0, m9g=s?s.gwa:m8g;
+    var m9r=m9g?q3flr(m9t/m9g*100,2):0;
+    var qt=c8t+m9t,qg=c8g+m9g,qr=qg?q3flr(qt/qg*100,2):0;
+    out[code]={lv:lv,m7:{toi:m7t,gwa:m7g,rate:m7r},m8:{toi:m8t,gwa:m8g,rate:m8r,inFile:!!a},cum8:{toi:c8t,gwa:c8g,rate:c8r},m9:{toi:m9t,gwa:m9g,rate:m9r,inFile:!!s},quarter:{toi:qt,gwa:qg,rate:qr},score:sejongToiScore(qr,lv)};
+  });
+  return {data:out,raw:{aug:aug,sep:sep}};
+}
 function parseCross(data){
   if(!data)return APP.incCross||{};
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -2327,6 +2370,21 @@ function parseOrg(data){
 function tick(){return new Promise(function(r){setTimeout(r,60);});}
 async function doUpload(){
   var btn=document.getElementById('ubtn'),msg=document.getElementById('umsg');
+  if((UP.toi8||UP.toi9)&&!UP.teacher&&!UP.org){
+    btn.disabled=true;btn.textContent='처리 중...';
+    try{
+      msg.innerHTML='<span style="color:var(--blue)">세종클럽 퇴회율 계산 중...</span>';await tick();
+      var stoi=buildSejongToi();
+      if(!stoi)throw new Error('조직 명단(sejong/orgs.json)을 불러오지 못했어요.');
+      msg.innerHTML='<span style="color:var(--blue)">GitHub에 저장 중...</span>';await tick();
+      await saveFile('sejong/toi.json',JSON.stringify({updated:new Date().toISOString().slice(0,10),quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');
+      APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;
+      UP.toi8=null;UP.toi9=null;
+      msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 세종클럽 퇴회율 저장 완료!</span><br><span style="color:var(--t2)">약 1분 뒤 반영돼요. (새로고침)</span>';
+      btn.textContent='데이터 반영하기';btn.disabled=false;renderAdmin();
+    }catch(err){msg.innerHTML='<span style="color:var(--red)">❌ 오류: '+err.message+'</span>';btn.textContent='데이터 반영하기';btn.disabled=false;}
+    return;
+  }
   btn.disabled=true;btn.textContent='처리 중...';msg.textContent='';
   try{
     msg.innerHTML='<span style="color:var(--blue)">교사 파일 분석 중... (수천 명 처리, 잠시만요)</span>';
@@ -2361,6 +2419,7 @@ async function doUpload(){
     if(elite6){try{await saveFile('cumulative/elite_jun.json',JSON.stringify({asof:meta.date,jiguk:elite6}),'elite june update');APP.elite6=elite6;}catch(e){}}
     var mt6={};var mg6=parseMastaTop6One(UP.jigu2?UP.jigu2.data:null,'지구');if(mg6)Object.assign(mt6,mg6);var me6=parseMastaTop6One(UP.eop?UP.eop.data:null,'사업국');if(me6)Object.assign(mt6,me6);
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
+    if(UP.toi8||UP.toi9){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
@@ -2369,7 +2428,7 @@ async function doUpload(){
     APP.incEnv=[];APP.incEnvMap={};incEnv.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],인당순증:a[3],순증합:a[4],교사평균:a[5],교사6월:a[6],선정:a[7]};APP.incEnv.push(o);APP.incEnvMap[o.소속코드]=o;});
     APP.incCross=incCross;
     if(prev){APP.prevT=prev.pt;APP.prevO=prev.po;}
-    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null};
+    UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi8:null,toi9:null};
     msg.innerHTML='<span style="color:var(--green);font-weight:600">✅ 저장 완료! 교사 '+tR.stats.total.toLocaleString()+'명 · 지구 '+oR.지구.length+'개</span><br><span style="color:var(--t2)">약 1분 뒤 전 직원이 최신 데이터를 조회할 수 있어요. (새로고침)</span>';
     btn.textContent='데이터 반영하기';btn.disabled=false;renderBadge();renderAdmin();
   }catch(err){
