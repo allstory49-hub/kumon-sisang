@@ -490,7 +490,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'7',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi8:null,toi9:null};
 
@@ -647,6 +647,7 @@ async function loadClubElite(){
   try{var r4=await dfetch('cumulative/mastatop6.json?t='+Date.now());if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
   try{var r5=await dfetch('cumulative/frozen_jik_jun.json?t='+Date.now());if(r5.ok)APP.frozenJik6=(await r5.json()).jun||{};}catch(e){}
   try{var r6=await dfetch('cumulative/frozen_tea_jun.json?t='+Date.now());if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
+  try{var r6b=await dfetch('cumulative/frozen_inc_jun.json?t='+Date.now());if(r6b.ok)APP.frozenIncJun=(await r6b.json()).inc||{};}catch(e){APP.frozenIncJun=null;}
   try{var r7=await dfetch('cumulative/env_final.json?t='+Date.now());if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
   try{var q1=await dfetch('cumulative/q3cur.json?t='+Date.now());if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
   try{var q2=await dfetch('cumulative/q3cum.json?t='+Date.now());if(q2.ok)APP.q3cum=(await q2.json()).org||{};}catch(e){APP.q3cum={};}
@@ -1454,6 +1455,14 @@ function jiguInc(){
     +'</div>';
 }
 function mastaRank(tno){
+  if(APP.frozenIncJun){
+    var arr=[];var meMs=null,meG=null;
+    Object.keys(APP.frozenIncJun).forEach(function(k){var o=APP.frozenIncJun[k];arr.push({t:k,ms:Number(o.마스타순증)||0,g:(o.소속코드||'').charAt(0)});if(k===tno){meMs=Number(o.마스타순증)||0;meG=(o.소속코드||'').charAt(0);}});
+    if(meMs===null)return null;
+    var nH=0,cH=0,ct=0;
+    arr.forEach(function(x){if(x.ms>meMs)nH++;if(x.g===meG){ct++;if(x.ms>meMs)cH++;}});
+    return {n:nH+1,total:arr.length,c:cH+1,ctotal:ct};
+  }
   var me=APP.incMap[tno];if(!me)return null;
   var ms=me.마스타순증||0, g=(me.소속코드||'').charAt(0), nH=0,cH=0,ct=0;
   (APP.incList||[]).forEach(function(x){var xm=x.마스타순증||0;if(xm>ms)nH++;if((x.소속코드||'').charAt(0)===g){ct++;if(xm>ms)cH++;}});
@@ -1461,11 +1470,12 @@ function mastaRank(tno){
 }
 function teacherInc(){
   var u=S.user, inc=APP.incMap[u.교사번호]||u;
+  var fj=(APP.frozenIncJun&&APP.frozenIncJun[u.교사번호])||null;
   var sn=shortName(inc.소속명||u.소속명)||(inc.소속명||u.소속명);
-  var sj=inc.과목순증||0, ip=inc.입회||0, inflow=inc.유입||0;
+  var sj=fj?(Number(fj.과목순증)||0):(inc.과목순증||0), ip=fj?(Number(fj.입회)||0):(inc.입회||0), inflow=inc.유입||0;
   var okS=sj>=5, okI=ip>=12, ach1=okS||okI;
   var tier=inflow>=5?2:inflow>=3?1:0, pay=tier===2?'2만원':tier===1?'1만원':'', ach2=tier>0;
-  var ms=inc.마스타순증||0, msAward=inc.마스타시상||'';
+  var ms=fj?(Number(fj.마스타순증)||0):(inc.마스타순증||0), msAward=fj?(fj.마스타시상||''):(inc.마스타시상||'');
   var msWin=msAward==='전사'||msAward==='총국', msPay=msAward==='전사'?'20만원':msAward==='총국'?'10만원':'';
   function cond(label,val,need,ok){
     return '<div class="icrow"><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">기준 <b>'+need+' 이상</b></div></div>'
