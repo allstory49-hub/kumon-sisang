@@ -1326,7 +1326,7 @@ function mutoeCard(){
   var u=S.user, tno=u.교사번호;
   if(!APP.mutoe)return '<div class="incsec"><div class="incsech">🛡️ 무퇴회 (8월)</div><div class="ib gr" style="margin-top:0">📅 8월</div>'
     +critBlock('8월 무퇴회 · 실적월 기준 근무 6개월↑ · 7월말 관리과목 60↑')
-    +'<div class="ictiers">130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b></div>'
+    +'<div class="ib bl" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--blue)">130과목 이상 → 20,000원<br>60~129과목 → 10,000원</div>'
     +'<div class="ib am" style="margin-bottom:0">📋 아직 8월 예상퇴회 목록이 업로드되지 않았어요.</div></div>';
   var toiCnt=APP.mutoe[tno]||0;
   var noToe=(toiCnt===0);
@@ -1341,7 +1341,7 @@ function mutoeCard(){
   return '<div class="incsec"><div class="incsech">🛡️ 무퇴회 (8월)</div>'
     +'<div class="ib gr" style="margin-top:0">📅 8월 · <span style="opacity:.8">'+(APP.mutoeAsof||'')+' 기준 잠정</span></div>'
     +critBlock('8월 무퇴회 · 실적월 기준 근무 6개월↑ · 7월말 관리과목 60↑')
-    +'<div class="ictiers">130과목 이상 → <b>20,000원</b><br>60~129과목 → <b>10,000원</b></div>'
+    +'<div class="ib bl" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--blue)">130과목 이상 → 20,000원<br>60~129과목 → 10,000원</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">8월 퇴회 건수</div><div class="ig4v" style="color:'+(noToe?'var(--green)':'var(--red)')+'">'+fmt(toiCnt)+'<span style="font-size:12px">건</span></div></div>'
       +'<div class="ig4"><div class="ig4l">근무기간</div><div class="ig4v" style="color:'+(wkOk?'var(--green)':'var(--red)')+'">'+fmt(wk)+'<span style="font-size:12px">개월</span></div></div>'
