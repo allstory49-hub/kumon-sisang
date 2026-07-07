@@ -1310,7 +1310,7 @@ function jContact(c){return '<div class="ib am" style="margin-top:14px;margin-bo
 var SHINHAN_CONTACT='인센티브 문의: 한정호 파트장(02-397-5977) · 프로모션 문의: 장세란 매니저(02-768-8334) · 카드 문의: 신한카드 콜센터(1544-7000)';
 var JUL_SHINHAN={'JL310':1,'KM170':1,'KN090':2,'RL030':1,'TG290':1};
 function shinhanJulyCard(){
-  var code=S.user.소속코드;
+  var code=(S.user&&S.user.소속코드)||'';
   var cnt=JUL_SHINHAN[code]||0;
   var pay=cnt*30000;var win=cnt>0;
   return '<div class="incsec"><div class="incsech">💳 지국 신한카드 발급</div>'
@@ -1323,7 +1323,7 @@ function shinhanJulyCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 반드시 7월 영업방향 게시글 첨부 URL(구몬학습 지국별 신한카드 발급 전용 URL)로 접수해야 인정돼요.<br>· 시상금은 8월 운영비에 포함하여 일괄 지급돼요.</div></div>';
 }
 function mutoeCard(){
-  var u=S.user, tno=u.교사번호;
+  var u=S.user||{}, tno=u.교사번호;
   if(!APP.mutoe)return '<div class="incsec"><div class="incsech">🛡️ 무퇴회 (8월)</div><div class="ib gr" style="margin-top:0">📅 8월</div>'
     +critBlock('8월 무퇴회 · 실적월 기준 근무 6개월↑ · 7월말 관리과목 60↑')
     +'<div class="ib bl" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--blue)">130과목 이상 → 20,000원<br>60~129과목 → 10,000원</div>'
@@ -1359,7 +1359,7 @@ function mastaTopJulyCard(){
     return (b.과목순증||0)-(a.과목순증||0);
   });
   arr.forEach(function(x,i){x.mtRank=i+1;});
-  var tno=S.user.교사번호;
+  var tno=(S.user&&S.user.교사번호)||null;
   var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].교사번호===tno){mi=k;break;}}
   var myRank=mi>=0?arr[mi].mtRank:null;
   var myMs=mi>=0?(arr[mi].마스타순증||0):0;
@@ -1383,7 +1383,7 @@ function mastaTopJulyCard(){
 function julyTeacher(){
   var tabs=['월성과','마스타순증','무퇴회','마스타Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
-  var inc=APP.incMap[S.user.교사번호];
+  var inc=APP.incMap[(S.user&&S.user.교사번호)||''];
   var body;
   if(S.jtab==='월성과'){
     var sj=inc?(Number(inc.과목순증)||0):0;var ok=sj>=5;
@@ -1439,7 +1439,7 @@ function julyJiguk(){
 }
 function hbadges(items){return '<div class="hbadges">'+items.map(function(b){return '<span class="hbg '+(b.ok?'ok':'no')+'">'+b.label+' '+(b.ok?(b.okText||'달성'):(b.noText||'미달'))+'</span>';}).join('')+'</div>';}
 function jigukInc(){
-  var u=S.user, j=APP.incJigukMap[u.소속코드];
+  var u=S.user||{}, j=APP.incJigukMap[u.소속코드];
   if(!j)return '<div class="ib am">이번 달 지국 마스타 인센티브 명단에 없어요.</div>';
   var grade=j.등급, ip=j.인당입회, ok=ip>=1;
   var gradeInfo={Legend:{c:'#7c3aed',m:'순증수 × 2.0만원'},Best:{c:'#2563eb',m:'순증수 × 1.5만원'},Great:{c:'#0f7a4d',m:'순증수 × 1.0만원'},Good:{c:'#b45309',m:'순증수 × 0.5만원'}};
@@ -1460,7 +1460,7 @@ function jigukInc(){
     +rankTop20((APP.incJiguk||[]).filter(function(x){return x.인당입회>=1;}).slice().sort(function(a,b){return b.인당순증-a.인당순증;}),u.소속코드,function(x){return [fmtD(x.인당순증),'인당'];},0);
 }
 function jiguMemberJuly(){
-  var u=S.user, j=APP.incJiguMap[u.소속코드];
+  var u=S.user||{}, j=APP.incJiguMap[u.소속코드];
   if(!j)return '<div class="incsec"><div class="incsech">👥 회원 순증</div><div class="ib gr" style="margin-top:0">📅 7월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑧ 회원증감_지구 파일 반영 필요)</div></div>';
   var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
   return '<div class="incsec"><div class="incsech">👥 회원 순증</div>'
