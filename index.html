@@ -535,18 +535,31 @@ function parseBaked(txt){var raw=txt.replace(/^\s*var\s+BAKED\s*=/,'').replace(/
 async function dfetch(path){var r=await fetch(path,{cache:'no-store'});var t=r.ok?await r.text():'';return {ok:r.ok,_t:t,text:function(){return Promise.resolve(this._t);},json:function(){return Promise.resolve(decJSON(this._t));}};}
 async function verifyPass(pw){try{var r=await fetch('auth.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return true;var t=(await r.text()).trim();if(t.indexOf('ENC1:')!==0)return true;try{return xorDec(t.slice(5),pw)==='KUMON_OK';}catch(e){return false;}}catch(e){return true;}}
 function gate(){return new Promise(function(resolve){
+  var SAVE_KEY='kumon_pass';
+  // 저장된 암호가 현재 auth.json 기준으로 유효하면 입력창 없이 통과
+  (async function(){
+    try{
+      var saved=localStorage.getItem(SAVE_KEY);
+      if(saved){var ok0=await verifyPass(saved);if(ok0){PASS=saved;resolve();return;}
+        localStorage.removeItem(SAVE_KEY);}
+    }catch(e){}
+    showGate();
+  })();
+  function showGate(){
   var ov=document.createElement('div');ov.id='gateOv';
   ov.style.cssText='position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px';
   ov.innerHTML='<div style="font-size:34px">🔒</div><div style="font-size:19px;font-weight:800;color:var(--t1)">시상·인센티브 현황 조회</div>'
     +'<div style="font-size:13px;color:var(--t3)">공용 암호를 입력하세요</div>'
     +'<input id="gatePw" type="password" placeholder="공용 암호" style="width:100%;max-width:280px;padding:13px 15px;border:1px solid var(--bd);border-radius:11px;background:var(--card);color:var(--t1);font-size:15px;text-align:center" />'
     +'<button id="gateBtn" style="width:100%;max-width:280px;padding:13px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:700;cursor:pointer">확인</button>'
-    +'<div id="gateErr" style="font-size:12px;color:var(--red);min-height:16px"></div>';
+    +'<div id="gateErr" style="font-size:12px;color:var(--red);min-height:16px"></div>'
+    +'<div style="font-size:11px;color:var(--t3)">한 번 입력하면 이 기기에 저장돼요 (암호 변경 시 다시 입력)</div>';
   document.body.appendChild(ov);
   var inp=ov.querySelector('#gatePw'),btn=ov.querySelector('#gateBtn'),err=ov.querySelector('#gateErr');
-  async function submit(){btn.disabled=true;err.textContent='확인 중...';var pw=inp.value.trim();var ok=await verifyPass(pw);if(ok){PASS=pw;ov.remove();resolve();}else{err.textContent='암호가 올바르지 않습니다.';btn.disabled=false;inp.select();}}
+  async function submit(){btn.disabled=true;err.textContent='확인 중...';var pw=inp.value.trim();var ok=await verifyPass(pw);if(ok){PASS=pw;try{localStorage.setItem(SAVE_KEY,pw);}catch(e){}ov.remove();resolve();}else{err.textContent='암호가 올바르지 않습니다.';btn.disabled=false;inp.select();}}
   btn.onclick=submit;inp.addEventListener('keydown',function(e){if(e.key==='Enter')submit();});
   setTimeout(function(){inp.focus();},100);
+  }
 });}
 
 /* ───── 직전(전일) 순위 추출 ───── */
