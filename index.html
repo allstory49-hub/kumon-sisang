@@ -1503,7 +1503,7 @@ function teacherInc(){
   var u=S.user, inc=APP.incMap[u.교사번호]||u;
   var fj=(APP.frozenIncJun&&APP.frozenIncJun[u.교사번호])||null;
   var sn=shortName(inc.소속명||u.소속명)||(inc.소속명||u.소속명);
-  var sj=fj?(Number(fj.과목순증)||0):(inc.과목순증||0), ip=fj?(Number(fj.입회)||0):(inc.입회||0), inflow=inc.유입||0;
+  var sj=fj?(Number(fj.과목순증)||0):(inc.과목순증||0), ip=fj?(Number(fj.입회)||0):(inc.입회||0), inflow=fj?(Number(fj.유입)||0):(inc.유입||0);
   var okS=sj>=5, okI=ip>=12, ach1=okS||okI;
   var tier=inflow>=5?2:inflow>=3?1:0, pay=tier===2?'2만원':tier===1?'1만원':'', ach2=tier>0;
   var ms=fj?(Number(fj.마스타순증)||0):(inc.마스타순증||0), msAward=fj?(fj.마스타시상||''):(inc.마스타시상||'');
