@@ -814,6 +814,37 @@ function mtoList(lv){
   arr.forEach(function(x,i){x.rank=i+1;});
   return arr;
 }
+function mastaTopHalf2Org(lv){
+  var reward=(lv==='사업국')?500000:300000;
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
+    var ms=Number(o.마스타순증)||0, mtea=Number(o.마스타교사)||Number(o.교사수)||0;
+    var per=mtea?q3flr(ms/mtea,2):0;
+    arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,총국:o.총국,마스타순증:ms,인당:per});
+  });
+  arr.sort(function(a,b){return (b.인당-a.인당)||(b.마스타순증-a.마스타순증);});
+  arr.forEach(function(x,i){x.rank=i+1;});
+  var code=(S.user&&S.user.소속코드)||'';
+  var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].소속코드===code){mi=k;break;}}
+  var me=mi>=0?arr[mi]:null;
+  function row(x){var im=(x.소속코드===code);
+    return '<div class="r20'+(im?' me':'')+(x.rank===1?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
+      +'<div class="r20-nm">'+(x.소속명||'')+(im?' <span class="r20-me">나</span>':'')+'</div>'
+      +'<div class="r20-col"><div class="r20-cv" style="color:'+(x.인당<0?'var(--red)':'var(--t1)')+'">'+fmtD2(x.인당)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="color:'+(x.마스타순증<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.마스타순증)+'</div></div></div>';}
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col">인당순증</div><div class="r20-col">순증</div></div>';
+  var top20=arr.slice(0,20);var rows=top20.map(row).join('');
+  var myExtra=(mi>=20)?('<div class="r20cut">···</div>'+row(arr[mi])):'';
+  var board='<div class="r20wrap"><div class="r20head">📊 마.스.타 인당순증 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
+  return '<div class="incsec"><div class="incsech">👑 마.스.타 Top ('+lv+') <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적</div>'
+    +'<div class="incres '+(me&&me.rank===1?'win':'lose')+'">'+(me?'현재 전사 '+me.rank+'위 · 마.스.타 인당순증 '+fmtD2(me.인당):'집계 대상 명단에 없어요')+'</div>'
+    +'<div class="ictiers">'+lv+' 마.스.타 인당순증 1위 → <b>시상금 '+fmt(reward)+'원</b></div>'
+    +(me&&me.rank>1?'<div class="icnext">⬆️ '+(me.rank-1)+'위까지 인당 <b>'+fmtD2(arr[me.rank-2].인당-me.인당)+'</b> 남음</div>':(me&&me.rank===1?'<div class="icnext win">🥇 현재 '+lv+' 1위!</div>':''))
+    +board
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 지금은 7월 실적만 반영된 잠정 순위예요. 최종 시상은 7~12월 하반기 누적 기준으로 확정돼요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = 마.스.타 순증 ÷ 마.스.타 담당 교사수 (둘째자리 절사)<br>· 동률 시: 하반기 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 시상금은 27년 1월 운영비에 포함하여 일괄 지급돼요.</div></div>';
+}
 function mtoCard(lv){
   if(!APP.mastaTopOrg)return '<div class="ib am">마.스.타 TOP(소속) 기준 데이터를 불러오는 중이거나 없습니다.</div>';
   var u=S.user, code=u.소속코드;
@@ -1298,7 +1329,7 @@ function julyEop(){
   if(S.jtab==='퇴회율&마스타')body=eopToiMastaCard();
   else if(S.jtab==='달성률')body=eopDalseongCard();
   else if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ TOP TOUR (총국&사업국)',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'사업국장 1~8위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
-  else body=jpvCard({h:'👑 마.스.타 Top (전직책)',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 사업국'}],reward:'시상금 50만원',note:'· 동률 시: 26년 하반기 달성률↑ > D순증↑ > 퇴회율↓'});
+  else body=mastaTopHalf2Org('사업국');
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function julyChong(){
@@ -1485,7 +1516,7 @@ function julyJigu(){
   if(S.jtab==='회원순증')body=jiguMemberJuly();
   else if(S.jtab==='엘리트지구장')body=eliteJiguCard();
   else if(S.jtab==='세종클럽')body=sejongPersonal('지구');
-  else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 하반기 마.스.타 인당순증 1위 지구 시상.<br>· 동률 시(하반기 누적): 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 시상금은 27년 1월 운영비에 포함하여 일괄 지급돼요.'});
+  else body=mastaTopHalf2Org('지구');
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function julyJiguk(){
@@ -1495,7 +1526,7 @@ function julyJiguk(){
   if(S.jtab==='퇴회율')body=jikToiCard();
   else if(S.jtab==='신한카드')body=shinhanJulyCard();
   else if(S.jtab==='세종클럽')body=sejongPersonal('지국');
-  else body=jpvCard({h:'👑 마.스.타 Top',rel:true,period:'하반기 7~12월',conds:[{l:'마.스.타 인당순증',need:'1위 소속'}],reward:'시상금 30만원',note:'· 하반기 마.스.타 인당순증 1위 지국 시상.<br>· 동률 시(하반기 누적): 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 시상금은 27년 1월 운영비에 포함하여 일괄 지급돼요.'});
+  else body=mastaTopHalf2Org('지국');
   var contact=(S.jtab==='신한카드')?SHINHAN_CONTACT:'영업기획팀 한정호 파트장 (02-397-5977)';
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact(contact);
 }
