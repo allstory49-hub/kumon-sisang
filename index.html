@@ -365,9 +365,12 @@ input,button{font-family:inherit;font-size:14px}
 .r20{display:flex;align-items:center;gap:9px;padding:8px 11px;border-top:1px solid var(--bd);font-size:13px}
 .r20-n{width:22px;flex:0 0 auto;text-align:center;font-weight:800;color:var(--t3)}
 .r20-nm{flex:1;min-width:0;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.r20-v{flex:0 0 auto;font-weight:900;color:var(--t1);text-align:right;min-width:96px}
-.r20-u{font-size:10px;font-weight:600;color:var(--t3);margin-left:2px}
-.r20-d{display:inline-block;font-size:10px;font-weight:800;margin-left:7px;padding:1px 5px;border-radius:6px;background:var(--card2)}
+.r20-col{flex:0 0 auto;width:60px;text-align:right}
+.r20-cv{font-weight:900;color:var(--t1);font-size:13px}
+.r20-cu{font-size:10px;font-weight:600;color:var(--t3);margin-left:1px}
+.r20h{font-size:10.5px;font-weight:700;color:var(--t3);border-top:none;padding-top:4px;padding-bottom:4px}
+.r20h .r20-nm,.r20h .r20-col{font-weight:700;color:var(--t3)}
+.r20h .r20-col{font-size:10.5px}
 .r20.win{background:rgba(29,158,117,.06)}
 .r20.win .r20-n{color:var(--green)}
 .r20.me{background:rgba(37,99,235,.1)}
@@ -1112,12 +1115,14 @@ function rankTop20All(sorted,myCode){
   function row(x,rk){var me=(x.소속코드===myCode),win=rk<=20&&x.자격;
     return '<div class="r20'+(me?' me':'')+(win?' win':'')+'"><div class="r20-n">'+rk+'</div>'
       +'<div class="r20-nm">'+(x.소속명||'')+(me?' <span class="r20-me">나</span>':'')+(x.자격?'':' <span style="font-size:9px;color:var(--t3)">(자격미충족)</span>')+'</div>'
-      +'<div class="r20-v">'+fmt1(x.달성률)+'<span class="r20-u">%</span><span class="r20-d" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t3)')+'">D '+fmt1(x.D순증)+'</span></div></div>';}
+      +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t2)')+'">'+fmt1(x.D순증)+'</div></div></div>';}
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">지구</div><div class="r20-col">달성률</div><div class="r20-col">D순증</div></div>';
   var rows=top.map(function(x){return row(x,x.rank);}).join('');
   var myExtra='';
   if(myCode){var mi=-1;for(var k=0;k<sorted.length;k++){if(sorted[k].소속코드===myCode){mi=k;break;}}
     if(mi>=20)myExtra='<div class="r20cut">···</div>'+row(sorted[mi],sorted[mi].rank);}
-  return '<div class="r20wrap"><div class="r20head">📊 달성률 상위 20위 (전사)</div>'+rows+myExtra+'</div>';
+  return '<div class="r20wrap"><div class="r20head">📊 달성률 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
 }
 // ===== 지국 퇴회율 (3분기) =====
 var JIKTOI=[{max:3.8,p:3.0},{max:4.1,p:2.0},{max:4.4,p:1.0},{max:4.6,p:0.5}];
