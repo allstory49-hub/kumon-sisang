@@ -505,7 +505,7 @@ async function loadData(){
     var txt=await res.text();
     var B=parseBaked(txt);
     if(B.t)APP.teachers=rankTeachers(decT(B.t));
-    if(B.o)APP.org=B.o;
+    if(B.o){APP.org=B.o;APP._orgIdx=null;}
     if(B.m)APP.meta=B.m;
     APP.prevT=B.pt||{};
     APP.prevO=B.po||{};
@@ -1013,6 +1013,11 @@ function eliteCard(){
     +rankTop20(list,code,function(x){return [fmtD2(x.달성률),'%'];},10)
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 합산과목 순증 합 ÷ 목표 합 × 100 (둘째자리 절사)<br>· 시상: 전사 10명(20만) + 총국별 10명(15만) · 교사수 5인 이하·최소 2개월 미만 제외<br>· 동률 시: 일반과목 순증(인당)↑ > D순증(인당)↑</div></div>';
 }
+function orgFresh(code){
+  // baked.js(최신 업로드) org 데이터에서 code 찾기 — 달성률·과목순증·디지털순증 최신값
+  if(!APP._orgIdx){APP._orgIdx={};var O=APP.org||{};['지구','지국','사업국','총국'].forEach(function(lv){(O[lv]||[]).forEach(function(o){if(o.소속코드)APP._orgIdx[o.소속코드]=o;});});}
+  return APP._orgIdx[code]||null;
+}
 function q3get(code){
   var a=(APP.q3cum||{})[code], b=(APP.q3cur||{})[code];
   if(!a&&!b)return null;
@@ -1021,6 +1026,24 @@ function q3get(code){
   ['순증','목표','퇴회','D순증','일반순증','마스타순증'].forEach(function(k){f[k]=((a&&a[k])||0)+((b&&b[k])||0);});
   // 과목수·교사수·마스타교사는 "합산 기준"이라 누적 합(월별 전월말 합)
   ['과목수','교사수','마스타교사'].forEach(function(k){f[k]=((a&&a[k])||0)+((b&&b[k])||0);});
+  // 최신 업로드(baked.js) org 데이터로 당월분(q3cur) 덮어쓰기 → 달성률·과목순증·D순증 자동 최신화
+  var fr=orgFresh(code);
+  if(fr){
+    // 당월 순증/일반순증/D순증을 baked 최신값으로 교체 (누적분 a는 유지)
+    f.순증=((a&&a.순증)||0)+(Number(fr.과목순증)||0);
+    f.일반순증=((a&&a.일반순증)||0)+(Number(fr.과목순증)||0);
+    f.D순증=((a&&a.D순증)||0)+(Number(fr.디지털순증)||0);
+  }
+  // 달성률: 누적분(q3cum)이 있으면 누적 순증÷목표, 없으면 baked 최신 달성률 사용
+  if(a&&a.순증!=null&&f.목표){
+    f.달성률=q3flr(f.순증/f.목표*100,2);
+  }else if(fr&&fr.달성률!=null){
+    f.달성률=fr.달성률;
+  }else if(b&&b.달성률!=null){
+    f.달성률=b.달성률;
+  }else{
+    f.달성률=f.목표?q3flr(f.순증/f.목표*100,2):null;
+  }
   f.lv=meta.lv;f.소속명=meta.소속명;f.관리자=meta.관리자;f.총국=meta.총국;
   return f;
 }
@@ -2602,7 +2625,7 @@ async function doUpload(){
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
     if(UP.toi8||UP.toi9){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.mutoe){try{var mcnt2=parseMutoe(UP.mutoe.data);await saveFile('cumulative/mutoe8.json',JSON.stringify({asof:meta.date,month:'2026-08',cnt:mcnt2}),'mutoe august update');APP.mutoe=mcnt2;APP.mutoeAsof=meta.date;}catch(e){}}
-    APP.teachers=rankTeachers(tR.records);APP.org=oR;APP.meta=meta;
+    APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
     APP.incJiguk=[];APP.incJigukMap={};incJiguk.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],총국:a[3],마스타순증:a[4],인당순증:a[5],인당입회:a[6],등급:a[7],시상금:a[8]};APP.incJiguk.push(o);APP.incJigukMap[o.소속코드]=o;});
