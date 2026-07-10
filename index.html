@@ -2522,6 +2522,47 @@ function parseMastaTop6One(data,level){
   for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!==level)continue;var t=Number(r[8])||0,s=Number(r[36])||0;m[cc]=t>0?Math.floor(s/t*100)/100:0;}
   return m;
 }
+function parseMastaRaw(data,level){
+  // 관통 파일: 마스타과목 순증(col36), 전월교사수(col8). 조직별 원값.
+  if(!data)return null;
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!==level)continue;m[cc]={마스타순증:Number(r[36])||0,마스타교사:Number(r[8])||0};}
+  return m;
+}
+function parseSopyeongOrg(data){
+  // ③ 소평(전체) 파일: 조직별 달성률·과목순증·D순증·퇴회·과목수·목표·교사수
+  // col: 소속코드0 소속명1 관리자명2 사번3 교사수4 관리과목5 디지털순증16 과목순증32 목표33 달성률35 총퇴회30
+  if(!data)return null;
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();var lv=classifyOrg(cc);if(!lv)continue;
+    var sj=Number(r[32])||0;
+    m[cc]={lv:lv,소속명:String(r[1]||'').trim(),관리자:String(r[2]||'').trim(),
+      순증:sj,일반순증:sj,목표:Number(r[33])||0,달성률:Number(r[35])||0,
+      D순증:Number(r[16])||0,퇴회:Number(r[30])||0,과목수:Number(r[5])||0,교사수:Number(r[4])||0};
+  }
+  return m;
+}
+function buildQ3cur(){
+  // ③ 소평(달성률·순증·D순증·퇴회·과목수·목표·교사수) + 관통④⑤⑥(마스타순증·마스타교사)로 q3cur 재생성
+  if(!UP.jik2)return null; // ③ 소평 없으면 갱신 안 함
+  var so=parseSopyeongOrg(UP.jik2.data);if(!so)return null;
+  var prev=APP.q3cur||{};
+  var out={};
+  Object.keys(so).forEach(function(code){
+    var s=so[code], p=prev[code]||{};
+    out[code]={lv:s.lv,소속명:s.소속명,관리자:s.관리자,총국:p.총국||'?',
+      순증:s.순증,목표:s.목표,달성률:s.달성률,퇴회:s.퇴회,과목수:s.과목수,
+      D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,
+      마스타순증:p.마스타순증||0,마스타교사:p.마스타교사||s.교사수};
+  });
+  // 관통에서 마스타 갱신
+  [[UP.jigu2,'지구'],[UP.jik,'지국'],[UP.eop,'사업국']].forEach(function(pair){
+    if(!pair[0])return;var m=parseMastaRaw(pair[0].data,pair[1]);if(!m)return;
+    Object.keys(m).forEach(function(code){if(out[code]){out[code].마스타순증=m[code].마스타순증;out[code].마스타교사=m[code].마스타교사;}});
+  });
+  return out;
+}
 function parseElite6(orgData){
   if(!orgData)return null;
   var wb=XLSX.read(orgData,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -2660,7 +2701,8 @@ async function doUpload(){
     if(elite6){try{await saveFile('cumulative/elite_jun.json',JSON.stringify({asof:meta.date,jiguk:elite6}),'elite june update');APP.elite6=elite6;}catch(e){}}
     var mt6={};var mg6=parseMastaTop6One(UP.jigu2?UP.jigu2.data:null,'지구');if(mg6)Object.assign(mt6,mg6);var me6=parseMastaTop6One(UP.eop?UP.eop.data:null,'사업국');if(me6)Object.assign(mt6,me6);
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
-    if(UP.toi8||UP.toi9){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
+    if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-07',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
+    if(UP.toi8||UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.mutoe){try{var mcnt2=parseMutoe(UP.mutoe.data);await saveFile('cumulative/mutoe8.json',JSON.stringify({asof:meta.date,month:'2026-08',cnt:mcnt2}),'mutoe august update');APP.mutoe=mcnt2;APP.mutoeAsof=meta.date;}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
