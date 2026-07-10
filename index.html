@@ -365,8 +365,9 @@ input,button{font-family:inherit;font-size:14px}
 .r20{display:flex;align-items:center;gap:9px;padding:8px 11px;border-top:1px solid var(--bd);font-size:13px}
 .r20-n{width:22px;flex:0 0 auto;text-align:center;font-weight:800;color:var(--t3)}
 .r20-nm{flex:1;min-width:0;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.r20-v{flex:0 0 auto;font-weight:900;color:var(--t1)}
+.r20-v{flex:0 0 auto;font-weight:900;color:var(--t1);text-align:right;min-width:96px}
 .r20-u{font-size:10px;font-weight:600;color:var(--t3);margin-left:2px}
+.r20-d{display:inline-block;font-size:10px;font-weight:800;margin-left:7px;padding:1px 5px;border-radius:6px;background:var(--card2)}
 .r20.win{background:rgba(29,158,117,.06)}
 .r20.win .r20-n{color:var(--green)}
 .r20.me{background:rgba(37,99,235,.1)}
@@ -1095,7 +1096,7 @@ function eliteJiguCard(){
     +critBlock('합산과목 달성률 <b>100%↑</b> & D순증 <b>1↑</b> · 달성률 상위 20명')
     +'<div class="ictiers">전사 상위 20명 → <b>20만원</b> + 녹지원 행사</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(ach>=100?'var(--green)':'var(--t1)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(ach>=100?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">D순증</div><div class="ig4v" style="color:'+(f.D순증>=1?'var(--green)':'var(--t1)')+'">'+fmtD(f.D순증)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(전체 '+fmt(rankAll.length)+'개)</span></div><div class="ig4v">'+(meR?meR.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(qual?'var(--green)':'var(--t2)')+'">'+(qual?'충족':'미충족')+'</div></div>'
@@ -1111,7 +1112,7 @@ function rankTop20All(sorted,myCode){
   function row(x,rk){var me=(x.소속코드===myCode),win=rk<=20&&x.자격;
     return '<div class="r20'+(me?' me':'')+(win?' win':'')+'"><div class="r20-n">'+rk+'</div>'
       +'<div class="r20-nm">'+(x.소속명||'')+(me?' <span class="r20-me">나</span>':'')+(x.자격?'':' <span style="font-size:9px;color:var(--t3)">(자격미충족)</span>')+'</div>'
-      +'<div class="r20-v">'+fmtD2(x.달성률)+'<span class="r20-u">%</span></div></div>';}
+      +'<div class="r20-v">'+fmt1(x.달성률)+'<span class="r20-u">%</span><span class="r20-d" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t3)')+'">D '+fmt1(x.D순증)+'</span></div></div>';}
   var rows=top.map(function(x){return row(x,x.rank);}).join('');
   var myExtra='';
   if(myCode){var mi=-1;for(var k=0;k<sorted.length;k++){if(sorted[k].소속코드===myCode){mi=k;break;}}
