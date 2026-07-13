@@ -1993,7 +1993,7 @@ function italCard(code){
   return '<div class="incsec" style="margin-top:10px"><div class="incsech">② 회원 이탈률 실적 <span class="rqbadge" style="background:var(--blue)">7월 (당월)</span></div>'
     +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">7월 이탈률</div><div class="icneed">이탈 '+fmt(t.ital)+'건 · 회원 순증(인계인수 제외) 기준</div></div><div class="icright"><div class="icnum">'+fmtD2(t.rate)+'<span style="font-size:12px">%</span></div></div></div>'+yoyRow+'</div>'
     +'<div class="incres '+(total>0?'win':'lose')+'">이탈률 '+fmtD2(t.rate)+'% → 기본 '+(t.score||0)+'점'+(yb.bonus>0?' + 가산 '+yb.bonus+'점 = <b>'+total+'점</b>':' → <b>'+total+'점</b>')+'</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 이탈률 급간: 2.4%↓ 20점 · 2.7%↓ 17 · 3.0%↓ 14 · 3.3%↓ 11 · 3.6%↓ 8 · 3.9%↓ 5점<br>· 전년比 감소 가산: 3%p↓ +10 · 2%p↓ +8 · 1%p↓ +5 (전년 25.3Q 이탈률 대비)<br>· 7월은 당월 실적만 반영(매일 갱신)</div></div>';
+    +'</div>';
 }
 function toiCard(code){
   var t=APP.sejongToi&&APP.sejongToi[code];
