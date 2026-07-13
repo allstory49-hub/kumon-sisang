@@ -1164,26 +1164,34 @@ var JIKTOI=[{max:3.8,p:3.0},{max:4.1,p:2.0},{max:4.4,p:1.0},{max:4.6,p:0.5}];
 function jikToiCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='지국')return '<div class="incsec"><div class="incsech">📉 퇴회율 (지국)</div><div class="ib am">이번 지국 퇴회율 명단에 없어요.</div></div>';
-  var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;
+  // 3분기 누적 퇴회율: 세종클럽과 동일 소스(sejongToi)로 7~9월 누적
+  var st=APP.sejongToi&&APP.sejongToi[code];
+  var toi=st?st.quarter.rate:(f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0);
   var ach=(f.달성률!=null)?f.달성률:(f.목표!==0?q3flr(f.순증/f.목표*100,2):0);
   var eligible=(ach>=50);
   var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<=JIKTOI[i].max){row=i;break;}}
   var unit=(eligible&&row>=0)?JIKTOI[row].p:0;
   var pay=Math.round(f.교사수*unit*10000);var win=pay>0;
   var remain='';
-  if(!eligible)remain='<div class="icremain">🎯 달성률 50%까지 <b>'+fmtD(50-ach)+'%p</b> 남음 (시상 조건)</div>';
+  if(!eligible)remain='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(q3flr(f.목표-f.순증,1))+'</b> 남음 (시상 조건 50%↑)</div>';
   else if(row<0)remain='<div class="icnext">⬆️ 4.6% 급간까지 퇴회율 <b>-'+fmtD2(toi-4.6)+'%p</b> 남음</div>';
   else if(row>0){var nextMax=JIKTOI[row-1].max;remain='<div class="icnext">⬆️ '+nextMax+'% 급간까지 퇴회율 <b>-'+fmtD2(toi-nextMax)+'%p</b> 남음</div>';}
+  var breakdown='';
+  if(st){
+    function mr(label,o,sub){return '<div class="icrow"'+(sub?' style="background:var(--card2)"':'')+'><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">퇴회 '+fmt(o.toi)+' · 과목수 '+fmt(o.gwa)+'</div></div><div class="icright"><div class="icnum">'+fmtD2(o.rate)+'<span style="font-size:12px">%</span></div></div></div>';}
+    breakdown='<div class="iclist" style="margin-top:8px">'+mr('7월',st.m7)+mr('8월 (단월)',st.m8)+mr('└ 7~8월 누적',st.cum8,true)+mr('9월 (단월)',st.m9)+mr('└ 3분기(7~9월) 누적',st.quarter,true)+'</div>';
+  }
   return '<div class="incsec"><div class="incsech">📉 지국 퇴회율</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
     +critBlock('합산과목 퇴회율 급간 (단, 달성률 <b>50%↑</b>)')
     +'<div class="ictiers">3.8%↓ → 교사수×<b>3.0만</b> · 4.1%↓ → <b>2.0만</b> · 4.4%↓ → <b>1.0만</b> · 4.6%↓ → <b>0.5만</b></div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">합산과목 퇴회율</div><div class="ig4v" style="color:'+(toi<=4.6?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<=4.6?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">달성률 <span style="font-size:9px;color:var(--t3)">(50%↑ 조건)</span></div><div class="ig4v" style="color:'+(ach>=50?'var(--green)':'var(--red)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(row>=0?JIKTOI[row].max+'%↓':'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(f.교사수)+'</div></div>'
     +'</div>'
+    +breakdown
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(eligible?'현재 퇴회율 급간 미해당':'달성률 50% 미달로 아직 대상 아니에요'))+'</div>'
     +remain
     +'<div class="ib bl" style="margin-bottom:0">· 퇴회율 = 퇴회(7~9월 누적) ÷ 전월말 관리과목(6월말~8월말 누적) × 100 (둘째자리 절사)<br>· 단, 합산과목 달성률 50% 이상 조직만 대상 · 최소 2개월 실적 보유 관리자만 인정<br>· 시상금은 10월 운영비에 포함하여 일괄 지급돼요.</div></div>';
