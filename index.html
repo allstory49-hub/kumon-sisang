@@ -1176,7 +1176,7 @@ function jikToiCard(){
   var toi=st?st.quarter.rate:(f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0);
   var ach=(f.달성률!=null)?f.달성률:(f.목표!==0?q3flr(f.순증/f.목표*100,2):0);
   var eligible=(ach>=50);
-  var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<=JIKTOI[i].max){row=i;break;}}
+  var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
   var unit=(row>=0)?JIKTOI[row].p:0;                  // 퇴회율 급간 단가 (달성률 무관)
   var pay=Math.round(f.교사수*unit*10000);            // 급간 기준 예상 시상금
   var win=(eligible&&pay>0);                          // 실제 시상 = 달성률50↑ + 급간 해당
@@ -1198,7 +1198,7 @@ function jikToiCard(){
     +critBlock('합산과목 퇴회율 급간 (단, 달성률 <b>50%↑</b>)')
     +tierBox
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<=4.6?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">달성률 <span style="font-size:9px;color:var(--t3)">(50%↑ 조건)</span></div><div class="ig4v" style="color:'+(ach>=50?'var(--green)':'var(--red)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:15px;color:'+(row>=0?'var(--green)':'var(--t2)')+'">'+(row>=0?JIKTOI[row].max+'%↓':'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(pay>0?'var(--green)':'var(--t2)')+'">'+(pay>0?fmt(pay)+'원':'-')+'</div></div>'
@@ -1213,7 +1213,7 @@ function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='사업국')return '<div class="incsec"><div class="incsech">📉 퇴회율 & 마.스.타 (사업국)</div><div class="ib am">이번 명단에 없어요.</div></div>';
   var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;
-  var toiOk=(toi<=4.6&&f.순증>=1);
+  var toiOk=(toi<4.7&&f.순증>=1);
   var mPer=f.마스타교사?q3flr(f.마스타순증/f.마스타교사,2):0;var mOk=(mPer>=1.5);
   var total=(toiOk?500000:0)+(mOk?500000:0);
   return '<div class="incsec"><div class="incsech">📉 퇴회율 & 마.스.타 (사업국)</div>'
@@ -1222,7 +1222,7 @@ function eopToiMastaCard(){
     +'<div class="ictiers">퇴회율 4.6%↓(순증1↑) → <b>50만원</b> · 마.스.타 인당 1.5↑ → <b>50만원</b> (각각)</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">퇴회율 <span style="font-size:9px;color:var(--t3)">(순증1↑)</span></div><div class="ig4v" style="color:'+(toiOk?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
-      +'<div class="ig4"><div class="ig4l">퇴회율 4.6%↓</div><div class="ig4v" style="font-size:15px;color:'+(toiOk?'var(--green)':'var(--t2)')+'">'+(toiOk?'✅ 50만':(toi<=4.6?'순증 미달':'미달'))+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">퇴회율 4.6%↓</div><div class="ig4v" style="font-size:15px;color:'+(toiOk?'var(--green)':'var(--t2)')+'">'+(toiOk?'✅ 50만':(toi<4.7?'순증 미달':'미달'))+'</div></div>'
       +'<div class="ig4"><div class="ig4l">마.스.타 누적 인당</div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">인당 1.5↑</div><div class="ig4v" style="font-size:15px;color:'+(mOk?'var(--green)':'var(--t2)')+'">'+(mOk?'✅ 50만':'미달')+'</div></div>'
     +'</div>'
@@ -2543,7 +2543,7 @@ function parseJigu(jiguData){
 
 var SEJONG_TOI_GRADES_JIGU=[[3.5,50],[3.7,46],[3.9,42],[4.1,38],[4.3,34],[4.5,30],[4.8,25]];
 var SEJONG_TOI_GRADES_OTH=[[3.7,50],[3.9,46],[4.1,42],[4.3,38],[4.5,34],[4.7,30],[4.9,25]];
-function sejongToiScore(rate,lv){var t=(lv==='지구')?SEJONG_TOI_GRADES_JIGU:SEJONG_TOI_GRADES_OTH;for(var i=0;i<t.length;i++){if(rate<=t[i][0])return t[i][1];}return 0;}
+function sejongToiScore(rate,lv){var t=(lv==='지구')?SEJONG_TOI_GRADES_JIGU:SEJONG_TOI_GRADES_OTH;for(var i=0;i<t.length;i++){if(rate<t[i][0]+0.1)return t[i][1];}return 0;}
 function parseToiFile(data){
   // 예상퇴회 파일: 소속코드(0) 전월말과목(4) 예상퇴회(6). header 2줄.
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -2560,7 +2560,7 @@ function parseMutoe(data){
   return cnt;
 }
 var SEJONG_ITAL_GRADES=[[2.4,20],[2.7,17],[3.0,14],[3.3,11],[3.6,8],[3.9,5]];
-function sejongItalScore(rate){for(var i=0;i<SEJONG_ITAL_GRADES.length;i++){if(rate<=SEJONG_ITAL_GRADES[i][0])return SEJONG_ITAL_GRADES[i][1];}return 0;}
+function sejongItalScore(rate){for(var i=0;i<SEJONG_ITAL_GRADES.length;i++){if(rate<SEJONG_ITAL_GRADES[i][0]+0.1)return SEJONG_ITAL_GRADES[i][1];}return 0;}
 function parseItal(data){
   // ⑧ 회원증감_지구/소계: 이탈(col13) 이탈률(col14). 조직별. 헤더 여러 줄 → 데이터 시작 탐색.
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
