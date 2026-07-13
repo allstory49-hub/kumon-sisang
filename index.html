@@ -1126,7 +1126,7 @@ function eliteJiguCard(){
   var win=qual&&meR&&meR.rank<=20;
   var remain='';
   if(small)remain='<div class="icremain">교사수 5인 이하로 제외 대상이에요.</div>';
-  else if(ach<100)remain='<div class="icremain">🎯 달성률 100%까지 <b>'+fmtD(100-ach)+'%p</b> 남음</div>';
+  else if(ach<100)remain='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(q3flr(f.목표-f.순증,1))+'</b> 남음</div>';
   else if(f.D순증<1)remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-f.D순증)+'</b> 남음</div>';
   else if(!win&&meR){var above=rankAll[meR.rank-2];if(above)remain='<div class="icnext">⬆️ '+(meR.rank-1)+'위까지 달성률 <b>'+fmtD(above.달성률-ach)+'%p</b> 남음</div>';}
   return '<div class="incsec"><div class="incsech">🏆 엘리트 지구장 <span class="rqbadge">상대평가</span></div>'
