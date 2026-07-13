@@ -2018,12 +2018,18 @@ function toiCard(code){
     +(!t.m9.inFile?'<div class="ib am" style="margin-bottom:0">· 9월 예상퇴회 명단에 없어 퇴회 0으로 처리하고, 과목수는 이전 월 값을 그대로 사용했어요.</div>':'')
     +'</div>';
 }
+function sejongClubOf(score){
+  if(score>=90)return {n:'세종 클럽',pay:200000,c:'#7c3aed'};
+  if(score>=70)return {n:'율곡 클럽',pay:150000,c:'#2563eb'};
+  if(score>=50)return {n:'퇴계 클럽',pay:100000,c:'#0f7a4d'};
+  return null;
+}
 function sejongPersonal(forceLv){
   var S2=APP.sejong;if(!S2)return '';
   var isOrg=(S.type==='org'&&(S.pos==='지구'||S.pos==='지국'));
   var lv=isOrg?S.pos:(forceLv||'지국');
   var head='<div class="stl" style="margin-top:20px">🏅 관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7~9월 잠정</span></div>'
-    +'<div class="ib am">🚧 <b>준비 중</b> · 3분기(2026.07~09) 평가 · ① 퇴회율 · ② 이탈률 반영됐고, 나머지 항목(③~⑤)은 실적 반영 후 표시됩니다.</div>';
+    +'<div class="ib bl">3분기(2026.07~09) 평가 · 현재 ① 퇴회율 · ② 이탈률 반영 (③~⑤는 실적 반영 시 합산). 점수·클럽은 실적이 들어올수록 갱신돼요.</div>';
   var grades='<div class="sjgrades">'
     +'<div class="sjg" style="border-color:#7c3aed"><div class="sjgn" style="color:#7c3aed">세종 클럽</div><div class="sjgp">90점<span class="sjup">↑</span></div><div class="sjga" style="color:#7c3aed">20만원</div></div>'
     +'<div class="sjg" style="border-color:#2563eb"><div class="sjgn" style="color:#2563eb">율곡 클럽</div><div class="sjgp">70점<span class="sjup">↑</span></div><div class="sjga" style="color:#2563eb">15만원</div></div>'
@@ -2037,10 +2043,17 @@ function sejongPersonal(forceLv){
     var s1=t?toiScoreTotal(S.user.소속코드):0, s2=it?italScoreTotal(S.user.소속코드):0;
     var haveAny=(t||it);
     var sum=s1+s2;
-    var totV=haveAny?(sum+' <span style="font-size:13px;color:var(--t3)">(①②만 반영)</span>'):'—';
-    personal='<div class="stl" style="margin-top:14px">'+nm+' 예상 점수</div>'
-      +'<div class="sjtot"><div class="sjtotl">'+nm+' · 3분기 예상 합계</div><div class="sjtotv">'+totV+' <span>/ 120점</span></div><div class="sjtotg">예상 등급 <b>미정 (③~⑤ 준비중)</b></div></div>'
-      +'<div class="ib bl" style="margin-bottom:0">현재 반영: ① 퇴회율 '+s1+'점 + ② 이탈률 '+s2+'점 = <b>'+sum+'점</b></div>'
+    var club=sejongClubOf(sum);
+    var nextName='',nextGap=0;
+    if(sum<50){nextName='퇴계 클럽';nextGap=50-sum;}
+    else if(sum<70){nextName='율곡 클럽';nextGap=70-sum;}
+    else if(sum<90){nextName='세종 클럽';nextGap=90-sum;}
+    var totBox='<div class="sjtot"'+(club?' style="border-color:'+club.c+'"':'')+'><div class="sjtotl">'+nm+' · 3분기 예상 합계</div>'
+      +'<div class="sjtotv"'+(club?' style="color:'+club.c+'"':'')+'>'+(haveAny?sum:'—')+' <span>/ 120점</span></div>'
+      +'<div class="sjtotg">'+(club?('현재 <b style="color:'+club.c+'">'+club.n+'</b> · 예상 시상금 <b>'+fmt(club.pay)+'원</b>'):(haveAny?'클럽 기준(50점) 미달':'실적 대기'))+(nextName?' · '+nextName+'까지 '+fmt(nextGap)+'점':'')+'</div></div>';
+    personal='<div class="stl" style="margin-top:14px">'+nm+' 클럽 선정 현황</div>'
+      +totBox
+      +'<div class="ib bl" style="margin-bottom:0">현재 반영: ① 퇴회율 '+s1+'점 + ② 이탈률 '+s2+'점 = <b>'+sum+'점</b> (③~⑤ 반영 시 합산)</div>'
       +toiCard(S.user.소속코드)
       +italCard(S.user.소속코드);
   }
@@ -2050,7 +2063,7 @@ function sejongClub(){
   var S2=APP.sejong;
   if(!S.sjLv)S.sjLv='지국';
   var head='<div class="mt">관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7~9월 잠정</span></div>'
-    +'<div class="ib am">🚧 <b>준비 중 (관리자 전용 미리보기)</b> · 3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(7~9월 누적) · ② 이탈률(7월 당월, 매일 갱신) 반영됐어요. 나머지 항목(③~⑤)은 실적 반영 후 표시됩니다.</div>';
+    +'<div class="ib bl">3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(7~9월 누적) · ② 이탈률(7월 당월, 매일 갱신) 반영 · ③~⑤는 실적 반영 시 합산돼요. 아래 클럽·시상금은 현재 반영분 기준 잠정이에요.</div>';
   // 등급 카드
   var grades=[{n:'세종 클럽',p:'90점',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점',a:'10만원',c:'#0f7a4d'}];
   var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'<span class="sjup">↑</span></div><div class="sjga" style="color:'+g.c+'">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
@@ -2062,14 +2075,23 @@ function sejongClub(){
   if(!S2){listBody='<div class="ib bl">조직 명단을 불러오는 중...</div>';}
   else{
     var arr=S2[S.sjLv]||[];
-    var rhead='<div class="sjrh"><div class="sjr-no">No</div><div class="sjr-nm">소속</div><div class="sjr-sc">①퇴회</div><div class="sjr-sc">②이탈</div><div class="sjr-sc">③제출</div><div class="sjr-sc">④사이렌</div><div class="sjr-sc">⑤오답</div><div class="sjr-tot">합계</div><div class="sjr-gr">등급</div></div>';
-    var rows=arr.slice(0,100).map(function(o,i){var t=APP.sejongToi&&APP.sejongToi[o.code];var it=APP.sejongItal&&APP.sejongItal[o.code];
-      var s1=t?toiScoreTotal(o.code):null, s2=it?italScoreTotal(o.code):null;
-      var toiCell=t?('<b style="color:var(--green)">'+s1+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(t.quarter.rate)+'%</span>'):'—';
-      var italCell=it?('<b style="color:var(--green)">'+s2+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(it.rate)+'%</span>'):'—';
-      var sum=((s1||0)+(s2||0));var sumCell=(t||it)?('<b>'+sum+'</b>'):'—';
-      return '<div class="sjrow"><div class="sjr-no">'+(i+1)+'</div><div class="sjr-nm">'+o.name+'<br><span class="rsb">'+o.chong+'</span></div><div class="sjr-sc">'+toiCell+'</div><div class="sjr-sc">'+italCell+'</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-tot">'+sumCell+'</div><div class="sjr-gr">미정</div></div>';}).join('');
-    listBody='<div class="ib gr" style="margin-top:8px">'+S.sjLv+' 대상 '+fmt(arr.length)+'개 (점수는 실적 반영 후 표시)</div><div class="sjtable">'+rhead+rows+'</div>'+(arr.length>100?'<div class="ib bl">· 상위 100개만 표시 중 (전체 '+fmt(arr.length)+'개)</div>':'');
+    // 합계 점수 내림차순 정렬
+    var enriched=arr.map(function(o){var t=APP.sejongToi&&APP.sejongToi[o.code];var it=APP.sejongItal&&APP.sejongItal[o.code];
+      var s1=t?toiScoreTotal(o.code):null,s2=it?italScoreTotal(o.code):null;
+      return {o:o,t:t,it:it,s1:s1,s2:s2,sum:((s1||0)+(s2||0)),has:!!(t||it)};});
+    enriched.sort(function(a,b){return b.sum-a.sum;});
+    var clubCnt={세종:0,율곡:0,퇴계:0};
+    enriched.forEach(function(e){var c=sejongClubOf(e.sum);if(c){if(c.n.indexOf('세종')>=0)clubCnt.세종++;else if(c.n.indexOf('율곡')>=0)clubCnt.율곡++;else clubCnt.퇴계++;}});
+    var rhead='<div class="sjrh"><div class="sjr-no">No</div><div class="sjr-nm">소속</div><div class="sjr-sc">①퇴회</div><div class="sjr-sc">②이탈</div><div class="sjr-sc">③제출</div><div class="sjr-sc">④사이렌</div><div class="sjr-sc">⑤오답</div><div class="sjr-tot">합계</div><div class="sjr-gr">클럽</div></div>';
+    var rows=enriched.slice(0,100).map(function(e,i){var o=e.o;
+      var toiCell=e.t?('<b style="color:var(--green)">'+e.s1+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(e.t.quarter.rate)+'%</span>'):'—';
+      var italCell=e.it?('<b style="color:var(--green)">'+e.s2+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(e.it.rate)+'%</span>'):'—';
+      var sumCell=e.has?('<b>'+e.sum+'</b>'):'—';
+      var club=sejongClubOf(e.sum);
+      var grCell=club?('<b style="color:'+club.c+'">'+club.n.replace(' 클럽','')+'</b>'):(e.has?'<span style="color:var(--t3)">미달</span>':'—');
+      return '<div class="sjrow"><div class="sjr-no">'+(i+1)+'</div><div class="sjr-nm">'+o.name+'<br><span class="rsb">'+o.chong+'</span></div><div class="sjr-sc">'+toiCell+'</div><div class="sjr-sc">'+italCell+'</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-sc">—</div><div class="sjr-tot">'+sumCell+'</div><div class="sjr-gr">'+grCell+'</div></div>';}).join('');
+    var clubSummary='<div class="ib gr" style="margin-top:8px">'+S.sjLv+' 대상 '+fmt(arr.length)+'개 · 현재 잠정 선정 → 세종 '+clubCnt.세종+' · 율곡 '+clubCnt.율곡+' · 퇴계 '+clubCnt.퇴계+'개 (합계순 정렬)</div>';
+    listBody=clubSummary+'<div class="sjtable">'+rhead+rows+'</div>'+(arr.length>100?'<div class="ib bl">· 상위 100개만 표시 중 (전체 '+fmt(arr.length)+'개)</div>':'');
   }
   return head+gcards+ilist+'<div class="stl" style="margin-top:18px">대상 조직 명단</div>'+lvtog+listBody+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
