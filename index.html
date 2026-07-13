@@ -1685,7 +1685,7 @@ function myTeacher(){
   var r=S.user,aw=fmt1(r.시상계);
   var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
   var sn=shortName(r.소속명)||r.소속명;
-  var items=[['과목순증',r.과목순증],['특별점수(마스타)',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['펜세트점수',r.펜세트점수],['스구N전환재약정',r.스구N전환재약정],['스구N재약정',r.스구N재약정]];
+  var items=[['과목순증',r.과목순증],['마.스.타 약정 점수',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['SKN재약정점수',r.스구N재약정]];
   return '<div class="mt">내 실적</div>'
     +'<div class="ib gr">📅 기준일: '+(APP.meta.date||'')+'&nbsp;·&nbsp;대상자 '+(APP.meta.total||0).toLocaleString()+'명</div>'
     +'<div class="hc"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb"><span class="bpos g">구몬교사</span> · 근무 '+r.근무기간+'개월</div></div></div>'
@@ -1772,7 +1772,7 @@ function myOrg(){
       +'<div class="sb flip"><div class="slb">총국 순위<br>('+S.pos+' '+(r.총국총원?r.총국총원.toLocaleString():'-')+'개 중)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDeltaBr(APP.prevO,r.소속코드,r.총국순위,'c')+'</div></div></div>';
 
   var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
-  var oitems=[['과목순증',r.과목순증],['특별점수(마스타)',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['펜세트점수',r.펜세트점수],['스구N전환재약정',r.스구N전환재약정],['스구N재약정',r.스구N재약정]];
+  var oitems=[['과목순증',r.과목순증],['마.스.타 약정 점수',r.특별점수],['디지털순증',r.디지털순증],['태블릿점수',r.태블릿점수],['SKN재약정점수',r.스구N재약정]];
   var detail='<div class="stl">항목별 내역</div><div class="cl">'
     +oitems.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+((i[1]||0)<0?' r':'')+'">'+fmt(i[1]||0)+'</span></div>';}).join('')
     +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+((r.시상점수||0)<0?' r':'')+'" style="font-size:15px">'+fmt1(r.시상점수||0)+'</span></div>'
@@ -2360,7 +2360,7 @@ function parseTeacher(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계']),입회관리과목:findCol(h,['입회 관리과목']),당복:findCol(h,['당복'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['MST약정점수','특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계']),입회관리과목:findCol(h,['입회 관리과목']),당복:findCol(h,['당복'])};
   if(C.교사명<0)throw new Error('교사명 열을 찾지 못했습니다.');
   var rec=[];
   for(var i=2;i<rows.length;i++){
@@ -2611,7 +2611,7 @@ function parseOrg(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['MST약정점수','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
   if(C.소속코드<0)throw new Error('소속코드 열을 찾지 못했습니다.');
   var res={지구:[],지국:[],사업국:[],총국:[]};
   for(var i=2;i<rows.length;i++){
