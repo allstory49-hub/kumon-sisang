@@ -1974,7 +1974,7 @@ function italScoreTotal(code){
 function toiYoyReplace(code,quarterRate,baseScore){
   // ① 전년比 퇴회 감소(%p): 급간 이상이면 더 높은 점수로 대체. 단 분기 5.5%↑ 제외.
   var p=APP.sejongPrev&&APP.sejongPrev[code];
-  if(!p||p.퇴회율==null||quarterRate>5.5)return {score:baseScore,prev:(p?p.퇴회율:null),drop:null,altScore:null,used:false};
+  if(!p||p.퇴회율==null||quarterRate>=5.5)return {score:baseScore,prev:(p?p.퇴회율:null),drop:null,altScore:null,used:false};
   var drop=q3flr(p.퇴회율-quarterRate,2);
   var alt=drop>=2.5?35:drop>=2.0?30:drop>=1.5?25:drop>=1.0?20:drop>=0.5?15:0;
   var used=alt>baseScore;
@@ -2009,7 +2009,7 @@ function toiCard(code){
   var yr=toiYoyReplace(code,t.quarter.rate,t.score||0);
   var yoyNote='';
   if(yr.prev!=null){
-    yoyNote='<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 퇴회 감소 대체</div><div class="icneed">전년(25.3Q) '+fmtD2(yr.prev)+'% → 3분기 '+fmtD2(t.quarter.rate)+'% · '+(yr.drop>=0?'▼':'▲')+fmtD2(Math.abs(yr.drop))+'%p'+(t.quarter.rate>5.5?' · 분기 5.5%↑ 제외':'')+'</div></div><div class="icright"><div class="icnum" style="color:'+(yr.used?'var(--green)':'var(--t3)')+'">'+(yr.altScore!=null?yr.altScore+'점':'-')+'</div></div></div>';
+    yoyNote='<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 퇴회 감소 대체</div><div class="icneed">전년(25.3Q) '+fmtD2(yr.prev)+'% → 3분기 '+fmtD2(t.quarter.rate)+'% · '+(yr.drop>=0?'▼':'▲')+fmtD2(Math.abs(yr.drop))+'%p'+(t.quarter.rate>=5.5?' · 분기 5.5%↑ 제외':'')+'</div></div><div class="icright"><div class="icnum" style="color:'+(yr.used?'var(--green)':'var(--t3)')+'">'+(yr.altScore!=null?yr.altScore+'점':'-')+'</div></div></div>';
   }
   return '<div class="incsec" style="margin-top:10px"><div class="incsech">① 합산과목 퇴회율 실적 <span class="rqbadge" style="background:var(--blue)">7~9월 잠정</span></div>'
     +'<div class="iclist">'+rows+yoyNote+'</div>'
