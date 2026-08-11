@@ -1170,31 +1170,33 @@ function rankTop20All(sorted,myCode){
 var JIKTOI=[{max:3.8,p:3.0},{max:4.1,p:2.0},{max:4.4,p:1.0},{max:4.6,p:0.5}];
 var JIKACH=[{min:200,p:2.0,l:'200% 이상'},{min:100,p:1.5,l:'100% 이상'},{min:50,p:1.0,l:'50% 이상'}];
 function jikAchieveCard(){
-  var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
-  if(!f||f.lv!=='지국')return '<div class="incsec"><div class="incsech">📈 지국 달성률</div><div class="ib am">이번 지국 달성률 명단에 없어요.</div></div>';
-  var ach=(f.달성률!=null)?f.달성률:(f.목표!==0?q3flr(f.순증/f.목표*100,2):0);
+  var code=(S.user&&S.user.소속코드)||'';
+  var fr=code?orgFresh(code):null;               // 8월 단월 실적(baked)
+  var q=code?q3get(code):null;                   // 교사수 등 보조
+  if(!fr||!q||q.lv!=='지국')return '<div class="incsec"><div class="incsech">📈 지국 달성률</div><div class="ib am">이번 지국 달성률 명단에 없어요.</div></div>';
+  var ach=Number(fr.달성률)||0;                   // 8월 단월 달성률
+  var sun=Number(fr.과목순증)||0;                  // 8월 단월 순증
+  var tno=Number(fr.전월말)||Number(q.교사수)||0;
   var row=-1;for(var i=0;i<JIKACH.length;i++){if(ach>=JIKACH[i].min){row=i;break;}}
-  var unit=(row>=0)?JIKACH[row].p:(f.순증>=1?0.5:0);
-  var lbl=(row>=0)?JIKACH[row].l:(f.순증>=1?'순증 1 이상':'미해당');
-  var pay=Math.round(f.교사수*unit*10000);var win=pay>0;
+  var unit=(row>=0)?JIKACH[row].p:(sun>=1?0.5:0);
+  var lbl=(row>=0)?JIKACH[row].l:(sun>=1?'순증 1 이상':'미해당');
+  var pay=Math.round(tno*unit*10000);var win=pay>0;
   var tiers=JIKACH.map(function(g,i){var on=(row===i);
     return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">달성률 '+g.l+'</div><div class="jtr">교사수 × <b>'+fmtD(g.p)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('')
-    +'<div class="jtier'+(row<0&&f.순증>=1?' on':'')+'"><div class="jtl">순증 1 이상</div><div class="jtr">교사수 × <b>0.5만원</b>'+(row<0&&f.순증>=1?' <span class="jtnow">현재</span>':'')+'</div></div>';
+    +'<div class="jtier'+(row<0&&sun>=1?' on':'')+'"><div class="jtl">순증 1 이상</div><div class="jtr">교사수 × <b>0.5만원</b>'+(row<0&&sun>=1?' <span class="jtnow">현재</span>':'')+'</div></div>';
   var nextGap='';
-  if(row<0&&f.순증<1)nextGap='<div class="icremain">🎯 순증 1까지 <b>'+fmt1(1-f.순증)+'</b> 남음</div>';
-  else if(row>0||row<0){var target=(row<0)?50:JIKACH[row-1].min;var need=q3flr(f.목표*target/100-f.순증,1);
-    if(need>0)nextGap='<div class="icnext">⬆️ 달성률 '+target+'%까지 순증 <b>'+fmt1(need)+'</b> 남음</div>';}
+  if(row<0&&sun<1)nextGap='<div class="icremain">🎯 순증 1까지 <b>'+fmt1(1-sun)+'</b> 남음</div>';
   return '<div class="incsec"><div class="incsech">📈 지국 달성률</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 8월 (단월)</div>'
     +critBlock('합산과목 달성률 급간별 시상금')
     +'<div class="jtiers">'+tiers+'</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">합산과목 달성률</div><div class="ig4v" style="color:'+(win?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">현재 급간</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+lbl+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(f.교사수)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(tno)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(pay)+'원':'-')+'</div></div>'
     +'</div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':'아직 시상 기준 미달이에요')+'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(tno)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':'아직 시상 기준 미달이에요')+'</div>'
     +nextGap
     +'<div class="ib bl" style="margin-bottom:0">· 8월 단월 합산과목 달성률 기준 · 급간별 교사수 비례 시상<br>· 시상금은 9월 운영비에 포함하여 지급돼요.</div></div>';
 }
