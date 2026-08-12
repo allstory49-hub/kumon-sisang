@@ -975,7 +975,7 @@ function club10Card(){
     return '<div class="incsec"><div class="incsech">🏅 온공 10 CLUB <span class="rqbadge">상대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 · <b style="color:var(--green)">✅ 최종 확정</b></div>'
       +'<div class="incres win">🎖️ 이미 '+L.ho+'호점으로 선정되었습니다! ('+L.when+' 달성)</div>'
-      +'<div class="icgift">🎁 현판 제막식·오찬·신형 사물함·호텔 숙박권 · 기보유 지국은 교사수×2만원</div>'
+      +'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함 교체 · 대표님/사업센터장님 지국 방문</div>'
       +lockedHtml
       +'<div class="ib bl" style="margin-bottom:0">· 1~5호점은 기선정 완료 · 이번 인센티브는 6~10호점 선정이에요.</div></div>';
   }
@@ -1000,10 +1000,10 @@ function club10Card(){
       +'<div class="ig4"><div class="ig4l">6~10호점 순위 <span style="font-size:9px;color:var(--t3)">(기선정 제외)</span></div><div class="ig4v">'+(selRank>0?selRank:'-')+'<span style="font-size:12px">위</span></div></div>'
     +'</div>'
     +remain
-    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함·호텔 숙박권 · 기보유 지국은 교사수×2만원</div>':'<div class="icguide">상반기 누적 인당순증 <b>10 이상</b> + 6~10호점 상위 5개(선착순)에 들면 선정돼요.</div>')
+    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함 교체 · 대표님/사업센터장님 지국 방문</div>':'<div class="icguide">상반기 누적 인당순증 <b>10 이상</b> + 6~10호점 상위 5개(선착순)에 들면 선정돼요.</div>')
     +rankTop20(open,code,function(x){return [fmtD2(x.total),'인당'];},5)
     +lockedHtml
-    +'<div class="ib bl" style="margin-bottom:0">· 누적 인당순증 = 1~5월 누적(박제) + 6월 인당(온공 순증 ÷ 전월 교사수)<br>· 1~5호점 기선정 완료 · 이번은 6~10호점 선정 · 동률 시: 조기달성 > 상반기 달성률↑ > 누적 퇴회율↓</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 온공 누적 인당순증 = [월말 온공 순증 ÷ 전월말 교사수]의 누적 합<br>· 매월 마감 실적 기준 선착순 선정 (10호점 달성 시 종료)<br>· 동률 시: 조기달성 &gt; 달성률↑ &gt; 누적 퇴회율↓<br>· 신형 사물함 기보유 지국은 교사수 × 20,000원 지급(운영비)<br>· 시상 내용은 대상 지국 선정 후 개별 공지돼요.</div></div>';
 }
 function eliteCalc(code){
   var b=(APP.elite45||{})[code], j=(APP.elite6||{})[code];
@@ -1198,7 +1198,7 @@ function jikAchieveCard(){
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(tno)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':'아직 시상 기준 미달이에요')+'</div>'
     +nextGap
-    +'<div class="ib bl" style="margin-bottom:0">· 8월 단월 합산과목 달성률 기준 · 급간별 교사수 비례 시상<br>· 시상금은 9월 운영비에 포함하여 지급돼요.</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 8월 합산과목 순증 ÷ 8월 목표 × 100 (둘째자리 절사)<br>· 과목입회는 당복·NKU를 포함해요.<br>· <b>7월말 기준 교사수</b>로 시상금을 지급해요.<br>· 시상금은 9월 운영비에 포함하여 일괄 지급 · 결과는 9월 초 게시판 공지</div></div>';
 }
 function jikToiCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
@@ -1503,7 +1503,7 @@ function mutoeCard(){
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 무퇴회 달성! 예상 시상금 '+fmt(pay)+'원':(!noToe?'8월 퇴회 '+fmt(toiCnt)+'건 발생 · 무퇴회 미해당':(!wkOk?'근무 6개월 미만이라 아직 대상 아니에요':'7월말 관리과목 60 미만이라 아직 대상 아니에요')))+'</div>'
     +'<div class="ib am" style="margin-bottom:0">⚠️ 현재 실적 기준 잠정 결과예요. 8월 마감 시 확정 퇴회로 변동될 수 있어요.</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 8월 한 달간 퇴회가 없는 교사 대상 · 지급월(9월) 재직 일반교사에 한해 지급<br>· 시상금은 8월 수수료에 포함 지급(9/15 명세서, 수수료 기타1)</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 근무기간·전월말 과목수·퇴회는 KSS &gt; 실적관리 &gt; 교사별 평가실적(일단위)에서 확인<br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급<br>· 시상금은 8월 수수료에 포함 지급(9/15 명세서, 수수료 기타1)<br>· 대상자는 9월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
 }
 function mastaTopJulyCard(){
   var arr=(APP.incList||[]).slice().sort(function(a,b){
@@ -1533,8 +1533,30 @@ function mastaTopJulyCard(){
     +'<div class="ib am" style="margin-bottom:0">⚠️ 최종 시상은 7~12월 하반기 누적 온공 순증 기준으로 확정돼요. 지금은 7월 한 달 실적만 반영된 잠정 순위예요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
 }
+function campaignCard(){
+  function c(img,title,price,period,std,gift,notes){
+    return '<div class="incsec"><div class="incsech">'+title+'</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 '+period+' · 지급월 26년 9월</div>'
+      +critBlock(std)
+      +'<div class="giftbox">'+img+'<div style="font-weight:700;font-size:14px;color:var(--t1)">'+gift+'</div></div>'
+      +'<div class="ib bl" style="margin-bottom:0">'+notes+'</div></div>';
+  }
+  return c('<div style="display:flex;gap:8px;justify-content:center"><img class="giftimg" style="max-width:46%" src="carrier_y.jpg" alt="옐로우"><img class="giftimg" style="max-width:46%" src="carrier_m.jpg" alt="민트"></div>',
+      '🧳 3과목 입회 캠페인','','26년 8월','3과목 이상 입회한 <b>유아~초등</b> 회원',
+      '곰돌이 캐릭터 캐리어 18인치 <span style="font-weight:500;color:var(--t3)">(옐로우·민트 랜덤)</span>',
+      '· 3과목 이상 입회 시 <b>과목추가 회원에게도</b> 지급<br>· 입회 과목에는 브플·NKU·온공 포함, <b>당복 제외</b><br>· 확인: 입회관리 &gt; 회원 캠페인 &gt; 리스트 &gt; 입회년월 8월 &gt; 3과목 입회 캠페인<br>· 색상은 랜덤 지급 · A/S: 코르 고객센터 1522-0915')
+    +c('<img class="giftimg" src="pencil.jpg" alt="색연필 미술용품 세트">',
+      '🎨 온공 약정 가입 캠페인','','26년 8월','온공 입회 후 <b>약정 가입</b>한 유아~초등 회원',
+      '색연필 미술용품 세트',
+      '· 온공 입회는 <b>당복 제외</b> · 온공약정은 6·12개월 모두 가능<br>· 기존 온공 학습 회원이 <b>약정만</b> 가입하면 미해당<br>· 8월 중 온공 입회 후 <b>9월 1구간(8일)</b>까지 약정 완료 시 해당<br>· 확인: 약정상품 &gt; 약정변동목록 &gt; 온공약정 &gt; 약정신규<br>· 파손/불량: 급우섭 대표 010-3537-7023')
+    +c('<img class="giftimg" src="daiso.jpg" alt="다이소 상품권">',
+      '💳 스마트구몬N 약정 가입 캠페인','','26년 8월','스마트구몬N 입회 후 <b>약정 계약</b> 회원 (9월 약정 시작 기준)',
+      '다이소 실물 카드 1만원권',
+      '· <b>당복·재약정·디바이스 약정 제외</b><br>· 기존 NKU 학습 회원이 약정만 가입하면 미해당<br>· 8월 중 NKU 입회 후 9월 1구간(8일)까지 약정 완료 시 해당<br>· 3과목 입회·온공 약정 캠페인과 <b>중복 지급</b>돼요.<br>· 사은품은 9월 중 사업장으로 배송')
+    +'<div class="ib am" style="margin-bottom:0">📌 회원 캠페인은 <b>회원(고객) 대상</b> 사은품이에요. 대상자는 9월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다.</div>';
+}
 function julyTeacher(){
-  var tabs=['월성과','무퇴회','온공Top'];
+  var tabs=['월성과','무퇴회','온공Top','회원캠페인'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
   var inc=APP.incMap[(S.user&&S.user.교사번호)||''];
   var body;
@@ -1547,14 +1569,15 @@ function julyTeacher(){
       +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
       +critBlock('합산과목 순증 <b>6 이상</b> <span style="color:var(--t3)">또는</span> 합산과목 입회 <b>13 이상</b>')
       +'<div class="stl" style="margin-top:14px">사은품</div>'
-      +'<div class="giftbox"><img class="giftimg" src="wagon.jpg" alt="레비오사 롱 익스펜션 폴딩 웨건"><div style="font-weight:700;font-size:14px;color:var(--t1)">레비오사 롱 익스펜션 폴딩 웨건</div><div class="giftpr">소비자가 40,000원</div></div>'
+      +'<div class="giftbox"><img class="giftimg" src="wagon.jpg" alt="레비오사 롱 익스펜션 폴딩웨건"><div style="font-weight:700;font-size:14px;color:var(--t1)">레비오사 롱 익스펜션 폴딩웨건</div><div class="giftpr">소비자가 298,000원</div></div>'
       +'<div class="incgrid4"><div class="ig4"><div class="ig4l">합산과목 순증 <span style="font-size:9px;color:var(--t3)">(6↑)</span></div><div class="ig4v" style="color:'+(sj<0?'var(--red)':okS?'var(--green)':'var(--t1)')+'">'+fmt1(sj)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">합산과목 입회 <span style="font-size:9px;color:var(--t3)">(13↑)</span></div><div class="ig4v" style="color:'+(okI?'var(--green)':'var(--t1)')+'">'+fmt1(ip)+'</div></div></div>'
       +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 달성! 폴딩 웨건 지급 대상입니다! ('+(okS?'순증':'입회')+' 기준)':'아직 미달이에요 (둘 중 하나만 달성하면 돼요)')+'</div>'
       +(ok?'':'<div class="icremain">🎯 순증 6까지 <b>'+rS+'</b> 남음 · 입회 13까지 <b>'+rI+'</b> 남음</div>')
-      +'<div class="ib bl" style="margin-bottom:0">· 합산과목 순증·입회는 인정입회·NKU·당복을 포함해요.<br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급돼요.</div></div>';
+      +'<div class="ib bl" style="margin-bottom:0">· 합산과목 <b>순증</b>은 인정입회·NKU·<b>당복 포함</b><br>· 합산과목 <b>입회</b>는 인정입회·NKU 포함, <b>당복 제외</b><br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급<br>· A/S: 디엔테크코리아 02-2661-3046<br>· 대상자는 9월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
   }
   else if(S.jtab==='무퇴회')body=mutoeCard();
+  else if(S.jtab==='회원캠페인')body=campaignCard();
   else body=mastaTopJulyCard();
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 김성희 매니저 (02-397-9436)');
 }
@@ -1613,7 +1636,7 @@ function jiguMemberJuly(){
     +'<div class="ig4"><div class="ig4l">지급액</div><div class="ig4v" style="color:'+(win?'var(--green)':'var(--t1)')+'">'+fmt(pay)+'원</div></div></div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+fmt(pay)+'원 지급 대상! (순증 '+fmt(ns)+' × 1만원)':'아직 회원순증 1 미달이에요')+'</div>'
     +(!win?'<div class="icremain">🎯 기준(1)까지 <b>'+fmt(1-ns)+'</b> 남음</div>':'')
-    +'<div class="ib bl" style="margin-bottom:0">· 회원순증 = 당월 회원증감 중 회원 순증(인계인수 제외) 계<br>· 시상금은 8월 운영비에 포함하여 일괄 지급돼요.</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 회원순증 확인: KSS &gt; 실적관리 &gt; 연령별 회원증감 &gt; 소속별 조회 &gt; 당월 회원 증감 &gt; 회원 순증(인계인수 제외) &gt; 계<br>· 시상금은 9월 운영비에 포함하여 일괄 지급 · 결과는 9월 초 게시판 공지</div></div>';
 }
 function jiguInc(){
   var u=S.user, j=APP.incJiguMap[u.소속코드]||{회원순증:0};
@@ -1931,7 +1954,7 @@ function info(){
   if(S.type==='org')return '<div class="mt">조직 시상 기준</div>'
     +'<div class="ib am" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--amber)">📌 26년 7월부터 시상점수 기준이 변경되었습니다.</div>'
     +'<div class="ib bl">시상점수 = 과목순증 + 온공 약정 점수 + 디지털 순증 + 태블릿 점수 + SKN 재약정 점수</div>'
-    +'<div class="ib bl">※ 온공 약정 점수 = 온공 약정 순증 × 0.5점</div>'
+    +'<div class="ib bl">※ 온공 약정 점수 = 온공 약정 순증 × 0.5점<br>예) 약정순증 10 → 5점 · 0 → 0점 · <b>-5 → -2.5점</b> (마이너스도 그대로 합산)<br>· 기존 온공 회원이 약정 가입해도 약정 순증에 반영돼요.</div>'
     +'<div class="ib bl">지구당 점수 = 합계 시상점수 ÷ 담당 지구수 &nbsp;<b>(지국 · 사업국에만 적용)</b></div>'
     +'<div class="stl">최소 기준</div><div class="cl">'
     +'<div class="cr"><span class="cll">과목순증</span><span class="cv">1 이상</span></div>'
@@ -1946,7 +1969,7 @@ function info(){
   return '<div class="mt">시상 기준 안내</div>'
     +'<div class="ib am" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--amber)">📌 26년 7월부터 시상점수 기준이 변경되었습니다.</div>'
     +'<div class="ib bl">시상점수 = 과목순증 + 온공 약정 점수 + 디지털 순증 + 태블릿 점수 + SKN재약정 점수</div>'
-    +'<div class="ib bl">※ 온공 약정 점수 = 온공 약정 순증 × 0.5점</div>'
+    +'<div class="ib bl">※ 온공 약정 점수 = 온공 약정 순증 × 0.5점<br>예) 약정순증 10 → 5점 · 0 → 0점 · <b>-5 → -2.5점</b> (마이너스도 그대로 합산)<br>· 기존 온공 회원이 약정 가입해도 약정 순증에 반영돼요.</div>'
     +'<div class="stl">필수조건 (시상 대상 기준)</div><div class="cl">'
     +'<div class="cr"><span class="cll">과목순증</span><span class="cv">1 이상</span></div>'
     +'<div class="cr"><span class="cll">디지털순증</span><span class="cv">1 이상</span></div>'
