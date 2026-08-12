@@ -2711,11 +2711,15 @@ function buildQ3cur(){
     Object.keys(m).forEach(function(code){if(out[code]){out[code].마스타순증=m[code].마스타순증;out[code].마스타교사=m[code].마스타교사;}});
   });
   // 지국·사업국 관통 파일이 없으면 지구 실적을 합산 롤업해서 채움
+  // 예외: 코드 규칙과 다르게 배속된 지구 (동작/이천/아산/기장/서진주 지국)
+  var JIGU_EXC={JI281:'JI270',JI282:'JI270',JK021:'JK010',JK022:'JK010',
+    RL041:'RL030',RL042:'RL030',TM121:'TM110',TM122:'TM110',
+    TO101:'TO090',TO102:'TO090'};
   if(got.지구&&(!got.지국||!got.사업국)){
     var jik={},eop={};
     Object.keys(out).forEach(function(c){
       if(out[c].lv!=='지구')return;
-      var jc=c.slice(0,4)+'0', ec=c.slice(0,2)+'000';
+      var jc=JIGU_EXC[c]||(c.slice(0,4)+'0'), ec=jc.slice(0,2)+'000';
       if(!jik[jc])jik[jc]={ms:0,tea:0};
       jik[jc].ms+=(Number(out[c].마스타순증)||0);jik[jc].tea+=(Number(out[c].마스타교사)||0);
       if(!eop[ec])eop[ec]={ms:0,tea:0};
