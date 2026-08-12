@@ -2858,9 +2858,9 @@ async function doUpload(){
     if(elite6){try{await saveFile('cumulative/elite_jun.json',JSON.stringify({asof:meta.date,jiguk:elite6}),'elite june update');APP.elite6=elite6;}catch(e){}}
     var mt6={};var mg6=parseMastaTop6One(UP.jigu2?UP.jigu2.data:null,'지구');if(mg6)Object.assign(mt6,mg6);var me6=parseMastaTop6One(UP.eop?UP.eop.data:null,'사업국');if(me6)Object.assign(mt6,me6);
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
-    if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-07',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
+    if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-08',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
     if(UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
-    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,month:'2026-07',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
+    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,month:'2026-08',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
