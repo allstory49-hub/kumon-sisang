@@ -2704,10 +2704,26 @@ function buildQ3cur(){
       마스타순증:p.마스타순증||0,마스타교사:p.마스타교사||s.교사수};
   });
   // 관통에서 마스타 갱신
+  var got={지구:false,지국:false,사업국:false};
   [[UP.jigu2,'지구'],[UP.jik,'지국'],[UP.eop,'사업국']].forEach(function(pair){
     if(!pair[0])return;var m=parseMastaRaw(pair[0].data,pair[1]);if(!m)return;
+    got[pair[1]]=true;
     Object.keys(m).forEach(function(code){if(out[code]){out[code].마스타순증=m[code].마스타순증;out[code].마스타교사=m[code].마스타교사;}});
   });
+  // 지국·사업국 관통 파일이 없으면 지구 실적을 합산 롤업해서 채움
+  if(got.지구&&(!got.지국||!got.사업국)){
+    var jik={},eop={};
+    Object.keys(out).forEach(function(c){
+      if(out[c].lv!=='지구')return;
+      var jc=c.slice(0,4)+'0', ec=c.slice(0,2)+'000';
+      if(!jik[jc])jik[jc]={ms:0,tea:0};
+      jik[jc].ms+=(Number(out[c].마스타순증)||0);jik[jc].tea+=(Number(out[c].마스타교사)||0);
+      if(!eop[ec])eop[ec]={ms:0,tea:0};
+      eop[ec].ms+=(Number(out[c].마스타순증)||0);eop[ec].tea+=(Number(out[c].마스타교사)||0);
+    });
+    if(!got.지국)Object.keys(jik).forEach(function(c){if(out[c]&&out[c].lv==='지국'){out[c].마스타순증=jik[c].ms;if(!out[c].마스타교사)out[c].마스타교사=jik[c].tea;}});
+    if(!got.사업국)Object.keys(eop).forEach(function(c){if(out[c]&&out[c].lv==='사업국'){out[c].마스타순증=eop[c].ms;if(!out[c].마스타교사)out[c].마스타교사=eop[c].tea;}});
+  }
   return out;
 }
 function parseElite6(orgData){
