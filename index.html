@@ -1603,7 +1603,7 @@ function jigukInc(){
 }
 function jiguMemberJuly(){
   var u=S.user||{}, j=APP.incJiguMap[u.소속코드];
-  if(!j)return '<div class="incsec"><div class="incsech">👥 회원 순증</div><div class="ib gr" style="margin-top:0">📅 8월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑧ 회원증감_지구 파일 반영 필요)</div></div>';
+  if(!j)return '<div class="incsec"><div class="incsech">👥 회원 순증</div><div class="ib gr" style="margin-top:0">📅 8월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑥ 회원증감_지구 파일 반영 필요)</div></div>';
   var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
   return '<div class="incsec"><div class="incsech">👥 회원 순증</div>'
     +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
@@ -2031,7 +2031,7 @@ function toiScoreTotal(code){
 }
 function italCard(code){
   var t=APP.sejongItal&&APP.sejongItal[code];
-  if(!t)return '<div class="ib bl" style="margin-top:10px">② 회원 이탈률: 아직 실적 데이터가 없어요. (⑧ 회원증감_지구 업로드 필요)</div>';
+  if(!t)return '<div class="ib bl" style="margin-top:10px">② 회원 이탈률: 아직 실적 데이터가 없어요. (⑥ 회원증감_지구 업로드 필요)</div>';
   var yb=italYoyBonus(code,t.rate);
   var total=(t.score||0)+yb.bonus;
   var yoyRow=(yb.prev!=null)?('<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 감소 가산</div><div class="icneed">전년(25.3Q) '+fmtD2(yb.prev)+'% → 올해 '+fmtD2(t.rate)+'% · '+(yb.drop>=0?'▼':'▲')+fmtD2(Math.abs(yb.drop))+'%p</div></div><div class="icright"><div class="icnum" style="color:'+(yb.bonus>0?'var(--green)':'var(--t3)')+'">+'+yb.bonus+'<span style="font-size:12px">점</span></div></div></div>'):'';
@@ -2215,7 +2215,7 @@ function adminInc7(){
         });
         mtStat='<div class="incstat"><div class="isl">무퇴회 인센티브 (8월)<span class="issub">근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(pay130)+'명(2만)·60~129 '+fmt(pay60)+'명(1만)</span></div><div class="isr"><span class="isn">'+fmt(elig)+'명</span><span class="isp">'+(APP.mutoeAsof||'잠정')+'</span><span class="isamt">예상 '+fmt(pay130*20000+pay60*10000)+'원</span></div></div>';
       }else{
-        mtStat='<div class="incstat na"><div class="isl">무퇴회 인센티브 (8월)</div><div class="isrna">⑬ 예상퇴회 목록 업로드 필요</div></div>';
+        mtStat='<div class="incstat na"><div class="isl">무퇴회 인센티브 (8월)</div><div class="isrna">⑩ 예상퇴회 목록 업로드 필요</div></div>';
       }
       body='<div class="incwrap">'
         +'<div class="incstat"><div class="isl">월 성과 인센티브 (텐트)<span class="issub">합산과목 순증 5↑ · 실물 사은품</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">그늘막 텐트</span></div></div>'
@@ -2248,7 +2248,7 @@ function shinhanStat(){
   return '<div class="incstat"><div class="isl">지국 신한카드 발급 (7월)<span class="issub">발급 건수 × 3만원 (운영비)</span></div><div class="isr"><span class="isn">'+fmt(ks.length)+'개 지국</span><span class="isp">'+fmt(cnt)+'건</span><span class="isamt">예상 '+fmt(cnt*30000)+'원</span></div></div>';
 }
 function sejongToiStat(lv){
-  var T=APP.sejongToi;if(!T)return '<div class="incstat na"><div class="isl">세종클럽 ① 퇴회율 ('+lv+')</div><div class="isrna">⑪⑫ 예상퇴회 업로드 필요</div></div>';
+  var T=APP.sejongToi;if(!T)return '<div class="incstat na"><div class="isl">세종클럽 ① 퇴회율 ('+lv+')</div><div class="isrna">⑧⑨ 예상퇴회 업로드 필요</div></div>';
   var codes=Object.keys(T).filter(function(c){return T[c].lv===lv;});
   if(!codes.length)return '<div class="incstat na"><div class="isl">세종클럽 ① 퇴회율 ('+lv+')</div><div class="isrna">해당 조직 없음</div></div>';
   var avg=codes.reduce(function(s,c){return s+(T[c].quarter.rate||0);},0)/codes.length;
@@ -2345,39 +2345,31 @@ function upload(){
     +'<div class="upz'+(UP.jik2?' done':'')+'" onclick="document.getElementById(\'jk2f\').click()"><div class="upi'+(UP.jik2?' done':'')+'">'+(UP.jik2?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jik2?UP.jik2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik2?' done':'')+'">지국 온공 동률기준(달성률·D순증) 파일</div></div></div>'
     +'<input type="file" id="jk2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik2\')">'
-    +'<div class="stl">④ 관통_사업국.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 추후 연동</span></div>'
-    +'<div class="upz'+(UP.eop?' done':'')+'" onclick="document.getElementById(\'eopf\').click()"><div class="upi'+(UP.eop?' done':'')+'">'+(UP.eop?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.eop?UP.eop.name:'파일 선택하기')+'</div><div class="ups'+(UP.eop?' done':'')+'">사업국 관리과목 통계 (신규)</div></div></div>'
-    +'<input type="file" id="eopf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'eop\')">'
-    +'<div class="stl">⑤ 관통_지국.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지국 온공 인센티브용</span></div>'
-    +'<div class="upz'+(UP.jik?' done':'')+'" onclick="document.getElementById(\'jkf\').click()"><div class="upi'+(UP.jik?' done':'')+'">'+(UP.jik?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.jik?UP.jik.name:'파일 선택하기')+'</div><div class="ups'+(UP.jik?' done':'')+'">지국 온공 인당순증 파일</div></div></div>'
-    +'<input type="file" id="jkf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jik\')">'
-    +'<div class="stl">⑥ 관통_지구.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 추후 연동</span></div>'
+    +'<div class="stl">④ 관통_지구.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 추후 연동</span></div>'
     +'<div class="upz'+(UP.jigu2?' done':'')+'" onclick="document.getElementById(\'jg2f\').click()"><div class="upi'+(UP.jigu2?' done':'')+'">'+(UP.jigu2?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jigu2?UP.jigu2.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu2?' done':'')+'">지구 관리과목 통계 (신규)</div></div></div>'
     +'<input type="file" id="jg2f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu2\')">'
-    +'<div class="stl">⑦ 관통_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 온공 인센티브용</span></div>'
+    +'<div class="stl">⑤ 관통_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 온공 인센티브용</span></div>'
     +'<div class="upz'+(UP.masta?' done':'')+'" onclick="document.getElementById(\'maf\').click()"><div class="upi'+(UP.masta?' done':'')+'">'+(UP.masta?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.masta?UP.masta.name:'파일 선택하기')+'</div><div class="ups'+(UP.masta?' done':'')+'">온공 과목 순증 파일</div></div></div>'
     +'<input type="file" id="maf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'masta\')">'
-    +'<div class="stl">⑧ 회원증감_지구/소계사용.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
+    +'<div class="stl">⑥ 회원증감_지구/소계사용.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 지구 인센티브용</span></div>'
     +'<div class="upz'+(UP.jigu?' done':'')+'" onclick="document.getElementById(\'jif\').click()"><div class="upi'+(UP.jigu?' done':'')+'">'+(UP.jigu?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.jigu?UP.jigu.name:'파일 선택하기')+'</div><div class="ups'+(UP.jigu?' done':'')+'">지구 회원순증 파일</div></div></div>'
     +'<input type="file" id="jif" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'jigu\')">'
-    +'<div class="stl">⑨ 회원증감_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
+    +'<div class="stl">⑦ 회원증감_교사.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 인센티브용</span></div>'
     +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
     +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
-    +'<div class="stl">⑪ 8월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
+    +'<div class="stl">⑧ 8월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
     +'<div class="upz'+(UP.toi8?' done':'')+'" onclick="document.getElementById(\'t8f\').click()"><div class="upi'+(UP.toi8?' done':'')+'">'+(UP.toi8?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.toi8?UP.toi8.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi8?' done':'')+'">8월 예상퇴회·전월말과목 파일</div></div></div>'
     +'<input type="file" id="t8f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi8\')">'
-    +'<div class="stl">⑫ 9월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
+    +'<div class="stl">⑨ 9월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 세종클럽 퇴회율용</span></div>'
     +'<div class="upz'+(UP.toi9?' done':'')+'" onclick="document.getElementById(\'t9f\').click()"><div class="upi'+(UP.toi9?' done':'')+'">'+(UP.toi9?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.toi9?UP.toi9.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi9?' done':'')+'">9월 예상퇴회·전월말과목 파일</div></div></div>'
     +'<input type="file" id="t9f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi9\')">'
-    +'<div class="stl">⑬ 8월_예상퇴회목록(교사별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 교사 무퇴회 인센티브용</span></div>'
+    +'<div class="stl">⑩ 8월_예상퇴회목록(교사별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 교사 무퇴회 인센티브용</span></div>'
     +'<div class="upz'+(UP.mutoe?' done':'')+'" onclick="document.getElementById(\'mtf\').click()"><div class="upi'+(UP.mutoe?' done':'')+'">'+(UP.mutoe?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.mutoe?UP.mutoe.name:'파일 선택하기')+'</div><div class="ups'+(UP.mutoe?' done':'')+'">8월 예상퇴회 목록(교사정보 열 기준 · 명단에 없는 교사=무퇴회)</div></div></div>'
     +'<input type="file" id="mtf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'mutoe\')">'
@@ -2587,7 +2579,7 @@ function parseMutoe(data){
 var SEJONG_ITAL_GRADES=[[2.4,20],[2.7,17],[3.0,14],[3.3,11],[3.6,8],[3.9,5]];
 function sejongItalScore(rate){for(var i=0;i<SEJONG_ITAL_GRADES.length;i++){if(rate<SEJONG_ITAL_GRADES[i][0]+0.1)return SEJONG_ITAL_GRADES[i][1];}return 0;}
 function parseItal(data){
-  // ⑧ 회원증감_지구/소계: 이탈(col13) 이탈률(col14). 조직별. 헤더 여러 줄 → 데이터 시작 탐색.
+  // ⑥ 회원증감_지구/소계: 이탈(col13) 이탈률(col14). 조직별. 헤더 여러 줄 → 데이터 시작 탐색.
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
   var start=4;for(var i=0;i<20;i++){var r=rows[i];if(!r)continue;if(/^[A-Za-z]{2}\d{3}$/.test(String(r[0]||'').trim())){start=i;break;}}
   var m={};
