@@ -1244,24 +1244,28 @@ function jikToiCard(){
 function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='사업국')return '<div class="incsec"><div class="incsech">📉 퇴회율 & 온공 (사업국)</div><div class="ib am">이번 명단에 없어요.</div></div>';
-  var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;
+  var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;   // 3분기 누적(q3cum+q3cur)
   var toiOk=(toi<4.7&&f.순증>=1);
   var mPer=f.마스타교사?q3flr(f.마스타순증/f.마스타교사,2):0;var mOk=(mPer>=1.5);
   var total=(toiOk?500000:0)+(mOk?500000:0);
   return '<div class="incsec"><div class="incsech">📉 퇴회율 & 온공 (사업국)</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
-    +critBlock('퇴회율 <b>4.6%↓</b>(순증 1↑) · 온공 누적 인당 <b>1.5↑</b>')
-    +'<div class="ictiers">퇴회율 4.6%↓(순증1↑) → <b>50만원</b> · 온공 인당 1.5↑ → <b>50만원</b> (각각)</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 <b>누적</b> · 7월부터 집계</div>'
+    +critBlock('3분기 누적 퇴회율 <b>4.6%↓</b>(순증 1↑) · 온공 누적 인당순증 <b>1.5↑</b>')
+    +'<div class="jtiers">'
+      +'<div class="jtier'+(toiOk?' on':'')+'"><div class="jtl">3분기 누적 퇴회율 4.6% 이하 <span style="font-size:10px;color:var(--t3)">(순증 1↑)</span></div><div class="jtr"><b>50만원</b>'+(toiOk?' <span class="jtnow">달성</span>':'')+'</div></div>'
+      +'<div class="jtier'+(mOk?' on':'')+'"><div class="jtl">3분기 누적 온공 인당순증 1.5 이상</div><div class="jtr"><b>50만원</b>'+(mOk?' <span class="jtnow">달성</span>':'')+'</div></div>'
+    +'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">퇴회율 <span style="font-size:9px;color:var(--t3)">(순증1↑)</span></div><div class="ig4v" style="color:'+(toiOk?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
-      +'<div class="ig4"><div class="ig4l">퇴회율 4.6%↓</div><div class="ig4v" style="font-size:15px;color:'+(toiOk?'var(--green)':'var(--t2)')+'">'+(toiOk?'✅ 50만':(toi<4.7?'순증 미달':'미달'))+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">온공 누적 인당</div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">인당 1.5↑</div><div class="ig4v" style="font-size:15px;color:'+(mOk?'var(--green)':'var(--t2)')+'">'+(mOk?'✅ 50만':'미달')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑ 조건)</span></div><div class="ig4v" style="color:'+(f.순증>=1?'var(--green)':'var(--red)')+'">'+fmt1(f.순증)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">온공 누적 인당순증</div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(total>0?'var(--green)':'var(--t2)')+'">'+(total>0?fmt(total)+'원':'-')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'온공':'')+')':'아직 시상 기준 미달이에요')+'</div>'
-    +(!toiOk&&toi>4.6?'<div class="icremain">🎯 퇴회율 4.6%까지 <b>-'+fmtD2(toi-4.6)+'%p</b> 남음</div>':'')
-    +(!mOk?'<div class="icremain">🎯 온공 인당 1.5까지 <b>'+fmtD2(1.5-mPer)+'</b> 남음</div>':'')
-    +'<div class="ib bl" style="margin-bottom:0">· 3분기 7월부터 누적 · 두 기준은 각각 평가·지급돼요.</div></div>';
+    +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6%까지 <b>-'+fmtD2(toi-4.6)+'%p</b> 남음</div>':'')
+    +(!toiOk&&toi<4.7&&f.순증<1?'<div class="icremain">🎯 퇴회율은 달성 · 순증 1까지 <b>'+fmt1(1-f.순증)+'</b> 남음</div>':'')
+    +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>'+fmtD2(1.5-mPer)+'</b> 남음</div>':'')
+    +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 실적 기준 · 두 기준은 각각 평가·지급돼요.<br>· 온공 인당순증 = 3분기 누적 온공 순증 ÷ 온공 담당 교사수<br>· 시상금은 10월 운영비에 포함하여 지급돼요.</div></div>';
 }
 function jiguJune(){
   var u=S.user;
