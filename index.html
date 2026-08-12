@@ -1533,30 +1533,8 @@ function mastaTopJulyCard(){
     +'<div class="ib am" style="margin-bottom:0">⚠️ 최종 시상은 7~12월 하반기 누적 온공 순증 기준으로 확정돼요. 지금은 7월 한 달 실적만 반영된 잠정 순위예요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
 }
-function campaignCard(){
-  function c(img,title,price,period,std,gift,notes){
-    return '<div class="incsec"><div class="incsech">'+title+'</div>'
-      +'<div class="ib gr" style="margin-top:0">📅 '+period+' · 지급월 26년 9월</div>'
-      +critBlock(std)
-      +'<div class="giftbox">'+img+'<div style="font-weight:700;font-size:14px;color:var(--t1)">'+gift+'</div></div>'
-      +'<div class="ib bl" style="margin-bottom:0">'+notes+'</div></div>';
-  }
-  return c('<div style="display:flex;gap:8px;justify-content:center"><img class="giftimg" style="max-width:46%" src="carrier_y.jpg" alt="옐로우"><img class="giftimg" style="max-width:46%" src="carrier_m.jpg" alt="민트"></div>',
-      '🧳 3과목 입회 캠페인','','26년 8월','3과목 이상 입회한 <b>유아~초등</b> 회원',
-      '곰돌이 캐릭터 캐리어 18인치 <span style="font-weight:500;color:var(--t3)">(옐로우·민트 랜덤)</span>',
-      '· 3과목 이상 입회 시 <b>과목추가 회원에게도</b> 지급<br>· 입회 과목에는 브플·NKU·온공 포함, <b>당복 제외</b><br>· 확인: 입회관리 &gt; 회원 캠페인 &gt; 리스트 &gt; 입회년월 8월 &gt; 3과목 입회 캠페인<br>· 색상은 랜덤 지급 · A/S: 코르 고객센터 1522-0915')
-    +c('<img class="giftimg" src="pencil.jpg" alt="색연필 미술용품 세트">',
-      '🎨 온공 약정 가입 캠페인','','26년 8월','온공 입회 후 <b>약정 가입</b>한 유아~초등 회원',
-      '색연필 미술용품 세트',
-      '· 온공 입회는 <b>당복 제외</b> · 온공약정은 6·12개월 모두 가능<br>· 기존 온공 학습 회원이 <b>약정만</b> 가입하면 미해당<br>· 8월 중 온공 입회 후 <b>9월 1구간(8일)</b>까지 약정 완료 시 해당<br>· 확인: 약정상품 &gt; 약정변동목록 &gt; 온공약정 &gt; 약정신규<br>· 파손/불량: 급우섭 대표 010-3537-7023')
-    +c('<img class="giftimg" src="daiso.jpg" alt="다이소 상품권">',
-      '💳 스마트구몬N 약정 가입 캠페인','','26년 8월','스마트구몬N 입회 후 <b>약정 계약</b> 회원 (9월 약정 시작 기준)',
-      '다이소 실물 카드 1만원권',
-      '· <b>당복·재약정·디바이스 약정 제외</b><br>· 기존 NKU 학습 회원이 약정만 가입하면 미해당<br>· 8월 중 NKU 입회 후 9월 1구간(8일)까지 약정 완료 시 해당<br>· 3과목 입회·온공 약정 캠페인과 <b>중복 지급</b>돼요.<br>· 사은품은 9월 중 사업장으로 배송')
-    +'<div class="ib am" style="margin-bottom:0">📌 회원 캠페인은 <b>회원(고객) 대상</b> 사은품이에요. 대상자는 9월 초 [캠페인/인센티브/시상] 게시판에 공지됩니다.</div>';
-}
 function julyTeacher(){
-  var tabs=['월성과','무퇴회','온공Top','회원캠페인'];
+  var tabs=['월성과','무퇴회','온공Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
   var inc=APP.incMap[(S.user&&S.user.교사번호)||''];
   var body;
@@ -1577,7 +1555,6 @@ function julyTeacher(){
       +'<div class="ib bl" style="margin-bottom:0">· 합산과목 <b>순증</b>은 인정입회·NKU·<b>당복 포함</b><br>· 합산과목 <b>입회</b>는 인정입회·NKU 포함, <b>당복 제외</b><br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급<br>· A/S: 디엔테크코리아 02-2661-3046<br>· 대상자는 9월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
   }
   else if(S.jtab==='무퇴회')body=mutoeCard();
-  else if(S.jtab==='회원캠페인')body=campaignCard();
   else body=mastaTopJulyCard();
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 김성희 매니저 (02-397-9436)');
 }
