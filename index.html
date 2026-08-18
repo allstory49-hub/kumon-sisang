@@ -2477,7 +2477,7 @@ function parseTeacher(data){
     if(wk<2)continue;
     var iphoe=fmt2((Number(row[C.입회관리과목])||0)-(Number(row[C.당복])||0));
     rec.push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),교사번호:String(row[C.교사번호]||'').trim().split('.')[0],교사명:nm,근무기간:wk,전월말관리과목:Number(row[C.전월말관리과목])||0,
-      과목순증:Number(row[C.과목순증])||0,특별점수:Number(row[C.특별점수])||0,디지털순증:Number(row[C.디지털순증])||0,태블릿점수:Number(row[C.태블릿점수])||0,펜세트점수:Number(row[C.펜세트점수])||0,스구N전환재약정:Number(row[C.스구N전환재약정])||0,스구N재약정:Number(row[C.스구N재약정])||0,시상계:fmt2(Number(row[C.시상계])||0),입회:iphoe});
+      과목순증:Number(row[C.과목순증])||0,특별점수:Number(row[C.특별점수])||0,디지털순증:Number(row[C.디지털순증])||0,태블릿점수:Number(row[C.태블릿점수])||0,펜세트점수:Number(row[C.펜세트점수])||0,스구N전환재약정:Number(row[C.스구N전환재약정])||0,스구N재약정:Number(row[C.스구N재약정])||0,시상계:fmt2(Number(row[C.시상계])||0),입회:iphoe,퇴회:Number(row[C.퇴회])||0});
   }
   rankTeachers(rec);
   var total=rec.length,max=rec.length?rec[0].시상계:0;
