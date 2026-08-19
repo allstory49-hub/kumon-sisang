@@ -502,7 +502,7 @@ input,button{font-family:inherit;font-size:14px}
 </div>
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongPrev:null,frozenTeaJul:null};
-var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'7',jtab:'월성과',i6tab:'회원순증'};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null};
 
 /* ───── GitHub 설정 ───── */
@@ -765,11 +765,70 @@ function histPersonalInc(){
 }
 function renderIncentive(){
   var b=document.getElementById('iBody');
-  if(!S.imonth)S.imonth='7';
-  var months=[{id:'7',l:'7월'},{id:'6',l:'6월 (확정)'}];
+  if(!S.imonth||S.imonth==='6')S.imonth='8';
+  var months=[{id:'8',l:'8월'},{id:'7',l:'7월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderIncentive()">'+m.l+'</button>';}).join('')+'</div>';
-  var body=S.imonth==='7'?incJuly():incJune();
+  var body=S.imonth==='8'?incJuly():incJulFixed();
   b.innerHTML=mtab+body;
+}
+// ===== 7월 (확정) =====
+async function loadJulSnap(){
+  if(APP.histCache['2026-07'])return APP.histCache['2026-07'];
+  try{var r=await dfetch('history/2026-07.json?t='+Date.now());if(r.ok){APP.histCache['2026-07']=await r.json();return APP.histCache['2026-07'];}}catch(e){}
+  return null;
+}
+function julFixLabel(s){return String(s||'').replace(/마\.스\.타/g,'온공');}
+function incJulFixed(){
+  var snap=APP.histCache['2026-07'];
+  if(!snap){loadJulSnap().then(function(x){if(x)renderIncentive();});return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
+  var head='<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
+    +'<div class="ib gr">📅 '+snap.label+' · '+snap.date+'</div>';
+  var items=[];
+  if(S.type==='org'&&S.pos==='지구'){
+    var j=snap.jigu&&snap.jigu[(S.user&&S.user.소속코드)||''];
+    if(j)items=[{name:'지구 회원순증',award:fmt(j.pay)+'원 (순증 '+fmt(j.ns)+' × 1만원)'}];
+  }else{
+    items=(snap.inc&&snap.inc[(S.user&&S.user.교사번호)||''])||[];
+  }
+  var body;
+  if(!items.length){
+    body='<div class="ib am">7월 확정 수혜 내역이 없어요.</div>';
+  }else{
+    body='<div class="incsec"><div class="incsech">🎁 7월 확정 수혜 내역</div>'
+      +items.map(function(it){return '<div class="histrow"><span>'+julFixLabel(it.name)+'</span><b style="color:var(--green);font-size:13px">'+julFixLabel(it.award)+'</b></div>';}).join('')
+      +'</div>';
+  }
+  // 개인 시상계·순위
+  var extra='';
+  if(S.type==='teacher'){
+    var t=snap.t&&snap.t[(S.user&&S.user.교사번호)||''];
+    if(t)extra='<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">7월 시상계</div><div class="ig4v" style="color:'+(t.s<0?'var(--red)':'var(--green)')+'">'+fmt1(t.s)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">전사 순위</div><div class="ig4v">'+fmt(t.n)+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">총국 순위</div><div class="ig4v">'+fmt(t.c)+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">온공 순증</div><div class="ig4v">'+fmt1(t.mj)+'</div></div></div>';
+  }else if(S.type==='org'){
+    var o=snap.o&&snap.o[(S.user&&S.user.소속코드)||''];
+    if(o)extra='<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">7월 시상점수</div><div class="ig4v" style="color:'+(o.d<0?'var(--red)':'var(--green)')+'">'+fmt1(o.d)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">전사 순위</div><div class="ig4v">'+fmt(o.n)+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">총국 순위</div><div class="ig4v">'+fmt(o.c)+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">온공 약정점수</div><div class="ig4v">'+fmt1(o.mj)+'</div></div></div>';
+  }
+  return head+extra+body+'<div class="ib bl" style="margin-bottom:0">· 7월 마감 확정 실적이에요. 이후 실적조정이 있어도 이 값은 변경되지 않아요.</div>';
+}
+function adminIncJulFixed(){
+  var snap=APP.histCache['2026-07'];
+  if(!snap){loadJulSnap().then(function(x){if(x)renderAdmin();});return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
+  var rows=(snap.agg||[]).map(function(a){
+    return '<div class="incstat"><div class="isl">'+julFixLabel(a.name)+(a.pct?'<span class="issub">'+a.pct+'%</span>':'')+'</div>'
+      +'<div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span>'+(a.amt?'<span class="isamt">'+fmt(a.amt)+'원</span>':'')+'</div></div>';
+  }).join('');
+  var tot=(snap.agg||[]).reduce(function(s,a){return s+(a.amt||0);},0);
+  return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
+    +'<div class="ib gr">📅 '+snap.label+' · '+snap.date+'</div>'
+    +'<div class="incwrap">'+rows+'</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 총 시상금 <b>'+fmt(tot)+'원</b> (실물 사은품 제외)<br>· 7월 마감 확정 기록이라 이후 변경되지 않아요.</div>';
 }
 function incJune(){
   if(S.type==='teacher')return teacherInc();
@@ -2197,10 +2256,10 @@ function adminSisang(){
   return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
 }
 function adminInc(){
-  if(!S.imonth)S.imonth='7';
-  var months=[{id:'7',l:'7월'},{id:'6',l:'6월 (확정)'}];
+  if(!S.imonth||S.imonth==='6')S.imonth='8';
+  var months=[{id:'8',l:'8월'},{id:'7',l:'7월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
-  return mtab+(S.imonth==='7'?adminInc7():adminInc6());
+  return mtab+(S.imonth==='8'?adminInc7():adminIncJulFixed());
 }
 function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
