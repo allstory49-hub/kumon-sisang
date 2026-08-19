@@ -501,7 +501,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongPrev:null};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongPrev:null,frozenTeaJul:null};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'7',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null};
 
@@ -663,6 +663,7 @@ async function loadClubElite(){
   try{var r5=await dfetch('cumulative/frozen_jik_jun.json?t='+Date.now());if(r5.ok)APP.frozenJik6=(await r5.json()).jun||{};}catch(e){}
   try{var r6=await dfetch('cumulative/frozen_tea_jun.json?t='+Date.now());if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
   try{var r6b=await dfetch('cumulative/frozen_inc_jun.json?t='+Date.now());if(r6b.ok)APP.frozenIncJun=(await r6b.json()).inc||{};}catch(e){APP.frozenIncJun=null;}
+  try{var r7=await dfetch('cumulative/frozen_tea_jul.json?t='+Date.now());if(r7.ok)APP.frozenTeaJul=(await r7.json()).jul||{};}catch(e){APP.frozenTeaJul=null;}
   try{var rmt=await dfetch('cumulative/mutoe8.json?t='+Date.now());if(rmt.ok){var mj=await rmt.json();APP.mutoe=mj.cnt||{};APP.mutoeAsof=mj.asof||'';}}catch(e){APP.mutoe=null;}
   try{var r7=await dfetch('cumulative/env_final.json?t='+Date.now());if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
   try{var q1=await dfetch('cumulative/q3cur.json?t='+Date.now());if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
@@ -1506,8 +1507,15 @@ function mutoeCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 근무기간·전월말 과목수·퇴회는 KSS &gt; 실적관리 &gt; 교사별 평가실적(일단위)에서 확인<br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급<br>· 시상금은 8월 수수료에 포함 지급(9/15 명세서, 수수료 기타1)<br>· 대상자는 9월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
 }
 function mastaTopJulyCard(){
-  var arr=(APP.incList||[]).slice().sort(function(a,b){
-    var d=(b.마스타순증||0)-(a.마스타순증||0);
+  var jul=APP.frozenTeaJul||null;   // 7월 확정 온공순증
+  var arr=(APP.incList||[]).map(function(x){
+    var cur=Number(x.마스타순증)||0;
+    var j=jul?(Number(jul[x.교사번호])||0):0;
+    var o={};for(var k in x)o[k]=x[k];
+    o.온공7=j;o.온공당월=cur;o.온공누적=Math.round((j+cur)*100)/100;
+    return o;
+  }).sort(function(a,b){
+    var d=b.온공누적-a.온공누적;
     if(d)return d;
     return (b.과목순증||0)-(a.과목순증||0);
   });
@@ -1515,23 +1523,30 @@ function mastaTopJulyCard(){
   var tno=(S.user&&S.user.교사번호)||null;
   var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].교사번호===tno){mi=k;break;}}
   var myRank=mi>=0?arr[mi].mtRank:null;
-  var myMs=mi>=0?(arr[mi].마스타순증||0):0;
+  var myMs=mi>=0?arr[mi].온공누적:0;
+  var my7=mi>=0?arr[mi].온공7:0, myCur=mi>=0?arr[mi].온공당월:0;
   function row(x,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(x.mtRank)+'">'+x.mtRank+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol big"><div class="rcol-v" style="color:'+((x.마스타순증||0)<0?'var(--red)':'var(--green)')+'">'+fmt(x.마스타순증)+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(x.mtRank)+'">'+x.mtRank+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
+      +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:var(--t3)">'+fmt1(x.온공7)+'</div></div>'
+      +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:var(--t3)">'+fmt1(x.온공당월)+'</div></div>'
+      +'<div class="rcol big"><div class="rcol-v" style="color:'+(x.온공누적<0?'var(--red)':'var(--green)')+'">'+fmt1(x.온공누적)+'</div></div></div>';
   }
   var top20=arr.slice(0,20);
   var rows=top20.map(function(x){return row(x,x.교사번호===tno);}).join('');
   var myExtra='';
   if(mi>=20){myExtra='<div class="rrsep">···</div>'+row(arr[mi],true);}
-  var board='<div class="rkstl" style="border-left-color:var(--amber)">현재 순위 (7월 기준 · 잠정) <span class="rkstlsub">온공 순증순</span></div>'
-    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc">온공 순증</div></div>'+rows+myExtra+'</div>';
+  var asof=(APP.meta&&APP.meta.date)||'';
+  var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7월 + 당월 온공 순증</span></div>'
+    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10px">7월</div><div class="rhc" style="font-size:10px">당월</div><div class="rhc">누적</div></div>'+rows+myExtra+'</div>';
+  var need=myMs<30?fmt1(30-myMs):0;
   return '<div class="incsec"><div class="incsech">👑 온공 Top (전직책) <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월</div>'
-    +'<div class="incres '+(myRank===1?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 온공 순증 '+fmt1(myMs):'집계 대상 데이터가 없어요')+'</div>'
-    +'<div class="ictiers">온공 순증 30 이상 · 1위 교사 → <b>시상금 50만원</b></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+asof+' 기준</span></div>'
+    +'<div class="incres '+(myRank===1&&myMs>=30?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 누적 온공 순증 '+fmt1(myMs)+' <span style="font-size:11px;opacity:.85">(7월 '+fmt1(my7)+' + 당월 '+fmt1(myCur)+')</span>':'집계 대상 데이터가 없어요')+'</div>'
+    +'<div class="ictiers">누적 온공 순증 30 이상 · 1위 교사 → <b>시상금 50만원</b></div>'
+    +(myRank&&myMs<30?'<div class="icremain">🎯 시상 자격(누적 30)까지 <b>'+need+'</b> 남음</div>':'')
     +board
-    +'<div class="ib am" style="margin-bottom:0">⚠️ 최종 시상은 7~12월 하반기 누적 온공 순증 기준으로 확정돼요. 지금은 7월 한 달 실적만 반영된 잠정 순위예요.</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 7월 확정 + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 누적 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
 }
 function julyTeacher(){
   var tabs=['월성과','무퇴회','온공Top'];
