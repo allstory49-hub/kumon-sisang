@@ -2540,7 +2540,7 @@ function parseTeacher(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['MST약정점수','특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계']),입회관리과목:findCol(h,['입회 관리과목']),당복:findCol(h,['당복']),퇴회:findCol(h,['퇴회'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),교사번호:findCol(h,['교사번호','교사코드']),교사명:findCol(h,['교사명']),근무기간:findCol(h,['근무기간']),전월말관리과목:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['온공약정점수','MST약정점수','특별점수(마스타)','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿점수:findCol(h,['태블릿']),펜세트점수:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N재약정']),시상계:findCol(h,['시상 계','시상계']),입회관리과목:findCol(h,['입회 관리과목']),당복:findCol(h,['당복']),퇴회:findCol(h,['퇴회'])};
   if(C.교사명<0)throw new Error('교사명 열을 찾지 못했습니다.');
   var rec=[];
   for(var i=2;i<rows.length;i++){
@@ -2833,7 +2833,7 @@ function parseOrg(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['MST약정점수','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['온공약정점수','MST약정점수','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
   if(C.소속코드<0)throw new Error('소속코드 열을 찾지 못했습니다.');
   var res={지구:[],지국:[],사업국:[],총국:[]};
   for(var i=2;i<rows.length;i++){
