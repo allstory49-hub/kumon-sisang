@@ -2201,14 +2201,14 @@ function metricsCards(code){
     {p:m.s3,t:'주평균 '+fmt1(m.submit)+'장 → <b>'+m.s3+'점</b>'+(m.s3===0?' (12장 미만 · 미달)':'')});
   // ④ 사이렌 회원 비율
   var s4t=(m.s4||0)+(m.sirenYoy||0);
-  var yoyRow=(m.sirenPrev!=null)?r('전년比 감소 가산','전년(25.3Q) '+fmtD2(m.sirenPrev)+'% → 올해 '+fmtD2(m.siren)+'% · '+((m.sirenDrop||0)>=0?'▼':'▲')+fmtD2(Math.abs(m.sirenDrop||0))+'%p',(m.sirenYoy>0?'+'+m.sirenYoy:'+0'),'점',(m.sirenYoy>0?'var(--green)':'var(--t3)')):'';
+  var yoyRow=(m.sirenPrev!=null)?r('전년比 감소 가산','전년(25.3Q) '+fmt1(m.sirenPrev)+'% → 올해 '+fmt1(m.siren)+'% · '+((m.sirenDrop||0)>=0?'▼':'▲')+fmt1(Math.abs(m.sirenDrop||0))+'%p',(m.sirenYoy>0?'+'+m.sirenYoy:'+0'),'점',(m.sirenYoy>0?'var(--green)':'var(--t3)')):'';
   out+=card('④','사이렌 회원 비율','7월 마감',
-    r('사이렌 비율','30%미만 10점 · 33%미만 7 · 35%미만 5',fmtD2(m.siren),'%',(m.s4>0?'var(--green)':'var(--t1)'))+yoyRow,
-    {p:s4t,t:'사이렌 '+fmtD2(m.siren)+'% → 기본 '+(m.s4||0)+'점'+(m.sirenYoy>0?' + 가산 '+m.sirenYoy+'점 = <b>'+s4t+'점</b>':' → <b>'+s4t+'점</b>')});
+    r('사이렌 비율','30%미만 10점 · 33%미만 7 · 35%미만 5',fmt1(m.siren),'%',(m.s4>0?'var(--green)':'var(--t1)'))+yoyRow,
+    {p:s4t,t:'사이렌 '+fmt1(m.siren)+'% → 기본 '+(m.s4||0)+'점'+(m.sirenYoy>0?' + 가산 '+m.sirenYoy+'점 = <b>'+s4t+'점</b>':' → <b>'+s4t+'점</b>')});
   // ⑤ 오답정정률
   out+=card('⑤','오답정정률','7/1~8/17 누적',
-    r('오답정정률','80% 이상 → 5점',fmtD2(m.correct),'%',(m.s5>0?'var(--green)':'var(--t1)')),
-    {p:m.s5,t:'오답정정률 '+fmtD2(m.correct)+'% → <b>'+m.s5+'점</b>'+(m.s5===0?' (80% 미만 · 미달)':'')});
+    r('오답정정률','80% 이상 → 5점',fmt1(m.correct),'%',(m.s5>0?'var(--green)':'var(--t1)')),
+    {p:m.s5,t:'오답정정률 '+fmt1(m.correct)+'% → <b>'+m.s5+'점</b>'+(m.s5===0?' (80% 미만 · 미달)':'')});
   return out;
 }
 function sejongClubOf(score){
@@ -2287,8 +2287,8 @@ function sejongClub(){
       var italCell=e.it?('<b style="color:var(--green)">'+e.s2+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(e.it.rate)+'%</span>'):'—';
       var sumCell=e.has?('<b>'+e.sum+'</b>'):'—';
       var m3=e.mt.has?('<b>'+e.mt.s3+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmt1(e.mt.m.submit)+'장</span>'):'—';
-      var m4=e.mt.has?('<b>'+e.mt.s4+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(e.mt.m.siren)+'%</span>'):'—';
-      var m5=e.mt.has?('<b>'+e.mt.s5+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmtD2(e.mt.m.correct)+'%</span>'):'—';
+      var m4=e.mt.has?('<b>'+e.mt.s4+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmt1(e.mt.m.siren)+'%</span>'):'—';
+      var m5=e.mt.has?('<b>'+e.mt.s5+'</b><br><span style="font-size:9px;color:var(--t3)">'+fmt1(e.mt.m.correct)+'%</span>'):'—';
       var club=sejongClubOf(e.sum);
       var grCell=club?('<b style="color:'+club.c+'">'+club.n.replace(' 클럽','')+'</b>'):(e.has?'<span style="color:var(--t3)">미달</span>':'—');
       return '<div class="sjrow"><div class="sjr-no">'+(i+1)+'</div><div class="sjr-nm">'+o.name+'<br><span class="rsb">'+o.chong+'</span></div><div class="sjr-sc">'+toiCell+'</div><div class="sjr-sc">'+italCell+'</div><div class="sjr-sc">'+m3+'</div><div class="sjr-sc">'+m4+'</div><div class="sjr-sc">'+m5+'</div><div class="sjr-tot">'+sumCell+'</div><div class="sjr-gr">'+grCell+'</div></div>';}).join('');
