@@ -1230,7 +1230,7 @@ function rankTop20All(sorted,myCode){
   function row(x,rk){var me=(x.소속코드===myCode),win=rk<=20&&x.자격;
     return '<div class="r20'+(me?' me':'')+(win?' win':'')+(x.자격?'':' nq')+'"><div class="r20-n">'+rk+'</div>'
       +'<div class="r20-nm">'+orgPerson(x)+(me?' <span class="r20-me">나</span>':'')+'</div>'
-      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt1(x.목표)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt(Math.round(x.목표))+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+((x.순증||0)<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div>'
       +'<div class="r20-col"><div class="r20-cv" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t2)')+'">'+fmt1(x.D순증)+'</div></div></div>';}
@@ -1518,7 +1518,7 @@ function coffeeCard(){
   function row(x){var m=(x.소속코드===code);
     return '<div class="r20'+(m?' me':'')+(x.rank===1&&x.자격?' win':'')+(x.자격?'':' nq')+'"><div class="r20-n">'+x.rank+'</div>'
       +'<div class="r20-nm">'+orgPerson(x)+(m?' <span class="r20-me">나</span>':'')+'</div>'
-      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt1(x.목표)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt(Math.round(x.목표))+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+(x.순증<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div></div>';}
   var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">총국</div><div class="r20-col" style="font-size:10px">누적목표</div><div class="r20-col" style="font-size:10px">누적순증</div><div class="r20-col">달성률</div></div>';
@@ -1565,7 +1565,7 @@ function topTourCard(lv){
   function row(x){var m=(x.소속코드===code);
     return '<div class="r20'+(m?' me':'')+(x.rank<=TO&&x.자격?' win':'')+(x.자격?'':' nq')+'"><div class="r20-n">'+x.rank+'</div>'
       +'<div class="r20-nm">'+orgPerson(x)+(m?' <span class="r20-me">나</span>':'')+'</div>'
-      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt1(x.목표)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt(Math.round(x.목표))+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+(x.순증<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div></div>';}
   var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col" style="font-size:10px">누적목표</div><div class="r20-col" style="font-size:10px">누적순증</div><div class="r20-col">달성률</div></div>';
