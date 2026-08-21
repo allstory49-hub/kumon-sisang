@@ -1295,7 +1295,7 @@ function jikToiCard(){
   if(!f||f.lv!=='지국')return '<div class="incsec"><div class="incsech">📉 [3분기] 퇴회율 (지국)</div><div class="ib am">이번 지국 퇴회율 명단에 없어요.</div></div>';
   // 3분기 누적 퇴회율: 세종클럽과 동일 소스(sejongToi)로 7~9월 누적
   var st=APP.sejongToi&&APP.sejongToi[code];
-  var toi=st?st.quarter.rate:(f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0);
+  var qt=q3Toi(code);var toi=st?st.quarter.rate:qt.rate;
   var ach=(f.달성률!=null)?f.달성률:(f.목표!==0?q3flr(f.순증/f.목표*100,2):0);
   var eligible=(ach>=50);
   var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
@@ -1304,7 +1304,7 @@ function jikToiCard(){
   var win=(eligible&&pay>0);                          // 실제 시상 = 달성률50↑ + 급간 해당
   var remain='';
   // ① 퇴회율: 다음(더 높은) 급간까지 줄여야 하는 퇴회 건수 (급간 "이하"=다음 0.1 미만)
-  var qToi=st?st.quarter.toi:f.퇴회, qGwa=st?st.quarter.gwa:f.과목수;
+  var qToi=st?st.quarter.toi:qt.toi, qGwa=st?st.quarter.gwa:qt.gwa;
   function toiCut(targetMax){   // targetMax% 급간에 들어가려면 줄여야 할 퇴회 건수
     if(!qGwa)return 0;
     var allow=qGwa*(targetMax+0.09)/100;
@@ -1336,7 +1336,7 @@ function jikToiCard(){
     +critBlock('합산과목 퇴회율 급간 (단, 달성률 <b>50%↑</b>)')
     +tierBox
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7·8월+9월예상)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">달성률 <span style="font-size:9px;color:var(--t3)">(50%↑ 조건)</span></div><div class="ig4v" style="color:'+(ach>=50?'var(--green)':'var(--red)')+'">'+fmtD2(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:15px;color:'+(row>=0?'var(--green)':'var(--t2)')+'">'+(row>=0?JIKTOI[row].max+'%↓':'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(pay>0?'var(--green)':'var(--t2)')+'">'+(pay>0?fmt(pay)+'원':'-')+'</div></div>'
@@ -1347,6 +1347,20 @@ function jikToiCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 퇴회율 = 퇴회(7~9월 누적) ÷ 전월말 관리과목(6월말~8월말 누적) × 100 (둘째자리 절사)<br>· 단, 합산과목 달성률 50% 이상 조직만 대상 · 최소 2개월 실적 보유 관리자만 인정<br>· 시상금은 10월 운영비에 포함하여 일괄 지급돼요.</div></div>';
 }
 // ===== 사업국 퇴회율 & 온공 (3분기) =====
+function q3Toi(code){
+  // 3분기 누적 퇴회율: 7월 확정 + 8월 실적 + 9월 예상퇴회(⑧ 파일)
+  var a=(APP.q3cum||{})[code]||{}, b=(APP.q3cur||{})[code]||{};
+  var t7=Number(a.퇴회)||0, g7=Number(a.과목수)||0;
+  var t8=Number(b.퇴회)||0, g8=Number(b.과목수)||g7;
+  var sep=(APP.sejongToiRaw&&APP.sejongToiRaw.sep)||null;
+  var s=sep&&sep[code];
+  var t9=s?(Number(s.toi)||0):0, g9=s?(Number(s.gwa)||0):0;
+  var toi=t7+t8+t9, gwa=g7+g8+g9;
+  return {toi:toi,gwa:gwa,rate:gwa?q3flr(toi/gwa*100,2):0,
+    m7:{toi:t7,gwa:g7,rate:g7?q3flr(t7/g7*100,2):0},
+    m8:{toi:t8,gwa:g8,rate:g8?q3flr(t8/g8*100,2):0},
+    m9:{toi:t9,gwa:g9,rate:g9?q3flr(t9/g9*100,2):0,inFile:!!s}};
+}
 function ongPerCap(code){
   // 온공 누적 인당순증 = 월별 (온공순증 ÷ 그 달 교사수)의 합
   var a=(APP.q3cum||{})[code]||{}, b=(APP.q3cur||{})[code]||{};
@@ -1359,7 +1373,7 @@ function ongPerCap(code){
 function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='사업국')return '<div class="incsec"><div class="incsech">📉 [3분기] 퇴회율 & 온공 (사업국)</div><div class="ib am">이번 명단에 없어요.</div></div>';
-  var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;   // 3분기 누적(q3cum+q3cur)
+  var qt=q3Toi(code);var toi=qt.rate;   // 3분기 누적(7+8월 실적 + 9월 예상)
   var toiOk=(toi<4.7&&f.순증>=1);
   var op=ongPerCap(code);var mPer=op.per;var mOk=(mPer>=1.5);
   var total=(toiOk?500000:0)+(mOk?500000:0);
@@ -1371,13 +1385,17 @@ function eopToiMastaCard(){
       +'<div class="jtier'+(mOk?' on':'')+'"><div class="jtl">3분기 누적 온공 인당순증 1.5 이상</div><div class="jtr"><b>50만원</b>'+(mOk?' <span class="jtnow">달성</span>':'')+'</div></div>'
     +'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7·8월+9월예상)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑ 조건)</span></div><div class="ig4v" style="color:'+(f.순증>=1?'var(--green)':'var(--red)')+'">'+fmt1(f.순증)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">온공 누적 인당순증 <span style="font-size:9px;color:var(--t3)">(월별 합산)</span></div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(total>0?'var(--green)':'var(--t2)')+'">'+(total>0?fmt(total)+'원':'-')+'</div></div>'
     +'</div>'
+    +(function(){
+      function mr(l,o,sub){return '<div class="icrow"'+(sub?' style="background:var(--card2)"':'')+'><div class="iclt"><div class="icl1">'+l+'</div><div class="icneed">퇴회 '+fmt(o.toi)+' · 과목수 '+fmt(o.gwa)+'</div></div><div class="icright"><div class="icnum">'+fmtD2(o.rate)+'<span style="font-size:12px">%</span></div></div></div>';}
+      return '<div class="iclist" style="margin-top:8px">'+mr('7월',qt.m7)+mr('8월',qt.m8)+mr('9월 (예상)',qt.m9)+mr('└ 3분기 누적',{toi:qt.toi,gwa:qt.gwa,rate:qt.rate},true)+'</div>';
+    })()
     +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'온공':'')+')':'아직 시상 기준 미달이에요')+'</div>'
-    +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6% 기준까지 <b>퇴회 '+fmt(Math.max(0,Math.ceil(f.퇴회-f.과목수*4.69/100)))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>':'')
+    +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6% 기준까지 <b>퇴회 '+fmt(Math.max(0,Math.ceil(qt.toi-qt.gwa*4.69/100)))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>':'')
     +(!toiOk&&toi<4.7&&f.순증<1?'<div class="icremain">🎯 퇴회율은 달성 · 순증 1까지 <b>'+fmt1(1-f.순증)+'</b> 남음</div>':'')
     +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>온공 '+fmt(Math.max(0,Math.ceil((1.5-mPer)*(op.tea8||1))))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(현재 인당 '+fmtD2(mPer)+' = 7월 '+fmtD2(op.per7)+' + 8월 '+fmtD2(op.per8)+')</span></div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 실적 기준 · 두 기준은 각각 평가·지급돼요.<br>· 온공 인당순증 = <b>월별 인당순증(그 달 온공 순증 ÷ 그 달 교사수)의 누적 합</b><br>· 시상금은 10월 운영비에 포함하여 지급돼요.</div></div>';
