@@ -930,7 +930,7 @@ function mastaTopHalf2Org(lv){
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +'<div class="incres '+(me&&me.rank===1?'win':'lose')+'">'+(me?'현재 전사 '+me.rank+'위 · 누적 인당순증 '+fmtD2(me.인당)+' <span style="font-size:11px;opacity:.85">(7월 '+fmtD2(me.인당7)+' + 8월 '+fmtD2(me.인당당월)+')</span>':'집계 대상 명단에 없어요')+'</div>'
     +'<div class="ictiers">'+lv+' 온공 인당순증 1위 → <b>시상금 '+fmt(reward)+'원</b></div>'
-    +(me&&me.rank>1?'<div class="icnext">⬆️ 1위까지 인당 <b>'+fmtD2(arr[0].인당-me.인당)+'</b> 남음 <span style="font-size:11px;opacity:.8">(1위 '+fmtD2(arr[0].인당)+' · '+orgPerson(arr[0])+')</span></div>':(me&&me.rank===1?'<div class="icnext win">🥇 현재 '+lv+' 1위!</div>':''))
+    +(me&&me.rank>1?'<div class="icnext">⬆️ 1위까지 <b>온공 '+fmt(Math.max(0,Math.ceil((arr[0].인당-me.인당)*(me.교사수||1))))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(내 인당 '+fmtD2(me.인당)+' · 1위 '+fmtD2(arr[0].인당)+' '+orgPerson(arr[0])+')</span></div>':(me&&me.rank===1?'<div class="icnext win">🥇 현재 '+lv+' 1위!</div>':''))
     +board
     +'<div class="ib am" style="margin-bottom:0">⚠️ 7월 확정 + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = <b>월별 인당순증(온공 순증 ÷ 그 달 교사수)의 누적 합</b> (월별 둘째자리 절사)<br>· 동률 시: 하반기 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 시상금은 27년 1월 운영비에 포함하여 일괄 지급돼요.</div></div>';
@@ -1315,14 +1315,14 @@ function jikToiCard(){
   function toiCut(targetMax){   // targetMax% 급간에 들어가려면 줄여야 할 퇴회 건수
     if(!qGwa)return 0;
     var allow=qGwa*(targetMax+0.09)/100;
-    return Math.max(0,Math.ceil((qToi-allow)*10)/10);
+    return Math.max(0,Math.ceil(qToi-allow));
   }
   if(row<0){
-    remain+='<div class="icnext">⬆️ 4.6% 급간(교사수 × 0.5만원)까지 <b>퇴회 '+fmt1(toiCut(4.6))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>';
+    remain+='<div class="icnext">⬆️ 4.6% 급간(교사수 × 0.5만원)까지 <b>퇴회 '+fmt(toiCut(4.6))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>';
   }else if(row>0){
     var ng=JIKTOI[row-1];
     var addPay=Math.round(f.교사수*(ng.p-JIKTOI[row].p)*10000);
-    remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 <b>퇴회 '+fmt1(toiCut(ng.max))+'건</b> 줄이면 돼요'+(addPay>0?' <span style="font-size:11px;opacity:.8">(+'+fmt(addPay)+'원)</span>':'')+'</div>';
+    remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 <b>퇴회 '+fmt(toiCut(ng.max))+'건</b> 줄이면 돼요'+(addPay>0?' <span style="font-size:11px;opacity:.8">(+'+fmt(addPay)+'원)</span>':'')+'</div>';
   }
   // ② 달성률: 시상 기본조건 50%까지 남은 순증
   if(!eligible){
@@ -1375,9 +1375,9 @@ function eopToiMastaCard(){
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(total>0?'var(--green)':'var(--t2)')+'">'+(total>0?fmt(total)+'원':'-')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'온공':'')+')':'아직 시상 기준 미달이에요')+'</div>'
-    +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6% 기준까지 <b>퇴회 '+fmt1(Math.max(0,Math.ceil((f.퇴회-f.과목수*4.69/100)*10)/10))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>':'')
+    +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6% 기준까지 <b>퇴회 '+fmt(Math.max(0,Math.ceil(f.퇴회-f.과목수*4.69/100)))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>':'')
     +(!toiOk&&toi<4.7&&f.순증<1?'<div class="icremain">🎯 퇴회율은 달성 · 순증 1까지 <b>'+fmt1(1-f.순증)+'</b> 남음</div>':'')
-    +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>'+fmtD2(1.5-mPer)+'</b> 남음</div>':'')
+    +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>온공 '+fmt(Math.max(0,Math.ceil(f.마스타교사*1.5-f.마스타순증)))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(현재 인당 '+fmtD2(mPer)+')</span></div>':'')
     +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 실적 기준 · 두 기준은 각각 평가·지급돼요.<br>· 온공 인당순증 = 3분기 누적 온공 순증 ÷ 온공 담당 교사수<br>· 시상금은 10월 운영비에 포함하여 지급돼요.</div></div>';
 }
 function jiguJune(){
@@ -2193,9 +2193,9 @@ function toiCard(code){
       var tgt=null;
       for(var i=G.length-1;i>=0;i--){if(G[i][1]>nowScore){tgt=G[i];break;}}
       if(!tgt||!gwa)return '';
-      var cut=Math.max(0,Math.ceil((toiN-gwa*(tgt[0]+0.09)/100)*10)/10);
+      var cut=Math.max(0,Math.ceil(toiN-gwa*(tgt[0]+0.09)/100));
       if(cut<=0)return '';
-      return '<div class="icnext">⬆️ '+tgt[0]+'% 급간('+tgt[1]+'점)까지 <b>퇴회 '+fmt1(cut)+'건</b> 줄이면 돼요</div>';
+      return '<div class="icnext">⬆️ '+tgt[0]+'% 급간('+tgt[1]+'점)까지 <b>퇴회 '+fmt(cut)+'건</b> 줄이면 돼요</div>';
     })()
     +(!t.m8.inFile?'<div class="ib am" style="margin-bottom:0">· 8월 예상퇴회 명단에 없어 퇴회 0으로 처리하고, 과목수는 7월 값을 그대로 사용했어요.</div>':'')
     +(!t.m9.inFile?'<div class="ib am" style="margin-bottom:0">· 9월 예상퇴회 명단에 없어 퇴회 0으로 처리하고, 과목수는 이전 월 값을 그대로 사용했어요.</div>':'')
