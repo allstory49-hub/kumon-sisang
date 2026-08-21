@@ -1486,6 +1486,117 @@ function incJuly(){
   if(S.type==='org'&&S.pos==='총국')return julyChong();
   return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다.</div>';
 }
+function topTourStat(){
+  var out='';
+  ['총국','사업국'].forEach(function(lv){
+    var TO=(lv==='총국')?2:8;
+    var arr=[];
+    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
+      var f=q3get(code);if(!f)return;
+      arr.push({ach:f.목표?q3flr(f.순증/f.목표*100,2):0});});
+    if(!arr.length){out+='<div class="incstat na"><div class="isl">[3분기] TOP TOUR ('+lv+')</div><div class="isrna">실적 데이터 없음</div></div>';return;}
+    arr.sort(function(a,b){return b.ach-a.ach;});
+    var elig=arr.filter(function(x){return x.ach>=50;}).length;
+    var win=Math.min(TO,elig);
+    out+='<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 달성률 50%↑ 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 최고 '+fmt1(arr[0].ach)+'%</span></div>'
+      +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+'</span><span class="isamt">추계 TOP TOUR</span></div></div>';
+  });
+  return out;
+}
+function coffeeCard(){
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
+    var f=q3get(code);if(!f)return;
+    var ach=f.목표?q3flr(f.순증/f.목표*100,2):0;
+    arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,달성률:ach,순증:f.순증,목표:f.목표});});
+  if(!arr.length)return '<div class="incsec"><div class="incsech">☕ [하반기] 커피차</div><div class="ib am">총국 실적 데이터가 없어요.</div></div>';
+  arr.sort(function(a,b){return b.달성률-a.달성률;});
+  arr.forEach(function(x,i){x.rank=i+1;x.자격=(x.달성률>=50);});
+  var code=(S.user&&S.user.소속코드)||'';
+  var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  var win=me&&me.rank===1&&me.자격;
+  function row(x){var m=(x.소속코드===code);
+    return '<div class="r20'+(m?' me':'')+(x.rank===1&&x.자격?' win':'')+(x.자격?'':' nq')+'"><div class="r20-n">'+x.rank+'</div>'
+      +'<div class="r20-nm">'+orgPerson(x)+(m?' <span class="r20-me">나</span>':'')+'</div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt1(x.목표)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+(x.순증<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div></div>';}
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">총국</div><div class="r20-col" style="font-size:10px">누적목표</div><div class="r20-col" style="font-size:10px">누적순증</div><div class="r20-col">달성률</div></div>';
+  var remain='';
+  if(me&&!me.자격){
+    var need=q3flr(me.목표*0.5-me.순증,1);
+    remain='<div class="icremain">🎯 시상 조건(달성률 50%)까지 순증 <b>'+fmt1(need>0?need:0)+'</b> 남음</div>';
+  }else if(me&&me.rank>1){
+    var need2=q3flr(me.목표*arr[0].달성률/100-me.순증,1);
+    remain='<div class="icnext">⬆️ 1위까지 순증 <b>'+fmt1(need2>0?need2:0)+'</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(1위 '+orgPerson(arr[0])+' '+fmt1(arr[0].달성률)+'%)</span></div>';
+  }
+  return '<div class="incsec"><div class="incsech">☕ [하반기] 커피차 (총국) <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
+    +critBlock('하반기 누적 합산과목 달성률 <b>50%↑</b> · <b>1위 총국</b>')
+    +'<div class="ictiers">27년 1월 총국 전략회의 <b>커피차 지원</b></div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">누적 달성률</div><div class="ig4v" style="color:'+(me&&me.자격?'var(--green)':'var(--t1)')+'">'+(me?fmt1(me.달성률):'-')+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 순위</div><div class="ig4v">'+(me?me.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">시상 T/O</div><div class="ig4v" style="font-size:15px">1위 총국</div></div>'
+      +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?(me.자격?'충족':'미충족'):'-')+'</div></div>'
+    +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 커피차 지원 대상! (현재 1위)':(me?'현재 '+me.rank+'위'+(me.자격?'':' · 달성률 50% 달성 시 시상 대상'):'집계 대상 명단에 없어요'))+'</div>'
+    +remain
+    +'<div class="r20wrap"><div class="r20head">📊 총국 누적 달성률 순위</div>'+header+arr.map(row).join('')+'</div>'
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 하반기(7~12월) 누적 기준이며, 현재는 3분기(7~9월) 실적까지만 반영된 잠정 순위예요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 시상금 대신 27년 1월 총국 전략회의에 커피차가 지원돼요.</div></div>';
+}
+function topTourCard(lv){
+  // 3분기 누적 달성률 상위: 총국장 1~2위 / 사업국장 1~8위 (단, 달성률 50%↑)
+  var TO=(lv==='총국')?2:8;
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
+    var f=q3get(code);if(!f)return;
+    var ach=f.목표?q3flr(f.순증/f.목표*100,2):0;
+    var tno=f.교사수||0;
+    arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,달성률:ach,순증:f.순증,목표:f.목표,
+      일반순증인당:tno?q3flr(f.일반순증/tno,3):0,D순증인당:tno?q3flr(f.D순증/tno,3):0});});
+  if(!arr.length)return '<div class="incsec"><div class="incsech">✈️ [3분기] TOP TOUR</div><div class="ib am">조직 실적 데이터가 없어요.</div></div>';
+  arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.일반순증인당-a.일반순증인당)||(b.D순증인당-a.D순증인당);});
+  arr.forEach(function(x,i){x.rank=i+1;x.자격=(x.달성률>=50);});
+  var code=(S.user&&S.user.소속코드)||'';
+  var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  var win=me&&me.rank<=TO&&me.자격;
+  function row(x){var m=(x.소속코드===code);
+    return '<div class="r20'+(m?' me':'')+(x.rank<=TO&&x.자격?' win':'')+(x.자격?'':' nq')+'"><div class="r20-n">'+x.rank+'</div>'
+      +'<div class="r20-nm">'+orgPerson(x)+(m?' <span class="r20-me">나</span>':'')+'</div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt1(x.목표)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+(x.순증<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
+      +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div></div>';}
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col" style="font-size:10px">누적목표</div><div class="r20-col" style="font-size:10px">누적순증</div><div class="r20-col">달성률</div></div>';
+  var show=arr.slice(0,Math.max(TO+2,10));
+  var extra='';
+  if(me&&me.rank>show.length)extra='<div class="r20cut">···</div>'+row(me);
+  var board='<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+show.map(row).join('')+extra+'</div>';
+  var remain='';
+  if(me&&!me.자격){
+    var need=q3flr(me.목표*0.5-me.순증,1);
+    remain='<div class="icremain">🎯 시상 조건(달성률 50%)까지 순증 <b>'+fmt1(need>0?need:0)+'</b> 남음</div>';
+  }else if(me&&me.rank>TO){
+    var t=arr[TO-1];
+    var need2=q3flr(me.목표*t.달성률/100-me.순증,1);
+    remain='<div class="icnext">⬆️ '+TO+'위 안에 들려면 순증 <b>'+fmt1(need2>0?need2:0)+'</b> 더 필요해요 <span style="font-size:11px;opacity:.8">('+TO+'위 '+fmt1(t.달성률)+'%)</span></div>';
+  }
+  return '<div class="incsec"><div class="incsech">✈️ [3분기] TOP TOUR ('+lv+') <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
+    +critBlock('3분기 누적 합산과목 달성률 <b>50%↑</b> · '+lv+'장 상위 '+TO+'명')
+    +'<div class="ictiers">추계 TOP TOUR (장소·일정 추후 공지) · 사업대표·사업센터장 동행</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">누적 달성률</div><div class="ig4v" style="color:'+(me&&me.자격?'var(--green)':'var(--t1)')+'">'+(me?fmt1(me.달성률):'-')+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 순위</div><div class="ig4v">'+(me?me.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">시상 T/O</div><div class="ig4v" style="font-size:15px">상위 '+TO+'명</div></div>'
+      +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?(me.자격?'충족':'미충족'):'-')+'</div></div>'
+    +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':'달성률 50% 달성 시 시상 대상이에요'):'집계 대상 명단에 없어요'))+'</div>'
+    +remain
+    +board
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 3분기(7~9월) 누적 합산과목 순증 ÷ 누적 목표<br>· 동률 시: 일반과목순증(인당)↑ &gt; D순증(인당)↑<br>· 시상 일정·장소는 추후 공지돼요.</div></div>';
+}
 function eopDalseongCard(){
   var arr=(APP.org['사업국']||[]).slice();
   if(!arr.length)return '<div class="ib am">사업국 달성률 데이터가 없습니다.</div>';
@@ -1521,7 +1632,7 @@ function julyEop(){
   var body;
   if(S.jtab==='퇴회율&온공')body=eopToiMastaCard();
   else if(S.jtab==='달성률')body=eopDalseongCard();
-  else if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ [3분기] TOP TOUR (총국&사업국)',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'사업국장 1~8위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
+  else if(S.jtab==='TOP TOUR')body=topTourCard('사업국');
   else body=mastaTopHalf2Org('사업국');
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
@@ -1529,8 +1640,8 @@ function julyChong(){
   var tabs=['TOP TOUR','커피차'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='TOP TOUR';
   var body;
-  if(S.jtab==='TOP TOUR')body=jpvCard({h:'✈️ [3분기] TOP TOUR',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률 (50%↑)',need:'총국장 1~2위'}],reward:'추계 Top Tour (장소·일정 추후 공지)',note:'· 사업대표·사업센터장 동행<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑'});
-  else body=jpvCard({h:'☕ [하반기] 커피차',rel:true,period:'하반기 7~12월',conds:[{l:'합산과목 달성률 (50%↑)',need:'1위 총국'}],reward:'27년 1월 총국 전략회의 커피차 지원',note:'· 하반기 누적 합산과목 달성률 1위 총국 대상.'});
+  if(S.jtab==='TOP TOUR')body=topTourCard('총국');
+  else body=coffeeCard();
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function jSub(tabs,sel,fn){
@@ -2436,8 +2547,7 @@ function adminInc7(){
       +jpvCard({h:'📉 [3분기] 사업국 퇴회율 & 온공',rel:true,period:'3분기 7~9월',conds:[{l:'누적 퇴회율·온공',need:'급간/순위'}],reward:'급간별 시상'})
       +jpvCard({h:'👑 [하반기] 온공 Top (사업국)',rel:true,period:'하반기 7~12월',conds:[{l:'온공 인당순증',need:'1위 사업국'}],reward:'시상금 500,000원'});
   }else{
-    body=jpvCard({h:'✈️ [3분기] TOP TOUR',rel:true,period:'3분기 7~9월',conds:[{l:'합산과목 달성률(50%↑)',need:'총국장 1~2위'}],reward:'추계 Top Tour'})
-      +jpvCard({h:'☕ [하반기] 커피차',rel:true,period:'하반기 7~12월',conds:[{l:'합산과목 달성률(50%↑)',need:'1위 총국'}],reward:'27년 1월 전략회의 커피차'});
+    body='<div class="incwrap">'+topTourStat()+'</div>'+coffeeCard();
   }
   return head+body;
 }
