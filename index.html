@@ -1310,9 +1310,19 @@ function jikToiCard(){
   var pay=Math.round(f.교사수*unit*10000);            // 급간 기준 예상 시상금
   var win=(eligible&&pay>0);                          // 실제 시상 = 달성률50↑ + 급간 해당
   var remain='';
-  if(!eligible)remain='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(q3flr(f.목표-f.순증,1))+'</b> 남음 (시상 조건 50%↑)</div>';
-  else if(row<0)remain='<div class="icnext">⬆️ 4.6% 급간까지 퇴회율 <b>-'+fmtD2(toi-4.6)+'%p</b> 남음</div>';
-  else if(row>0){var nextMax=JIKTOI[row-1].max;remain='<div class="icnext">⬆️ '+nextMax+'% 급간까지 퇴회율 <b>-'+fmtD2(toi-nextMax)+'%p</b> 남음</div>';}
+  // ① 퇴회율: 다음(더 높은) 급간까지 남은 %p — 급간 판정은 "이하"=다음 0.1 미만
+  if(row<0){
+    remain+='<div class="icnext">⬆️ 4.6% 급간(교사수 × 0.5만원)까지 퇴회율 <b>'+fmtD2(toi-4.69)+'%p</b> 낮추면 돼요</div>';
+  }else if(row>0){
+    var ng=JIKTOI[row-1];
+    var addPay=Math.round(f.교사수*(ng.p-JIKTOI[row].p)*10000);
+    remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 퇴회율 <b>'+fmtD2(toi-(ng.max+0.09))+'%p</b> 낮추면 돼요'+(addPay>0?' <span style="font-size:11px;opacity:.8">(+'+fmt(addPay)+'원)</span>':'')+'</div>';
+  }
+  // ② 달성률: 시상 기본조건 50%까지 남은 순증
+  if(!eligible){
+    var need50=q3flr(f.목표*0.5-f.순증,1);
+    remain+='<div class="icremain">🎯 시상 조건(달성률 50%)까지 순증 <b>'+fmt1(need50>0?need50:0)+'</b> 남음</div>';
+  }
   var breakdown='';
   if(st){
     function mr(label,o,sub){return '<div class="icrow"'+(sub?' style="background:var(--card2)"':'')+'><div class="iclt"><div class="icl1">'+label+'</div><div class="icneed">퇴회 '+fmt(o.toi)+' · 과목수 '+fmt(o.gwa)+'</div></div><div class="icright"><div class="icnum">'+fmtD2(o.rate)+'<span style="font-size:12px">%</span></div></div></div>';}
