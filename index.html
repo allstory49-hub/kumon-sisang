@@ -900,16 +900,9 @@ function mastaTopHalf2Org(lv){
   var reward=(lv==='사업국')?500000:300000;
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
-    var a=(APP.q3cum||{})[code]||{};
-    // 인당순증은 "월별 인당"을 각각 구해 합산 (순증 합계 ÷ 교사수 아님)
-    var ms7=Number(a.마스타순증)||0, tea7=Number(a.마스타교사)||Number(a.교사수)||0;
-    var ms8=Number(o.마스타순증)||0, tea8=Number(o.마스타교사)||Number(o.교사수)||0;
-    var per7=tea7?q3flr(ms7/tea7,2):0;
-    var per8=tea8?q3flr(ms8/tea8,2):0;
-    var per=Math.round((per7+per8)*100)/100;
-    var ms=Math.round((ms7+ms8)*100)/100;
+    var op=ongPerCap(code);   // 월별 인당 합산 (공용 헬퍼)
     arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,총국:o.총국,
-      온공7:ms7,인당7:per7,온공당월:ms8,인당당월:per8,마스타순증:ms,인당:per,교사수:tea8});
+      온공7:op.ms7,인당7:op.per7,온공당월:op.ms8,인당당월:op.per8,마스타순증:op.ms,인당:op.per,교사수:op.tea8});
   });
   arr.sort(function(a,b){return (b.인당-a.인당)||(b.마스타순증-a.마스타순증);});
   arr.forEach(function(x,i){x.rank=i+1;});
@@ -1354,12 +1347,21 @@ function jikToiCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 퇴회율 = 퇴회(7~9월 누적) ÷ 전월말 관리과목(6월말~8월말 누적) × 100 (둘째자리 절사)<br>· 단, 합산과목 달성률 50% 이상 조직만 대상 · 최소 2개월 실적 보유 관리자만 인정<br>· 시상금은 10월 운영비에 포함하여 일괄 지급돼요.</div></div>';
 }
 // ===== 사업국 퇴회율 & 온공 (3분기) =====
+function ongPerCap(code){
+  // 온공 누적 인당순증 = 월별 (온공순증 ÷ 그 달 교사수)의 합
+  var a=(APP.q3cum||{})[code]||{}, b=(APP.q3cur||{})[code]||{};
+  var ms7=Number(a.마스타순증)||0, t7=Number(a.마스타교사)||Number(a.교사수)||0;
+  var ms8=Number(b.마스타순증)||0, t8=Number(b.마스타교사)||Number(b.교사수)||0;
+  var p7=t7?q3flr(ms7/t7,2):0, p8=t8?q3flr(ms8/t8,2):0;
+  return {per7:p7,per8:p8,per:Math.round((p7+p8)*100)/100,
+          ms7:ms7,ms8:ms8,ms:Math.round((ms7+ms8)*100)/100,tea7:t7,tea8:t8};
+}
 function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='사업국')return '<div class="incsec"><div class="incsech">📉 [3분기] 퇴회율 & 온공 (사업국)</div><div class="ib am">이번 명단에 없어요.</div></div>';
   var toi=f.과목수!==0?q3flr(f.퇴회/f.과목수*100,2):0;   // 3분기 누적(q3cum+q3cur)
   var toiOk=(toi<4.7&&f.순증>=1);
-  var mPer=f.마스타교사?q3flr(f.마스타순증/f.마스타교사,2):0;var mOk=(mPer>=1.5);
+  var op=ongPerCap(code);var mPer=op.per;var mOk=(mPer>=1.5);
   var total=(toiOk?500000:0)+(mOk?500000:0);
   return '<div class="incsec"><div class="incsech">📉 [3분기] 퇴회율 & 온공 (사업국)</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 <b>누적</b> · 7월부터 집계</div>'
@@ -1371,14 +1373,14 @@ function eopToiMastaCard(){
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율</div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑ 조건)</span></div><div class="ig4v" style="color:'+(f.순증>=1?'var(--green)':'var(--red)')+'">'+fmt1(f.순증)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">온공 누적 인당순증</div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">온공 누적 인당순증 <span style="font-size:9px;color:var(--t3)">(월별 합산)</span></div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(total>0?'var(--green)':'var(--t2)')+'">'+(total>0?fmt(total)+'원':'-')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(total>0?'win':'lose')+'">'+(total>0?'🎉 시상금 '+fmt(total)+'원 ('+(toiOk?'퇴회율':'')+(toiOk&&mOk?' + ':'')+(mOk?'온공':'')+')':'아직 시상 기준 미달이에요')+'</div>'
     +(!toiOk&&toi>=4.7?'<div class="icremain">🎯 퇴회율 4.6% 기준까지 <b>퇴회 '+fmt(Math.max(0,Math.ceil(f.퇴회-f.과목수*4.69/100)))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>':'')
     +(!toiOk&&toi<4.7&&f.순증<1?'<div class="icremain">🎯 퇴회율은 달성 · 순증 1까지 <b>'+fmt1(1-f.순증)+'</b> 남음</div>':'')
-    +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>온공 '+fmt(Math.max(0,Math.ceil(f.마스타교사*1.5-f.마스타순증)))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(현재 인당 '+fmtD2(mPer)+')</span></div>':'')
-    +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 실적 기준 · 두 기준은 각각 평가·지급돼요.<br>· 온공 인당순증 = 3분기 누적 온공 순증 ÷ 온공 담당 교사수<br>· 시상금은 10월 운영비에 포함하여 지급돼요.</div></div>';
+    +(!mOk?'<div class="icremain">🎯 온공 인당순증 1.5까지 <b>온공 '+fmt(Math.max(0,Math.ceil((1.5-mPer)*(op.tea8||1))))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(현재 인당 '+fmtD2(mPer)+' = 7월 '+fmtD2(op.per7)+' + 8월 '+fmtD2(op.per8)+')</span></div>':'')
+    +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 실적 기준 · 두 기준은 각각 평가·지급돼요.<br>· 온공 인당순증 = <b>월별 인당순증(그 달 온공 순증 ÷ 그 달 교사수)의 누적 합</b><br>· 시상금은 10월 운영비에 포함하여 지급돼요.</div></div>';
 }
 function jiguJune(){
   var u=S.user;
