@@ -2084,8 +2084,9 @@ function myOrg(){
   var detail='<div class="stl">항목별 내역</div><div class="cl">'
     +oitems.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+((i[1]||0)<0?' r':'')+'">'+fmt(i[1]||0)+'</span></div>';}).join('')
     +'<div class="cr tot"><span class="cll" style="font-weight:600">합계 (시상점수)</span><span class="cv'+((r.시상점수||0)<0?' r':'')+'" style="font-size:15px">'+fmt1(r.시상점수||0)+'</span></div>'
-    +(S.pos!=='지구'?'<div class="cr"><span class="cll">지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
+    +((S.pos!=='지구'&&S.pos!=='총국')?'<div class="cr"><span class="cll">지구수</span><span class="cv">'+(r.지구수||0)+'개</span></div>'
       +'<div class="cr tot"><span class="cll" style="font-weight:600">지구당 점수</span><span class="cv" style="font-size:15px;color:'+((r.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmtD2(r.지구당)+'</span></div>':'')
+    +(S.pos==='총국'?'<div class="cr tot"><span class="cll" style="font-weight:600">달성률</span><span class="cv" style="font-size:15px;color:'+((r.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(r.달성률||0)+'%</span></div>':'')
     +'</div>';
 
   return '<div class="mt">내 실적</div>'
@@ -2094,9 +2095,11 @@ function myOrg(){
     +'<div class="sr">'
     +'<div class="sb flip"><div class="slb">과목순증</div><div class="sn'+(r.과목순증<0?' r':' g')+'">'+fmt1(r.과목순증)+'</div></div>'
     +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
-    +'<div class="sb flip"><div class="slb">'+scoreLabel+'</div><div class="sn'+(r.지구당<0?' r':' g')+'">'+sc+'</div></div></div>'
+    +(S.pos==='총국'
+      ?'<div class="sb flip"><div class="slb">달성률</div><div class="sn'+((r.달성률||0)<0?' r':' g')+'">'+fmt1(r.달성률||0)+'<span style="font-size:12px">%</span></div></div></div>'
+      :'<div class="sb flip"><div class="slb">'+scoreLabel+'</div><div class="sn'+(r.지구당<0?' r':' g')+'">'+sc+'</div></div></div>')
     +rankRow
-    +(meetMin?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
+    +((S.pos==='총국'||meetMin)?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
     +'</div>'
     +detail
     +body;
@@ -2164,7 +2167,9 @@ function orgRank(){
     +'<div class="sc wide"><div class="sl">내 점수</div><div class="mini3">'
     +'<div><div class="m3l">과목순증</div><div class="m3v'+(r.과목순증<0?' rd':'')+'">'+fmt1(r.과목순증)+'</div></div>'
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
-    +'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>'
+    +(pos==='총국'
+      ?'<div><div class="m3l">달성률</div><div class="m3v" style="color:'+((r.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(r.달성률||0)+'%</div></div></div></div>'
+      :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
     +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
     return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
@@ -2180,10 +2185,22 @@ function orgRank(){
       +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabelBr+'</div></div>'
       +rows+myExtra+'</div>';
   }
+  if(pos==='총국'){
+    var ca=(APP.org.총국||[]).slice().sort(function(a,b){return (b.달성률||0)-(a.달성률||0);});
+    var crows=ca.map(function(x,i){var im=(x.사번&&x.사번===r.사번);
+      return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(i+1)+'">'+(i+1)+'</div>'
+        +'<div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
+        +'<div class="rcol"><div class="rcol-v"'+((x.과목순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
+        +'<div class="rcol"><div class="rcol-v"'+((x.디지털순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
+        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+((x.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(x.달성률||0)+'%</div></div></div>';}).join('');
+    return '<div class="mt">총국 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
+      +'<div class="rkstl" style="border-left-color:var(--amber)">전사 순위 <span class="rkstlsub">(달성률순)</span></div>'
+      +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">달성률</div></div>'+crows+'</div>';
+  }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +(pos==='총국'?'<div class="ib am">총국은 시상점수 순위를 제공하지 않습니다.</div>':block('전사 순위',national,nationalFull)
+    +block('전사 순위',national,nationalFull)
     +block('총국 순위',chong,chongFull)
-    +(pos==='사업국'?'':block('사업국 순위',saup,saupFull)));
+    +(pos==='사업국'?'':block('사업국 순위',saup,saupFull));
 }
 
 function info(){
