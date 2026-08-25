@@ -2909,20 +2909,23 @@ function prtOpen(cfg){
     +'<div id="prtN" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">'
     +opts.map(function(v,i){return '<button class="prtb'+(v===Math.min(PRT.n,tot)?' on':'')+'" data-n="'+v+'">'+(v===tot?'전체 '+fmt(tot):fmt(v)+'명')+'</button>';}).join('')
     +'</div>'
-    +(PRT.cut?'<div style="font-size:12px;color:var(--t3);margin-bottom:14px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'')
-    +'<div style="display:flex;gap:8px;margin-bottom:8px">'
-    +'<button id="prtImg" style="flex:1;padding:13px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:800;cursor:pointer">🖼️ 이미지 저장 · 공유</button>'
-    +'<button id="prtGo" style="flex:1;padding:13px;border:1.5px solid var(--green);border-radius:10px;background:var(--card);color:var(--green);font-size:14px;font-weight:800;cursor:pointer">🖨️ 인쇄 / PDF</button>'
-    +'</div>'
-    +'<div style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:12px">· 이미지: 카카오톡·메시지로 바로 공유하거나 사진으로 저장돼요.<br>· 인쇄: A4 표 형태로 출력하거나 PDF로 저장돼요.</div>'
-    +'<button id="prtX" style="width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
+    +(PRT.cut?'<div style="font-size:12px;color:var(--t3);margin-bottom:10px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'')
+    +'<div id="prtHint" style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:14px"></div>'
+    +'<button id="prtImg" style="width:100%;padding:14px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer">다음</button>'
+    +'<button id="prtX" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
     +'</div>';
   document.body.appendChild(ov);
+  function hint(){
+    var h=ov.querySelector('#prtHint');if(!h)return;
+    h.innerHTML=(PRT.n>40)
+      ?'⚠️ '+fmt(PRT.n)+'명은 이미지가 세로로 길어져요. 카카오톡 공유는 <b>30명 이하</b>, 많은 인원은 <b>인쇄(A4 분할)</b>를 권해요.'
+      :'· 다음 화면에서 <b>공유 · 저장 · 인쇄</b>를 고를 수 있어요.';
+  }
   ov.querySelectorAll('.prtb').forEach(function(b){b.onclick=function(){
     ov.querySelectorAll('.prtb').forEach(function(z){z.classList.remove('on');});
-    b.classList.add('on');PRT.n=Number(b.dataset.n);};});
+    b.classList.add('on');PRT.n=Number(b.dataset.n);hint();};});
+  hint();
   ov.querySelector('#prtX').onclick=function(){ov.remove();};
-  ov.querySelector('#prtGo').onclick=function(){ov.remove();prtRender();};
   ov.querySelector('#prtImg').onclick=function(){ov.remove();prtImage();};
 }
 function prtEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -3001,7 +3004,7 @@ function prtRender(){
   w.document.write(html);w.document.close();
   setTimeout(function(){try{w.focus();w.print();}catch(e){}},350);
 }
-function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">🖨️ 출력 · 🖼️ 이미지</button>';}
+function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">📤 공유 · 출력</button>';}
 
 
 // ===== 인센티브 순위 출력 =====
@@ -3294,10 +3297,11 @@ function imgPreview(dataUrl,fname){
     +'<img id="imgP" src="'+dataUrl+'" style="width:100%;display:block" alt="순위 이미지">'
     +'</div>'
     +'<div style="background:var(--card);border-radius:14px;padding:14px">'
-    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.6;margin-bottom:11px">📌 이미지를 <b>길게 눌러</b> \u2018이미지 저장\u2019 또는 \u2018공유\u2019를 선택할 수도 있어요.</div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button id="imgShare" style="flex:1;padding:13px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:800;cursor:pointer">📤 공유하기</button>'
-    +'<button id="imgSave" style="flex:1;padding:13px;border:1.5px solid var(--green);border-radius:10px;background:var(--card);color:var(--green);font-size:14px;font-weight:800;cursor:pointer">⬇️ 저장하기</button>'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.6;margin-bottom:11px">📌 이미지를 <b>길게 눌러</b> 저장할 수도 있어요. · 여러 장 <b>종이 출력</b>은 인쇄를 눌러주세요.</div>'
+    +'<div style="display:flex;gap:7px">'
+    +'<button id="imgShare" style="flex:1;padding:13px 6px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:13.5px;font-weight:800;cursor:pointer">📤 공유</button>'
+    +'<button id="imgSave" style="flex:1;padding:13px 6px;border:1.5px solid var(--green);border-radius:10px;background:var(--card);color:var(--green);font-size:13.5px;font-weight:800;cursor:pointer">⬇️ 저장</button>'
+    +'<button id="imgPrint" style="flex:1;padding:13px 6px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:800;cursor:pointer">🖨️ 인쇄</button>'
     +'</div>'
     +'<button id="imgX" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
     +'<div id="imgMsg" style="font-size:12px;color:var(--t3);margin-top:9px;text-align:center;min-height:16px"></div>'
@@ -3324,6 +3328,7 @@ function imgPreview(dataUrl,fname){
     imgDownload(dataUrlToBlob(dataUrl),fname);
     msg.innerHTML='저장했어요. <b>휴대폰: 다운로드 폴더</b> · PC: 다운로드 폴더';
   };
+  ov.querySelector('#imgPrint').onclick=function(){ov.remove();prtRender();};
   ov.querySelector('#imgX').onclick=function(){ov.remove();};
 }
 function imgDownload(blob,fname){
