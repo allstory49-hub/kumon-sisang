@@ -70,7 +70,7 @@ input,button{font-family:inherit;font-size:14px}
 .bd{padding:1.1rem}
 
 /* 타이틀 */
-.mt{font-size:18px;font-weight:700;margin-bottom:0.9rem;letter-spacing:-0.01em}
+.mt{font-size:18px;font-weight:700;margin-bottom:0.9rem;letter-spacing:-0.01em;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .stl{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:9px;margin-top:2px}
 
 /* 영웅 카드 */
@@ -204,10 +204,10 @@ input,button{font-family:inherit;font-size:14px}
 .mtnote{font-size:10.5px;font-weight:500;color:var(--t3);margin-left:2px}
 .prtb{padding:8px 13px;border:1px solid var(--bd);border-radius:9px;background:var(--card2);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer}
 .prtb.on{background:var(--green);border-color:var(--green);color:#fff}
-.prtlink{padding:6px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer}
+.prtlink{padding:5px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--t2);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;line-height:1.5}
 .prtlink:hover{border-color:var(--green);color:var(--green)}
-.prtbar{display:flex;justify-content:flex-end;margin:-4px 0 6px}
-.rkstl{font-size:15.5px;font-weight:800;color:var(--t1);margin:22px 0 10px;padding:8px 12px;border-left:4px solid var(--green);background:var(--card2);border-radius:0 8px 8px 0}
+.prtbar{display:flex;justify-content:flex-end;margin:8px 0 6px}
+.rkstl{font-size:15.5px;font-weight:800;color:var(--t1);margin:22px 0 10px;padding:8px 12px;border-left:4px solid var(--green);background:var(--card2);border-radius:0 8px 8px 0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .rkstlsub{font-size:11px;font-weight:500;color:var(--t3)}
 .topcard{background:linear-gradient(180deg,rgba(29,158,117,.10),rgba(29,158,117,.03));border:1.5px solid rgba(29,158,117,.35)}
 .topcl{font-size:14px;font-weight:800;color:var(--green);margin-bottom:4px}
@@ -252,7 +252,10 @@ input,button{font-family:inherit;font-size:14px}
 .giftnm{font-size:14px;font-weight:700;color:var(--t1)}
 .giftpr{font-size:12px;color:var(--t2);margin-top:2px}
 .incsec{border:1.5px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:16px;background:var(--card)}
-.incsech{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:10px}
+.incsech{font-size:16px;font-weight:800;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.incsech>.prtlink{flex:0 0 auto}
+.mt>.prtlink{flex:0 0 auto}
+.rkstl>.prtlink{flex:0 0 auto}
 .ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
 .ictiers b{font-weight:800}
 .incwrap{display:flex;flex-direction:column;gap:8px}
@@ -923,9 +926,8 @@ function mastaTopHalf2Org(lv){
   var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col2">7월<br><span style="font-weight:600">순증/인당</span></div><div class="r20-col2">8월<br><span style="font-weight:600">순증/인당</span></div><div class="r20-col2">누적<br><span style="font-weight:600">순증/인당</span></div></div>';
   var top20=arr.slice(0,20);var rows=top20.map(row).join('');
   var myExtra=(mi>=20)?('<div class="r20cut">···</div>'+row(arr[mi])):'';
-  var board='<div class="prtbar">'+prtBtn("prtOngOrg('"+lv+"')")+'</div>'
-    +'<div class="r20wrap"><div class="r20head">📊 하반기 누적 온공 인당순증 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
-  return '<div class="incsec"><div class="incsech">👑 [하반기] 온공 Top ('+lv+') <span class="rqbadge">상대평가</span></div>'
+  var board='<div class="r20wrap"><div class="r20head">📊 하반기 누적 온공 인당순증 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
+  return '<div class="incsec"><div class="incsech"><span>👑 [하반기] 온공 Top ('+lv+') <span class="rqbadge">상대평가</span></span>'+prtBtn("prtOngOrg(\'"+lv+"\')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +'<div class="incres '+(me&&me.rank===1?'win':'lose')+'">'+(me?'현재 전사 '+me.rank+'위 · 누적 인당순증 '+fmtD2(me.인당)+' <span style="font-size:11px;opacity:.85">(7월 '+fmtD2(me.인당7)+' + 8월 '+fmtD2(me.인당당월)+')</span>':'집계 대상 명단에 없어요')+'</div>'
     +'<div class="ictiers">'+lv+' 온공 인당순증 1위 → <b>시상금 '+fmt(reward)+'원</b></div>'
@@ -1197,7 +1199,7 @@ function eliteJiguCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   var rankAll=eliteJiguRankAll();
   var meR=null;for(var i=0;i<rankAll.length;i++){if(rankAll[i].소속코드===code){meR=rankAll[i];break;}}
-  var boardTop='<div class="prtbar">'+prtBtn("prtElite()")+'</div>'+rankTop20All(rankAll,code);
+  var boardTop=rankTop20All(rankAll,code);
   if(!f||f.lv!=='지구'){
     return '<div class="incsec"><div class="incsech">🏆 [3분기] 엘리트 지구장 <span class="rqbadge">상대평가</span></div>'
       +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
@@ -1214,7 +1216,7 @@ function eliteJiguCard(){
   else if(ach<100)remain='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(q3flr(f.목표-f.순증,1))+'</b> 남음</div>';
   else if(f.D순증<1)remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-f.D순증)+'</b> 남음</div>';
   else if(!win&&meR){var above=rankAll[meR.rank-2];if(above)remain='<div class="icnext">⬆️ '+(meR.rank-1)+'위까지 달성률 <b>'+fmtD(above.달성률-ach)+'%p</b> 남음</div>';}
-  return '<div class="incsec"><div class="incsech">🏆 [3분기] 엘리트 지구장 <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech"><span>🏆 [3분기] 엘리트 지구장 <span class="rqbadge">상대평가</span></span>'+prtBtn("prtElite()")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <b>7월부터 집계</b></div>'
     +critBlock('합산과목 달성률 <b>100%↑</b> & D순증 <b>1↑</b> · 달성률 상위 20명')
     +'<div class="ictiers">전사 상위 20명 → <b>20만원</b> + 녹지원 행사</div>'
@@ -1578,8 +1580,7 @@ function topTourCard(lv){
   var show=arr.slice(0,Math.max(TO+2,10));
   var extra='';
   if(me&&me.rank>show.length)extra='<div class="r20cut">···</div>'+row(me);
-  var board='<div class="prtbar">'+prtBtn("prtTopTour('"+lv+"')")+'</div>'
-    +'<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+show.map(row).join('')+extra+'</div>';
+  var board='<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+show.map(row).join('')+extra+'</div>';
   var remain='';
   if(me&&!me.자격){
     var need=q3flr(me.목표*0.5-me.순증,1);
@@ -1589,7 +1590,7 @@ function topTourCard(lv){
     var need2=q3flr(me.목표*t.달성률/100-me.순증,1);
     remain='<div class="icnext">⬆️ '+TO+'위 안에 들려면 순증 <b>'+fmt1(need2>0?need2:0)+'</b> 더 필요해요 <span style="font-size:11px;opacity:.8">('+TO+'위 '+fmt1(t.달성률)+'%)</span></div>';
   }
-  return '<div class="incsec"><div class="incsech">✈️ [3분기] TOP TOUR ('+lv+') <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech"><span>✈️ [3분기] TOP TOUR ('+lv+') <span class="rqbadge">상대평가</span></span>'+prtBtn("prtTopTour(\'"+lv+"\')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('3분기 누적 합산과목 달성률 <b>50%↑</b> · '+lv+'장 상위 '+TO+'명')
     +'<div class="ictiers">추계 TOP TOUR (장소·일정 추후 공지) · 사업대표·사업센터장 동행</div>'
@@ -1786,11 +1787,10 @@ function mastaTopJulyCard(){
   var myExtra='';
   if(mi>=20){myExtra='<div class="rrsep">···</div>'+row(arr[mi],true);}
   var asof=(APP.meta&&APP.meta.date)||'';
-  var board='<div class="prtbar">'+prtBtn("prtOngTea()")+'</div>'
-    +'<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7월 + 당월 온공 순증</span></div>'
+  var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7월 + 당월 온공 순증</span></div>'
     +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10px">7월</div><div class="rhc" style="font-size:10px">당월</div><div class="rhc">누적</div></div>'+rows+myExtra+'</div>';
   var need=myMs<30?fmt1(30-myMs):0;
-  return '<div class="incsec"><div class="incsech">👑 [하반기] 온공 Top (전직책) <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech"><span>👑 [하반기] 온공 Top (전직책) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtOngTea()")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+asof+' 기준</span></div>'
     +'<div class="incres '+(myRank===1&&myMs>=30?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 누적 온공 순증 '+fmt1(myMs)+' <span style="font-size:11px;opacity:.85">(7월 '+fmt1(my7)+' + 당월 '+fmt1(myCur)+')</span>':'집계 대상 데이터가 없어요')+'</div>'
     +'<div class="ictiers">누적 온공 순증 30 이상 · 1위 교사 → <b>시상금 50만원</b></div>'
@@ -2136,8 +2136,8 @@ function teacherRank(){
   function trow(x,rank,im){
     return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big"><div class="rcol-v" style="color:'+(x.시상계<0?'var(--red)':'var(--green)')+'">'+fmt1(x.시상계)+'</div></div></div>';
   }
-  function block(title,arr,full){
-    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
+  function block(title,arr,full,pfn){
+    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
     if(!arr.length)return ttl+'<div class="empty">해당 데이터가 없습니다.</div>';
     var rows=arr.map(function(x,idx){return trow(x,idx+1,x.교사번호===r.교사번호);}).join('');
     var myExtra='';
@@ -2148,9 +2148,9 @@ function teacherRank(){
       +rows+myExtra+'</div>';
   }
   return '<div class="mt">시상점수 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +'<div class="prtbar">'+prtBtn("prtTea('n')")+'</div>'+block('전사 순위',national,nationalFull)
-    +'<div class="prtbar">'+prtBtn("prtTea('c')")+'</div>'+block('총국 순위',chong,chongFull)
-    +'<div class="prtbar">'+prtBtn("prtTea('s')")+'</div>'+block('사업국 순위',saup,saupFull);
+    +block('전사 순위',national,nationalFull,"prtTea('n')")
+    +block('총국 순위',chong,chongFull,"prtTea('c')")
+    +block('사업국 순위',saup,saupFull,"prtTea('s')");
 }
 function prtTea(scope){
   var r=S.user,p1=(r.소속코드||'').charAt(0),p2=(r.소속코드||'').slice(0,2);
@@ -2198,8 +2198,8 @@ function orgRank(){
   function orow(x,rank,im){
     return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
-  function block(title,arr,full){
-    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'">'+title+' <span class="rkstlsub">(시상점수순)</span></div>';
+  function block(title,arr,full,pfn){
+    var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
     if(!arr.length)return ttl+'<div class="empty">해당 데이터가 없습니다.</div>';
     var rows=arr.map(function(x,idx){return orow(x,idx+1,x.사번&&x.사번===r.사번);}).join('');
     var myExtra='';
@@ -2218,14 +2218,13 @@ function orgRank(){
         +'<div class="rcol"><div class="rcol-v"'+((x.디지털순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
         +'<div class="rcol big w2"><div class="rcol-v" style="color:'+((x.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(x.달성률||0)+'%</div></div></div>';}).join('');
     return '<div class="mt">총국 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-      +'<div class="rkstl" style="border-left-color:var(--amber)">전사 순위 <span class="rkstlsub">(달성률순)</span></div>'
-      +'<div class="prtbar">'+prtBtn("prtOrg('n')")+'</div>'
+      +'<div class="rkstl" style="border-left-color:var(--amber)"><span>전사 순위 <span class="rkstlsub">(달성률순)</span></span>'+prtBtn("prtOrg('n')")+'</div>'
       +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">달성률</div></div>'+crows+'</div>';
   }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
-    +'<div class="prtbar">'+prtBtn("prtOrg('n')")+'</div>'+block('전사 순위',national,nationalFull)
-    +'<div class="prtbar">'+prtBtn("prtOrg('c')")+'</div>'+block('총국 순위',chong,chongFull)
-    +(pos==='사업국'?'':'<div class="prtbar">'+prtBtn("prtOrg('s')")+'</div>'+block('사업국 순위',saup,saupFull));
+    +block('전사 순위',national,nationalFull,"prtOrg('n')")
+    +block('총국 순위',chong,chongFull,"prtOrg('c')")
+    +(pos==='사업국'?'':block('사업국 순위',saup,saupFull,"prtOrg('s')"));
 }
 function prtOrg(scope){
   var r=S.user,pos=S.pos,all=(APP.org[pos]||[]).slice();
@@ -2516,8 +2515,7 @@ function sejongClub(){
       var grCell=club?('<b style="color:'+club.c+'">'+club.n.replace(' 클럽','')+'</b>'):(e.has?'<span style="color:var(--t3)">미달</span>':'—');
       return '<div class="sjrow"><div class="sjr-no">'+(i+1)+'</div><div class="sjr-nm">'+o.name+'<br><span class="rsb">'+o.chong+'</span></div><div class="sjr-sc">'+toiCell+'</div><div class="sjr-sc">'+italCell+'</div><div class="sjr-sc">'+m3+'</div><div class="sjr-sc">'+m4+'</div><div class="sjr-sc">'+m5+'</div><div class="sjr-tot">'+sumCell+'</div><div class="sjr-gr">'+grCell+'</div></div>';}).join('');
     var clubSummary='<div class="ib gr" style="margin-top:8px">'+S.sjLv+' 대상 '+fmt(arr.length)+'개 · 현재 잠정 선정 → 세종 '+clubCnt.세종+' · 율곡 '+clubCnt.율곡+' · 퇴계 '+clubCnt.퇴계+'개 (합계순 정렬)</div>';
-    listBody=clubSummary+'<div class="prtbar">'+prtBtn("prtSejong('"+S.sjLv+"')")+'</div>'
-      +'<div class="sjtable">'+rhead+rows+'</div>'+(arr.length>100?'<div class="ib bl">· 상위 100개만 표시 중 (전체 '+fmt(arr.length)+'개)</div>':'');
+    listBody=clubSummary+'<div class="prtbar">'+prtBtn("prtSejong('"+S.sjLv+"')")+'</div><div class="sjtable">'+rhead+rows+'</div>'+(arr.length>100?'<div class="ib bl">· 상위 100개만 표시 중 (전체 '+fmt(arr.length)+'개)</div>':'');
   }
   return head+gcards+ilist+'<div class="stl" style="margin-top:18px">대상 조직 명단</div>'+lvtog+listBody+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
@@ -2560,8 +2558,7 @@ function adminSisang(){
     cntLine='<div class="ib gr">✅ <b>시상 대상</b> <b style="color:var(--green)">(과목순증·디지털순증 1 이상)</b> · <b>'+fmt(q)+'개</b> / 전체 '+fmt(O.length)+'개 '+S.stab+'</div>';
     body=adminOrg();
   }
-  return '<div class="mt">시상 순위</div>'+btns+cntLine
-    +'<div class="prtbar">'+prtBtn("prtAdminSisang()")+'</div>'+body;
+  return '<div class="mt"><span>시상 순위</span>'+prtBtn("prtAdminSisang()")+'</div>'+btns+cntLine+body;
 }
 function prtAdminSisang(){
   var pos=S.stab||'교사';
@@ -2610,8 +2607,7 @@ function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
-  var head='<div class="mt">8월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab
-    +'<div class="prtbar">'+prtBtn("prtAdminInc()")+'</div>';
+  var head='<div class="mt"><span>8월 인센티브 통계</span>'+prtBtn("prtAdminInc()")+'</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
   var L=APP.incList||[],n=L.length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   var body='';
