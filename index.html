@@ -2159,9 +2159,12 @@ function prtTea(scope){
   if(scope==='s'){arr=APP.teachers.filter(function(x){return (x.소속코드||'').slice(0,2)===p2;});label=shortName(r.소속명)+' 사업국';}
   prtOpen({
     title:'교사 시상점수 순위 ('+label+')',
-    sub:'시상점수 내림차순 · 대상 '+fmt(arr.length)+'명',
-    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'과목순증',k:'과목순증',num:1},{h:'디지털순증',k:'디지털순증',num:1},{h:'시상점수',k:'시상계',num:1}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===r.교사번호),소속명:x.소속명,교사명:x.교사명,과목순증:fmt1(x.과목순증),디지털순증:fmt(x.디지털순증),시상계:fmt1(x.시상계)};}),
+    sub:'시상점수 = 과목순증 + 온공약정점수 + 디지털순증 + 태블릿점수 + SKN재약정점수  ·  대상 '+fmt(arr.length)+'명',
+    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},
+      {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+      {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'시상점수',k:'f',num:1}],
+    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===r.교사번호),소속명:x.소속명,교사명:x.교사명,
+      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),f:fmt1(x.시상계)};}),
     n:30
   });
 }
@@ -2236,9 +2239,14 @@ function prtOrg(scope){
   prtOpen({
     title:pos+' '+(isChong?'달성률':'시상점수')+' 순위 ('+label+')',
     sub:(isChong?'달성률':'시상점수')+' 내림차순 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'과목순증',num:1},{h:'디지털순증',k:'디지털순증',num:1},scoreCol],
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+      {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+      {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
+      {h:'시상점수',k:'f',num:1},scoreCol],
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
-      소속명:x.소속명,관리자명:x.관리자명||'',과목순증:fmt1(x.과목순증),디지털순증:fmt(x.디지털순증),
+      소속명:x.소속명,관리자명:x.관리자명||'',
+      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
+      f:fmt1(x.시상점수),
       v:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?arr.length:30
   });
@@ -2562,11 +2570,14 @@ function prtAdminSisang(){
     var q=T.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
     prtOpen({
       title:'[전사] 교사 시상점수 순위',
-      sub:'시상 대상(과목순증·디지털순증 각 1↑) '+fmt(q)+'명 / 전체 '+fmt(T.length)+'명',
-      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'근무',k:'a',num:1},{h:'과목순증',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},{h:'시상점수',k:'d',num:1},{h:'대상',k:'e'}],
+      sub:'시상점수 = 과목순증 + 온공약정점수 + 디지털순증 + 태블릿점수 + SKN재약정점수  ·  시상 대상 '+fmt(q)+'명 / 전체 '+fmt(T.length)+'명',
+      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'근무',k:'a',num:1},
+        {h:'과목순증',k:'b',num:1},{h:'온공약정',k:'cc',num:1},{h:'디지털순증',k:'d',num:1},
+        {h:'태블릿',k:'e',num:1},{h:'SKN재약정',k:'f',num:1},{h:'대상',k:'g'},{h:'시상점수',k:'h',num:1}],
       rows:T.map(function(x,i){return {_rank:x.순위||(i+1),소속명:x.소속명,교사명:x.교사명,
-        a:fmt(x.근무기간),b:fmt1(x.과목순증),cc:fmt(x.디지털순증),d:fmt1(x.시상계),
-        e:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-'};}),
+        a:fmt(x.근무기간),b:fmt1(x.과목순증),cc:fmtD2(x.특별점수),d:fmt(x.디지털순증),
+        e:fmt1(x.태블릿점수),f:fmtD2(x.스구N재약정),
+        g:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',h:fmt1(x.시상계)};}),
       n:30
     });
     return;
@@ -2577,13 +2588,15 @@ function prtAdminSisang(){
   var qo=O.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
   prtOpen({
     title:'[전사] '+pos+' '+(isChong?'달성률':'시상점수')+' 순위',
-    sub:'시상 대상(과목순증·디지털순증 각 1↑) '+fmt(qo)+'개 / 전체 '+fmt(O.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'디지털순증',k:'b',num:1},
-      {h:(isChong?'달성률(%)':(pos==='지구'?'시상점수':'지구당 점수')),k:'cc',num:1},{h:'대상',k:'d'}],
+    sub:'시상점수 = 과목순증 + 온공약정점수 + 디지털순증 + 태블릿점수 + SKN재약정점수  ·  시상 대상 '+fmt(qo)+'개 / 전체 '+fmt(O.length)+'개',
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+      {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+      {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
+      {h:(isChong?'달성률(%)':(pos==='지구'?'시상점수':'지구당 점수')),k:'g',num:1}],
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
-      a:fmt1(x.과목순증),b:fmt(x.디지털순증),
-      cc:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당)),
-      d:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-'};}),
+      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
+      f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
+      g:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?O.length:30
   });
 }
@@ -2954,7 +2967,7 @@ function prtRender(){
       }).join('')+'</tr>';
   }).join('');
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+prtEsc(PRT.title)+'</title><style>'
-    +'@page{size:A4;margin:12mm 11mm}'
+    +'@page{size:A4 '+(PRT.cols.length>=7?'landscape':'portrait')+';margin:11mm 9mm}'
     +'*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'html,body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
     +'body{font-family:"맑은 고딕","Malgun Gothic",sans-serif;color:#16241E;margin:0}'
@@ -2965,12 +2978,12 @@ function prtRender(){
     +'.lg{display:flex;gap:14px;align-items:center;font-size:10.5px;color:#5B6B64;padding:8px 16px;background:#F4F7F5;border-left:1px solid #DCE5E0;border-right:1px solid #DCE5E0}'
     +'.lg b{color:#E8590C}'
     +'.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:3px}'
-    +'table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #DCE5E0;border-top:none}'
-    +'th{background:#1B3A2D;color:#fff;padding:8px 7px;text-align:left;font-weight:800;font-size:10.5px;border-right:1px solid #2C4A3C;border-bottom:2px solid #10281F}'
+    +'table{width:100%;border-collapse:collapse;font-size:'+(PRT.cols.length>=7?'10':'11')+'px;border:1px solid #DCE5E0;border-top:none;table-layout:fixed}'
+    +'th{background:#1B3A2D;color:#fff;padding:'+(PRT.cols.length>=7?'7px 5px':'8px 7px')+';text-align:left;font-weight:800;font-size:10.5px;border-right:1px solid #2C4A3C;border-bottom:2px solid #10281F}'
     +'th:last-child{border-right:none}'
     +'th.num,td.num{text-align:right}'
     +'th.rk,td.rk{width:40px;text-align:center}'
-    +'td{padding:6px 7px;border-bottom:1px solid #EDF1EF;border-right:1px solid #F0F4F2}'
+    +'td{padding:'+(PRT.cols.length>=7?'5px 5px':'6px 7px')+';border-bottom:1px solid #EDF1EF;border-right:1px solid #F0F4F2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
     +'td:last-child{border-right:none}'
     +'tbody tr:nth-child(even) td{background:#FAFBFA}'
     +'td.rk{font-weight:800;color:#4A5C54}'
@@ -3179,7 +3192,8 @@ function prtAdminInc(){
 function prtImage(){
   var rows=PRT.rows.slice(0,PRT.n);
   var DPR=2;
-  var W=920, padX=34;
+  var nNum=(PRT.cols||[]).filter(function(c){return c.num;}).length;
+  var W=(nNum>=5?1180:(nNum>=4?1040:920)), padX=34;
   var headH=140, colH=44, rowH=54, footH=64;
   var H=headH+colH+rows.length*rowH+footH;
   var cv=document.createElement('canvas');
@@ -3207,7 +3221,7 @@ function prtImage(){
   var cols=PRT.cols||[];
   var nameKeys=cols.filter(function(c){return !c.num;});
   var numKeys=cols.filter(function(c){return c.num;});
-  var numW=Math.min(96,Math.max(64,(W-padX*2-250)/Math.max(1,numKeys.length)));
+  var numW=Math.min(104,Math.max(62,(W-padX*2-250)/Math.max(1,numKeys.length)));
   var numTotal=numKeys.length*numW;
   var rkW=54, nameX=padX+rkW+8, nameW=W-padX*2-rkW-8-numTotal-8;
 
