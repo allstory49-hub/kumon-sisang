@@ -2903,69 +2903,100 @@ function prtOpen(cfg){
   var ov=document.createElement('div');ov.id='prtOv';
   ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(8,20,15,.55);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML='<div style="background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:22px">'
-    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:4px">🖨️ 순위 출력</div>'
+    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:4px">순위 내보내기</div>'
     +'<div style="font-size:13px;color:var(--t3);margin-bottom:16px">'+PRT.title+'</div>'
     +'<div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:8px">출력 인원</div>'
     +'<div id="prtN" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">'
     +opts.map(function(v,i){return '<button class="prtb'+(v===Math.min(PRT.n,tot)?' on':'')+'" data-n="'+v+'">'+(v===tot?'전체 '+fmt(tot):fmt(v)+'명')+'</button>';}).join('')
     +'</div>'
     +(PRT.cut?'<div style="font-size:12px;color:var(--t3);margin-bottom:14px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'')
-    +'<div style="display:flex;gap:8px">'
-    +'<button id="prtGo" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer">인쇄 / PDF 저장</button>'
-    +'<button id="prtX" style="flex:0 0 90px;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:14px;font-weight:600;cursor:pointer">닫기</button>'
-    +'</div></div>';
+    +'<div style="display:flex;gap:8px;margin-bottom:8px">'
+    +'<button id="prtImg" style="flex:1;padding:13px;border:none;border-radius:10px;background:var(--green);color:#fff;font-size:14px;font-weight:800;cursor:pointer">🖼️ 이미지 저장 · 공유</button>'
+    +'<button id="prtGo" style="flex:1;padding:13px;border:1.5px solid var(--green);border-radius:10px;background:var(--card);color:var(--green);font-size:14px;font-weight:800;cursor:pointer">🖨️ 인쇄 / PDF</button>'
+    +'</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:12px">· 이미지: 카카오톡·메시지로 바로 공유하거나 사진으로 저장돼요.<br>· 인쇄: A4 표 형태로 출력하거나 PDF로 저장돼요.</div>'
+    +'<button id="prtX" style="width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
+    +'</div>';
   document.body.appendChild(ov);
   ov.querySelectorAll('.prtb').forEach(function(b){b.onclick=function(){
     ov.querySelectorAll('.prtb').forEach(function(z){z.classList.remove('on');});
     b.classList.add('on');PRT.n=Number(b.dataset.n);};});
   ov.querySelector('#prtX').onclick=function(){ov.remove();};
   ov.querySelector('#prtGo').onclick=function(){ov.remove();prtRender();};
+  ov.querySelector('#prtImg').onclick=function(){ov.remove();setTimeout(prtImage,60);};
 }
 function prtEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function prtRender(){
   var rows=PRT.rows.slice(0,PRT.n);
   var head='<tr><th class="rk">순위</th>'+PRT.cols.map(function(cl){return '<th'+(cl.num?' class="num"':'')+'>'+prtEsc(cl.h)+'</th>';}).join('')+'</tr>';
+  var firstOut=-1;
+  rows.forEach(function(r,i){var rk=r._rank||(i+1);if(PRT.cut&&rk>PRT.cut&&firstOut<0)firstOut=i;});
+  var lastIdx=PRT.cols.length-1;
   var body=rows.map(function(r,i){
     var rk=r._rank||(i+1);
     var out=(PRT.cut&&rk>PRT.cut);
-    return '<tr class="'+(out?'out':'')+(r._me?' me':'')+'">'
+    var cls=[];
+    if(out)cls.push('out'); else if(rk<=3)cls.push('m'+rk);
+    if(r._me)cls.push('me');
+    if(i===firstOut)cls.push('cut');
+    return '<tr'+(cls.length?' class="'+cls.join(' ')+'"':'')+'>'
       +'<td class="rk">'+rk+'</td>'
-      +PRT.cols.map(function(cl){return '<td'+(cl.num?' class="num"':'')+'>'+prtEsc(r[cl.k])+'</td>';}).join('')+'</tr>';
+      +PRT.cols.map(function(cl,k){
+        var v=String(r[cl.k]==null?'':r[cl.k]);
+        var cc=[];
+        if(cl.num)cc.push('num');
+        if(cl.num&&k===lastIdx)cc.push('val');
+        if(/^-/.test(v))cc.push('neg');
+        return '<td'+(cc.length?' class="'+cc.join(' ')+'"':'')+'>'+prtEsc(v)+'</td>';
+      }).join('')+'</tr>';
   }).join('');
-  var cutNote=PRT.cut?'<div class="lg"><span class="dot"></span>'+prtEsc(PRT.cutLabel||('시상 대상 '+PRT.cut+'명'))+' · 회색 행은 대상 외</div>':'';
   var html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+prtEsc(PRT.title)+'</title><style>'
-    +'@page{size:A4;margin:14mm 12mm}'
+    +'@page{size:A4;margin:12mm 11mm}'
     +'*{box-sizing:border-box}'
-    +'body{font-family:"맑은 고딕","Malgun Gothic",sans-serif;color:#16241E;margin:0;padding:0}'
-    +'h1{font-size:17px;margin:0 0 4px}'
-    +'.sub{font-size:11.5px;color:#5B6B64;margin-bottom:4px}'
-    +'.meta{font-size:10.5px;color:#8A968F;margin-bottom:10px}'
-    +'.lg{font-size:10.5px;color:#5B6B64;margin:0 0 8px;display:flex;align-items:center;gap:6px}'
-    +'.dot{display:inline-block;width:10px;height:10px;border-radius:2px;background:#E9EDEB}'
-    +'table{width:100%;border-collapse:collapse;font-size:11px}'
-    +'th{background:#10281F;color:#fff;padding:6px 6px;text-align:left;font-weight:700;font-size:10.5px}'
+    +'body{font-family:"맑은 고딕","Malgun Gothic",sans-serif;color:#16241E;margin:0}'
+    +'.hd{background:#10281F;color:#fff;padding:14px 16px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:flex-end}'
+    +'.hd h1{font-size:18px;margin:0 0 3px;letter-spacing:-.3px}'
+    +'.hd .sub{font-size:11.5px;color:#9FBCAF}'
+    +'.hd .rt{text-align:right;font-size:10.5px;color:#7FD9B4;line-height:1.6;white-space:nowrap;padding-left:14px}'
+    +'.lg{display:flex;gap:14px;align-items:center;font-size:10.5px;color:#5B6B64;padding:8px 16px;background:#F4F7F5;border-left:1px solid #DCE5E0;border-right:1px solid #DCE5E0}'
+    +'.lg b{color:#E8590C}'
+    +'.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #DCE5E0;border-top:none}'
+    +'th{background:#1B3A2D;color:#fff;padding:8px 7px;text-align:left;font-weight:700;font-size:10.5px;border-right:1px solid #2C4A3C}'
+    +'th:last-child{border-right:none}'
     +'th.num,td.num{text-align:right}'
-    +'th.rk,td.rk{width:38px;text-align:center}'
-    +'td{padding:5px 6px;border-bottom:1px solid #E6EBE8}'
-    +'tr:nth-child(even) td{background:#FAFBFA}'
-    +'tr.out td{color:#9AA8A1;background:#F2F5F3}'
-    +'tr.me td{background:#E6F5EE;font-weight:800}'
+    +'th.rk,td.rk{width:40px;text-align:center}'
+    +'td{padding:6px 7px;border-bottom:1px solid #EDF1EF;border-right:1px solid #F0F4F2}'
+    +'td:last-child{border-right:none}'
+    +'tbody tr:nth-child(even) td{background:#FAFBFA}'
+    +'td.rk{font-weight:800;color:#4A5C54}'
+    +'tr.m1 td.rk{background:#D4A017;color:#fff}tr.m2 td.rk{background:#9BA7AE;color:#fff}tr.m3 td.rk{background:#B4763C;color:#fff}'
+    +'td.val{font-weight:800;color:#1D9E75;font-size:12px}'
+    +'td.neg{color:#DC2626}'
+    +'tr.cut td{border-top:2px dashed #E8590C}'
+    +'tr.out td{color:#A9B5AF;background:#F5F7F6!important}'
+    +'tr.out td.val{color:#A9B5AF}'
+    +'tr.me td{background:#E6F5EE!important;font-weight:800}'
     +'thead{display:table-header-group}tr{page-break-inside:avoid}'
-    +'.ft{margin-top:10px;font-size:9.5px;color:#9AA8A1}'
+    +'.ft{margin-top:9px;font-size:9.5px;color:#9AA8A1;display:flex;justify-content:space-between}'
     +'</style></head><body>'
-    +'<h1>'+prtEsc(PRT.title)+'</h1>'
-    +(PRT.sub?'<div class="sub">'+prtEsc(PRT.sub)+'</div>':'')
-    +'<div class="meta">'+prtEsc((APP.meta&&APP.meta.date)||'')+'  ·  출력 '+new Date().toLocaleDateString('ko-KR')+'  ·  '+fmt(rows.length)+'명(개) 표시</div>'
-    +cutNote
+    +'<div class="hd"><div><h1>'+prtEsc(PRT.title)+'</h1>'
+      +(PRT.sub?'<div class="sub">'+prtEsc(PRT.sub)+'</div>':'')+'</div>'
+      +'<div class="rt">'+prtEsc((APP.meta&&APP.meta.date)||'')+'<br>'+fmt(rows.length)+'명(개) 표시</div></div>'
+    +'<div class="lg">'
+      +(PRT.cut?'<span><span class="sw" style="background:#fff;border:1px solid #DCE5E0"></span><b>시상 대상</b> '+prtEsc(PRT.cutLabel||(PRT.cut+'명'))+'</span>'
+        +'<span><span class="sw" style="background:#F5F7F6;border:1px solid #DCE5E0"></span>대상 외</span>':'<span>시상점수 내림차순</span>')
+      +'<span><span class="sw" style="background:#E6F5EE;border:1px solid #BEE3D2"></span>본인</span>'
+      +'</div>'
     +'<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'
-    +'<div class="ft">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</div>'
+    +'<div class="ft"><span>※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span><span>출력 '+new Date().toLocaleDateString('ko-KR')+'</span></div>'
     +'</body></html>';
   var w=window.open('','_blank');
   if(!w){alert('팝업이 차단되었습니다. 브라우저에서 팝업을 허용해 주세요.');return;}
   w.document.write(html);w.document.close();
   setTimeout(function(){try{w.focus();w.print();}catch(e){}},350);
 }
-function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">🖨️ 출력</button>';}
+function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">🖨️ 출력 · 🖼️ 이미지</button>';}
 
 
 // ===== 인센티브 순위 출력 =====
@@ -3134,6 +3165,130 @@ function prtAdminInc(){
     return;
   }
   prtTopTour('총국');
+}
+
+// ===== 순위 이미지 생성 (Canvas) =====
+function prtImage(){
+  var rows=PRT.rows.slice(0,PRT.n);
+  var DPR=2;
+  var W=920, padX=34;
+  var headH=140, colH=44, rowH=54, footH=64;
+  var H=headH+colH+rows.length*rowH+footH;
+  var cv=document.createElement('canvas');
+  cv.width=W*DPR; cv.height=H*DPR;
+  var g=cv.getContext('2d'); g.scale(DPR,DPR);
+  var FF='"맑은 고딕","Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+  function rr(x,y,w,h,r,fill){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();g.fillStyle=fill;g.fill();}
+  function txt(t,x,y,size,color,weight,align){g.font=(weight||'400')+' '+size+'px '+FF;g.fillStyle=color;g.textAlign=align||'left';g.textBaseline='middle';g.fillText(String(t==null?'':t),x,y);}
+  function clip(t,max,size,weight){g.font=(weight||'400')+' '+size+'px '+FF;t=String(t==null?'':t);
+    if(g.measureText(t).width<=max)return t;
+    while(t.length>1&&g.measureText(t+'…').width>max)t=t.slice(0,-1);
+    return t+'…';}
+
+  // 배경
+  g.fillStyle='#FFFFFF';g.fillRect(0,0,W,H);
+  // 헤더
+  g.fillStyle='#10281F';g.fillRect(0,0,W,headH);
+  rr(W-186,26,150,30,15,'rgba(29,158,117,.22)');
+  txt('KUMON 인센티브',W-111,42,13,'#7FD9B4','700','center');
+  txt(clip(PRT.title,W-padX*2-190,25,'800'),padX,52,25,'#FFFFFF','800');
+  if(PRT.sub)txt(clip(PRT.sub,W-padX*2,13.5),padX,84,13.5,'#9FBCAF','400');
+  txt(((APP.meta&&APP.meta.date)||'')+'   ·   '+rows.length+'명(개) 표시',padX,110,12.5,'#7B9A8A','400');
+
+  // 열 위치
+  var cols=PRT.cols||[];
+  var nameKeys=cols.filter(function(c){return !c.num;});
+  var numKeys=cols.filter(function(c){return c.num;});
+  var numW=Math.min(96,Math.max(64,(W-padX*2-250)/Math.max(1,numKeys.length)));
+  var numTotal=numKeys.length*numW;
+  var rkW=54, nameX=padX+rkW+8, nameW=W-padX*2-rkW-8-numTotal-8;
+
+  // 컬럼 헤더
+  var cy=headH;
+  g.fillStyle='#F4F7F5';g.fillRect(0,cy,W,colH);
+  txt('순위',padX+rkW/2,cy+colH/2,12,'#5B6B64','700','center');
+  txt(nameKeys.map(function(c){return c.h;}).join(' · '),nameX,cy+colH/2,12,'#5B6B64','700');
+  numKeys.forEach(function(c,i){
+    txt(c.h,padX+rkW+8+nameW+8+i*numW+numW-6,cy+colH/2,12,'#5B6B64','700','right');});
+  g.strokeStyle='#DCE5E0';g.lineWidth=1;
+  g.beginPath();g.moveTo(0,cy+colH-.5);g.lineTo(W,cy+colH-.5);g.stroke();
+
+  // 행
+  var y=cy+colH, cutDrawn=false;
+  rows.forEach(function(r,i){
+    var rk=r._rank||(i+1);
+    var out=(PRT.cut&&rk>PRT.cut);
+    // 시상 경계선
+    if(out&&!cutDrawn){
+      cutDrawn=true;
+      g.strokeStyle='#E8590C';g.lineWidth=2;g.setLineDash([7,5]);
+      g.beginPath();g.moveTo(padX,y+.5);g.lineTo(W-padX,y+.5);g.stroke();g.setLineDash([]);
+      rr(W-padX-118,y-11,118,22,11,'#E8590C');
+      txt('시상 기준선',W-padX-59,y,11.5,'#FFFFFF','800','center');
+    }
+    if(r._me)g.fillStyle='#E6F5EE';
+    else if(out)g.fillStyle='#F5F7F6';
+    else g.fillStyle=(i%2?'#FAFBFA':'#FFFFFF');
+    g.fillRect(0,y,W,rowH);
+    if(r._me){g.fillStyle='#1D9E75';g.fillRect(0,y,4,rowH);}
+
+    // 순위 배지
+    var bx=padX+rkW/2, by=y+rowH/2;
+    if(rk<=3&&!out){
+      var med=['#D4A017','#9BA7AE','#B4763C'][rk-1];
+      g.beginPath();g.arc(bx,by,15,0,Math.PI*2);g.fillStyle=med;g.fill();
+      txt(rk,bx,by+.5,14,'#FFFFFF','800','center');
+    }else{
+      txt(rk,bx,by,14,out?'#A9B5AF':'#4A5C54','700','center');
+    }
+    // 이름/소속
+    var pk=null,ok=null;
+    nameKeys.forEach(function(c){
+      if(!pk&&/교사명|관리자/.test(c.k))pk=c; else if(!ok)ok=c;});
+    if(!pk){pk=nameKeys[0];ok=nameKeys[1]||null;}
+    var main=pk?String(r[pk.k]||''):'';
+    var sub=ok?String(r[ok.k]||''):'';
+    if(!main){main=sub;sub='';}
+    if(sub){
+      txt(clip(main,nameW,15.5,'800'),nameX,by-9,15.5,out?'#8C9A93':'#16241E','800');
+      txt(clip(sub,nameW,12),nameX,by+11,12,out?'#AAB6B0':'#7B8A83','400');
+    }else{
+      txt(clip(main,nameW,15.5,'800'),nameX,by,15.5,out?'#8C9A93':'#16241E','800');
+    }
+    // 수치
+    numKeys.forEach(function(c,k){
+      var v=String(r[c.k]==null?'':r[c.k]);
+      var last=(k===numKeys.length-1);
+      var col=out?'#A9B5AF':(last?'#1D9E75':(/^-/.test(v)?'#DC2626':'#4A5C54'));
+      txt(v,padX+rkW+8+nameW+8+k*numW+numW-6,by,last?16:13.5,col,last?'800':'600','right');
+    });
+    g.strokeStyle='#EDF1EF';g.lineWidth=1;
+    g.beginPath();g.moveTo(padX,y+rowH-.5);g.lineTo(W-padX,y+rowH-.5);g.stroke();
+    y+=rowH;
+  });
+
+  // 푸터
+  g.fillStyle='#F4F7F5';g.fillRect(0,y,W,footH);
+  txt(PRT.cut?('※ 주황 점선 위가 시상 대상 ('+(PRT.cutLabel||PRT.cut+'명')+')'):'※ 실적조정으로 인한 순위변동이 있을 수 있습니다.',padX,y+24,12,'#5B6B64','600');
+  txt('출력 '+new Date().toLocaleDateString('ko-KR')+'  ·  시상·인센티브 조회 앱',padX,y+44,11.5,'#8A968F','400');
+
+  var fname=(PRT.title||'순위').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_')+'.png';
+  cv.toBlob(function(blob){
+    if(!blob){alert('이미지 생성에 실패했습니다.');return;}
+    var file=null;
+    try{file=new File([blob],fname,{type:'image/png'});}catch(e){}
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:PRT.title}).catch(function(){imgDownload(blob,fname);});
+    }else{
+      imgDownload(blob,fname);
+    }
+  },'image/png');
+}
+function imgDownload(blob,fname){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},2000);
 }
 function rankTeachers(rec){
   function cmp(a,b){return (b.시상계-a.시상계)||(b.전월말관리과목-a.전월말관리과목);}
