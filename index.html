@@ -2552,7 +2552,40 @@ function adminSisang(){
     cntLine='<div class="ib gr">✅ <b>시상 대상</b> <b style="color:var(--green)">(과목순증·디지털순증 1 이상)</b> · <b>'+fmt(q)+'개</b> / 전체 '+fmt(O.length)+'개 '+S.stab+'</div>';
     body=adminOrg();
   }
-  return '<div class="mt">시상 순위</div>'+btns+cntLine+body;
+  return '<div class="mt">시상 순위</div>'+btns+cntLine
+    +'<div class="prtbar">'+prtBtn("prtAdminSisang()")+'</div>'+body;
+}
+function prtAdminSisang(){
+  var pos=S.stab||'교사';
+  if(pos==='교사'){
+    var T=(APP.teachers||[]);
+    var q=T.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
+    prtOpen({
+      title:'[전사] 교사 시상점수 순위',
+      sub:'시상 대상(과목순증·디지털순증 각 1↑) '+fmt(q)+'명 / 전체 '+fmt(T.length)+'명',
+      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'근무',k:'a',num:1},{h:'과목순증',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},{h:'시상점수',k:'d',num:1},{h:'대상',k:'e'}],
+      rows:T.map(function(x,i){return {_rank:x.순위||(i+1),소속명:x.소속명,교사명:x.교사명,
+        a:fmt(x.근무기간),b:fmt1(x.과목순증),cc:fmt(x.디지털순증),d:fmt1(x.시상계),
+        e:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-'};}),
+      n:30
+    });
+    return;
+  }
+  var O=(APP.org[pos]||[]).slice();
+  var isChong=(pos==='총국');
+  if(isChong)O.sort(function(a,b){return (b.달성률||0)-(a.달성률||0);});
+  var qo=O.filter(function(r){return (r.과목순증||0)>=1&&(r.디지털순증||0)>=1;}).length;
+  prtOpen({
+    title:'[전사] '+pos+' '+(isChong?'달성률':'시상점수')+' 순위',
+    sub:'시상 대상(과목순증·디지털순증 각 1↑) '+fmt(qo)+'개 / 전체 '+fmt(O.length)+'개',
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'디지털순증',k:'b',num:1},
+      {h:(isChong?'달성률(%)':(pos==='지구'?'시상점수':'지구당 점수')),k:'cc',num:1},{h:'대상',k:'d'}],
+    rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
+      a:fmt1(x.과목순증),b:fmt(x.디지털순증),
+      cc:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당)),
+      d:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-'};}),
+    n:(pos==='사업국'||isChong)?O.length:30
+  });
 }
 function adminInc(){
   if(!S.imonth||S.imonth==='6')S.imonth='8';
@@ -2564,7 +2597,8 @@ function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
-  var head='<div class="mt">8월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
+  var head='<div class="mt">8월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab
+    +'<div class="prtbar">'+prtBtn("prtAdminInc()")+'</div>';
   var L=APP.incList||[],n=L.length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   var body='';
@@ -3016,6 +3050,90 @@ function prtSejong(lv){
       a:x.s1,b:x.s2,cc:x.s3,d:x.s4,e:x.s5,f:x.sum,g:x.club,h:x.pay?fmt(x.pay):'-'};}),
     cut:(win.length||1),cutLabel:'클럽 선정 '+fmt(win.length)+'개 (50점 이상)',n:50
   });
+}
+function prtAdminInc(){
+  var role=S.aincRole||'교사';
+  if(role==='교사'){
+    var L=APP.incList||[], T=APP.teachers||[];
+    var tmap={};T.forEach(function(t){tmap[t.교사번호]=t;});
+    var arr=L.map(function(x){
+      var t=tmap[x.교사번호]||{};
+      var sj=Number(x.과목순증)||0, ip=Number(x.입회)||0;
+      var toi=Number(t.퇴회)||0, wk=Number(t.근무기간)||0, gwa=Number(t.전월말관리과목)||0;
+      var wol=(sj>=6||ip>=13);
+      var mut=(toi===0&&wk>=6&&gwa>=60);
+      var mpay=mut?(gwa>=130?20000:10000):0;
+      return {교사번호:x.교사번호,소속명:x.소속명,교사명:x.교사명,sj:sj,ip:ip,toi:toi,gwa:gwa,
+        wol:wol,mut:mut,mpay:mpay,win:(wol||mut),sort:(wol?1:0)+(mut?1:0)};
+    }).filter(function(x){return x.win;})
+      .sort(function(a,b){return (b.sort-a.sort)||(b.sj-a.sj);});
+    prtOpen({
+      title:'[8월] 교사 인센티브 대상자',
+      sub:'월성과(순증6↑ 또는 입회13↑) · 무퇴회(퇴회0·근무6↑·과목60↑) · 대상 '+fmt(arr.length)+'명',
+      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'과목순증',k:'a',num:1},{h:'입회',k:'b',num:1},
+        {h:'퇴회',k:'cc',num:1},{h:'과목수',k:'d',num:1},{h:'월성과',k:'e'},{h:'무퇴회',k:'f'},{h:'무퇴회 시상금',k:'g',num:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,소속명:x.소속명,교사명:x.교사명,
+        a:fmt1(x.sj),b:fmt1(x.ip),cc:fmt(x.toi),d:fmt(x.gwa),
+        e:x.wol?'○':'-',f:x.mut?'○':'-',g:x.mpay?fmt(x.mpay):'-'};}),
+      n:Math.min(50,arr.length)
+    });
+    return;
+  }
+  if(role==='지구'){
+    var J=(APP.incJigu||[]).map(function(a){return {코드:a[0],소속명:a[1],관리자:a[2],ns:Number(a[3])||0};})
+      .sort(function(a,b){return b.ns-a.ns;});
+    var win=J.filter(function(x){return x.ns>=1;}).length;
+    prtOpen({
+      title:'[8월] 지구 회원순증 인센티브',
+      sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(win)+'개 / 전체 '+fmt(J.length)+'개',
+      cols:[{h:'지구',k:'소속명'},{h:'지구장',k:'관리자'},{h:'회원순증',k:'a',num:1},{h:'시상금',k:'b',num:1}],
+      rows:J.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
+        a:fmt1(x.ns),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
+      cut:(win||1),cutLabel:'시상 대상 '+fmt(win)+'개 (순증 1↑)',n:50
+    });
+    return;
+  }
+  if(role==='지국'){
+    var arr2=[];
+    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지국')return;
+      var fr=orgFresh(code);if(!fr)return;
+      var ach=Number(fr.달성률)||0, sun=Number(fr.과목순증)||0, tno=Number(fr.전월말)||Number(o.교사수)||0;
+      var row=-1;for(var i=0;i<JIKACH.length;i++){if(ach>=JIKACH[i].min){row=i;break;}}
+      var unit=(row>=0)?JIKACH[row].p:(sun>=1?0.5:0);
+      arr2.push({code:code,소속명:o.소속명,관리자:o.관리자||'',ach:ach,sun:sun,tno:tno,unit:unit,pay:Math.round(tno*unit*10000)});});
+    arr2.sort(function(a,b){return b.ach-a.ach;});
+    var win2=arr2.filter(function(x){return x.pay>0;}).length;
+    prtOpen({
+      title:'[8월] 지국 달성률 인센티브',
+      sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(win2)+'개 / 전체 '+fmt(arr2.length)+'개',
+      cols:[{h:'지국',k:'소속명'},{h:'지국장',k:'관리자'},{h:'달성률(%)',k:'a',num:1},{h:'순증',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1}],
+      rows:arr2.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
+        a:fmt1(x.ach),b:fmt1(x.sun),cc:fmt(x.tno),d:x.unit?fmtD(x.unit):'-',e:x.pay?fmt(x.pay):'-'};}),
+      cut:(win2||1),cutLabel:'시상 대상 '+fmt(win2)+'개',n:50
+    });
+    return;
+  }
+  if(role==='사업국'){
+    var arr3=[];
+    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='사업국')return;
+      var f=q3get(code);if(!f)return;
+      var qt=q3Toi(code), op=ongPerCap(code);
+      var toiOk=(qt.rate<4.7&&f.순증>=1), mOk=(op.per>=1.5);
+      arr3.push({code:code,소속명:o.소속명,관리자:o.관리자||'',rate:qt.rate,sun:f.순증,per:op.per,
+        pay:(toiOk?500000:0)+(mOk?500000:0),toiOk:toiOk,mOk:mOk});});
+    arr3.sort(function(a,b){return a.rate-b.rate;});
+    var win3=arr3.filter(function(x){return x.pay>0;}).length;
+    prtOpen({
+      title:'[3분기] 사업국 퇴회율 & 온공 인센티브',
+      sub:'퇴회율 4.6%↓(순증1↑) 50만 + 온공 인당 1.5↑ 50만 · 대상 '+fmt(win3)+'개 / 전체 '+fmt(arr3.length)+'개',
+      cols:[{h:'사업국',k:'소속명'},{h:'사업국장',k:'관리자'},{h:'누적퇴회율(%)',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'온공 인당',k:'cc',num:1},{h:'퇴회율',k:'d'},{h:'온공',k:'e'},{h:'시상금',k:'f',num:1}],
+      rows:arr3.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
+        a:fmtD2(x.rate),b:fmt1(x.sun),cc:fmtD2(x.per),d:x.toiOk?'○':'-',e:x.mOk?'○':'-',f:x.pay?fmt(x.pay):'-'};}),
+      cut:(win3||1),cutLabel:'시상 대상 '+fmt(win3)+'개',n:arr3.length
+    });
+    return;
+  }
+  prtTopTour('총국');
 }
 function rankTeachers(rec){
   function cmp(a,b){return (b.시상계-a.시상계)||(b.전월말관리과목-a.전월말관리과목);}
