@@ -2975,7 +2975,7 @@ function prtOpen(cfg){
   var ov=document.createElement('div');ov.id='prtOv';
   ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(8,20,15,.55);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.innerHTML='<div style="background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:22px">'
-    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:4px">순위 내보내기</div>'
+    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:4px">순위 공유하기</div>'
     +'<div style="font-size:13px;color:var(--t3);margin-bottom:16px">'+PRT.title+'</div>'
     +'<div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:8px">출력 인원</div>'
     +'<div id="prtN" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">'
@@ -3080,7 +3080,7 @@ function prtRender(){
   w.document.write(html);w.document.close();
   setTimeout(function(){try{w.focus();w.print();}catch(e){}},350);
 }
-function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">📤 공유 · 출력</button>';}
+function prtBtn(id){return '<button class="prtlink" onclick="'+id+'">📤 공유</button>';}
 
 
 // ===== 인센티브 순위 출력 =====
@@ -3195,8 +3195,11 @@ function prtAdminInc(){
     return;
   }
   if(role==='지구'){
-    var J=(APP.incJigu||[]).map(function(a){return {코드:a[0],소속명:a[1],관리자:a[2],ns:Number(a[3])||0};})
-      .sort(function(a,b){return b.ns-a.ns;});
+    var J=(APP.incJigu||[]).map(function(a){
+      return Array.isArray(a)
+        ? {코드:a[0],소속명:a[1],관리자:a[2],ns:Number(a[3])||0}
+        : {코드:a.소속코드,소속명:a.소속명,관리자:a.관리자||'',ns:Number(a.회원순증)||0};
+    }).sort(function(a,b){return b.ns-a.ns;});
     var win=J.filter(function(x){return x.ns>=1;}).length;
     prtOpen({
       title:'[8월] 지구 회원순증 인센티브',
@@ -3252,12 +3255,23 @@ function prtAdminInc(){
 }
 
 // ===== 순위 이미지 생성 (Canvas) =====
+function prtTheme(t){
+  if(/교사/.test(t))       return {k:'교사',  bg:'#10281F', ac:'#1D9E75', soft:'#E6F5EE', badge:'#7FD9B4'};
+  if(/지구/.test(t))       return {k:'지구',  bg:'#123A5E', ac:'#2478C0', soft:'#E6F0FA', badge:'#8FC4EE'};
+  if(/지국/.test(t))       return {k:'지국',  bg:'#3D2A5C', ac:'#7A4FBF', soft:'#EFE9FA', badge:'#C3AEEC'};
+  if(/사업국/.test(t))     return {k:'사업국',bg:'#5C2A1F', ac:'#C25A2E', soft:'#FBEBE3', badge:'#F0B394'};
+  if(/총국/.test(t))       return {k:'총국',  bg:'#4A3A10', ac:'#B08420', soft:'#FAF2DE', badge:'#E3C878'};
+  return {k:'',bg:'#10281F',ac:'#1D9E75',soft:'#E6F5EE',badge:'#7FD9B4'};
+}
 function prtImage(){
   var rows=PRT.rows.slice(0,PRT.n);
   var DPR=2;
   var nNum=(PRT.cols||[]).filter(function(c){return c.num;}).length;
-  var W=(nNum>=5?1180:(nNum>=4?1040:920)), padX=34;
-  var headH=140, colH=44, rowH=54, footH=64;
+  // 수치 열 수에 맞춰 폭 결정 (여백 최소화)
+  var W=Math.max(880,Math.min(1400, 470+nNum*118)), padX=30;
+  var headH=152, colH=48, rowH=60, footH=66;
+  // 직책별 테마
+  var TH=prtTheme(PRT.title||'');
   var H=headH+colH+rows.length*rowH+footH;
   var cv=document.createElement('canvas');
   cv.width=W*DPR; cv.height=H*DPR;
@@ -3272,59 +3286,61 @@ function prtImage(){
 
   // 배경
   g.fillStyle='#FFFFFF';g.fillRect(0,0,W,H);
-  // 헤더
-  g.fillStyle='#10281F';g.fillRect(0,0,W,headH);
-  rr(W-186,26,150,30,15,'rgba(29,158,117,.22)');
-  txt('KUMON 인센티브',W-111,42,13,'#7FD9B4','700','center');
-  txt(clip(PRT.title,W-padX*2-190,25,'800'),padX,52,25,'#FFFFFF','800');
-  if(PRT.sub)txt(clip(PRT.sub,W-padX*2,13.5),padX,84,13.5,'#9FBCAF','400');
-  txt(((APP.meta&&APP.meta.date)||'')+'   ·   '+rows.length+'명(개) 표시',padX,110,12.5,'#7B9A8A','400');
+  // 헤더 (직책별 색)
+  g.fillStyle=TH.bg;g.fillRect(0,0,W,headH);
+  var bw=168;
+  rr(W-padX-bw,26,bw,32,16,'rgba(255,255,255,.14)');
+  txt('KUMON 인센티브',W-padX-bw/2,42,13.5,TH.badge,'800','center');
+  if(TH.k){rr(padX,24,66,30,15,TH.ac);txt(TH.k,padX+33,39,14,'#FFFFFF','800','center');}
+  txt(clip(PRT.title,W-padX*2-bw-20,29,'800'),TH.k?padX+78:padX,40,29,'#FFFFFF','800');
+  if(PRT.sub)txt(clip(PRT.sub,W-padX*2,15),padX,86,15,'rgba(255,255,255,.72)','400');
+  txt(((APP.meta&&APP.meta.date)||'')+'   ·   '+rows.length+'명(개) 표시',padX,116,14,'rgba(255,255,255,.55)','400');
 
-  // 열 위치
+  // 열 위치 (여백 최소화)
   var cols=PRT.cols||[];
   var nameKeys=cols.filter(function(c){return !c.num;});
   var numKeys=cols.filter(function(c){return c.num;});
-  var numW=Math.min(104,Math.max(62,(W-padX*2-250)/Math.max(1,numKeys.length)));
+  var rkW=58;
+  var numW=Math.max(96,Math.min(132,(W-padX*2-rkW-8-300)/Math.max(1,numKeys.length)));
   var numTotal=numKeys.length*numW;
-  var rkW=54, nameX=padX+rkW+8, nameW=W-padX*2-rkW-8-numTotal-8;
+  var nameX=padX+rkW+10, nameW=W-padX*2-rkW-10-numTotal;
 
   // 컬럼 헤더
   var cy=headH;
-  g.fillStyle='#F4F7F5';g.fillRect(0,cy,W,colH);
-  txt('순위',padX+rkW/2,cy+colH/2,12,'#5B6B64','700','center');
-  txt(nameKeys.map(function(c){return c.h;}).join(' · '),nameX,cy+colH/2,12,'#5B6B64','700');
+  g.fillStyle='#F2F5F3';g.fillRect(0,cy,W,colH);
+  txt('순위',padX+rkW/2,cy+colH/2,13,'#5B6B64','800','center');
+  txt(nameKeys.map(function(c){return c.h;}).join(' · '),nameX,cy+colH/2,13,'#5B6B64','800');
   numKeys.forEach(function(c,i){
-    txt(c.h,padX+rkW+8+nameW+8+i*numW+numW-6,cy+colH/2,12,'#5B6B64','700','right');});
-  g.strokeStyle='#DCE5E0';g.lineWidth=1;
-  g.beginPath();g.moveTo(0,cy+colH-.5);g.lineTo(W,cy+colH-.5);g.stroke();
+    txt(c.h,padX+rkW+10+nameW+i*numW+numW-8,cy+colH/2,13,'#5B6B64','800','right');});
+  g.strokeStyle='#D5DFDA';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(0,cy+colH-.75);g.lineTo(W,cy+colH-.75);g.stroke();
 
   // 행
   var y=cy+colH, cutDrawn=false;
   rows.forEach(function(r,i){
     var rk=r._rank||(i+1);
     var out=(PRT.cut&&rk>PRT.cut);
-    // 시상 경계선
     if(out&&!cutDrawn){
       cutDrawn=true;
-      g.strokeStyle='#E8590C';g.lineWidth=2;g.setLineDash([7,5]);
-      g.beginPath();g.moveTo(padX,y+.5);g.lineTo(W-padX,y+.5);g.stroke();g.setLineDash([]);
-      rr(W-padX-118,y-11,118,22,11,'#E8590C');
-      txt('시상 기준선',W-padX-59,y,11.5,'#FFFFFF','800','center');
+      g.strokeStyle='#E8590C';g.lineWidth=2.5;g.setLineDash([8,6]);
+      g.beginPath();g.moveTo(0,y+.5);g.lineTo(W,y+.5);g.stroke();g.setLineDash([]);
+      rr(padX,y-13,132,26,13,'#E8590C');
+      txt('시상 기준선',padX+66,y,12.5,'#FFFFFF','800','center');
     }
-    if(r._me)g.fillStyle='#E6F5EE';
+    if(r._me)g.fillStyle=TH.soft;
     else if(out)g.fillStyle='#F5F7F6';
     else g.fillStyle=(i%2?'#FAFBFA':'#FFFFFF');
     g.fillRect(0,y,W,rowH);
-    if(r._me){g.fillStyle='#1D9E75';g.fillRect(0,y,4,rowH);}
+    if(r._me){g.fillStyle=TH.ac;g.fillRect(0,y,5,rowH);}
 
     // 순위 배지
     var bx=padX+rkW/2, by=y+rowH/2;
     if(rk<=3&&!out){
       var med=['#D4A017','#9BA7AE','#B4763C'][rk-1];
-      g.beginPath();g.arc(bx,by,15,0,Math.PI*2);g.fillStyle=med;g.fill();
-      txt(rk,bx,by+.5,14,'#FFFFFF','800','center');
+      g.beginPath();g.arc(bx,by,17,0,Math.PI*2);g.fillStyle=med;g.fill();
+      txt(rk,bx,by+.5,16,'#FFFFFF','800','center');
     }else{
-      txt(rk,bx,by,14,out?'#A9B5AF':'#4A5C54','700','center');
+      txt(rk,bx,by,16,out?'#A9B5AF':'#4A5C54','800','center');
     }
     // 이름/소속
     var pk=null,ok=null;
@@ -3335,17 +3351,17 @@ function prtImage(){
     var sub=ok?String(r[ok.k]||''):'';
     if(!main){main=sub;sub='';}
     if(sub){
-      txt(clip(main,nameW,15.5,'800'),nameX,by-9,15.5,out?'#8C9A93':'#16241E','800');
-      txt(clip(sub,nameW,12),nameX,by+11,12,out?'#AAB6B0':'#7B8A83','400');
+      txt(clip(main,nameW-10,19,'800'),nameX,by-11,19,out?'#8C9A93':'#16241E','800');
+      txt(clip(sub,nameW-10,14),nameX,by+13,14,out?'#AAB6B0':'#7B8A83','400');
     }else{
-      txt(clip(main,nameW,15.5,'800'),nameX,by,15.5,out?'#8C9A93':'#16241E','800');
+      txt(clip(main,nameW-10,19,'800'),nameX,by,19,out?'#8C9A93':'#16241E','800');
     }
     // 수치
     numKeys.forEach(function(c,k){
       var v=String(r[c.k]==null?'':r[c.k]);
       var last=(k===numKeys.length-1);
-      var col=out?'#A9B5AF':(last?'#1D9E75':(/^-/.test(v)?'#DC2626':'#4A5C54'));
-      txt(v,padX+rkW+8+nameW+8+k*numW+numW-6,by,last?16:13.5,col,last?'800':'600','right');
+      var col=out?'#A9B5AF':(last?TH.ac:(/^-/.test(v)?'#DC2626':'#3C4C45'));
+      txt(v,padX+rkW+10+nameW+k*numW+numW-8,by,last?21:16,col,last?'800':'700','right');
     });
     g.strokeStyle='#EDF1EF';g.lineWidth=1;
     g.beginPath();g.moveTo(padX,y+rowH-.5);g.lineTo(W-padX,y+rowH-.5);g.stroke();
@@ -3353,9 +3369,10 @@ function prtImage(){
   });
 
   // 푸터
-  g.fillStyle='#F4F7F5';g.fillRect(0,y,W,footH);
-  txt(PRT.cut?('※ 주황 점선 위가 시상 대상 ('+(PRT.cutLabel||PRT.cut+'명')+')'):'※ 실적조정으로 인한 순위변동이 있을 수 있습니다.',padX,y+24,12,'#5B6B64','600');
-  txt('출력 '+new Date().toLocaleDateString('ko-KR')+'  ·  시상·인센티브 조회 앱',padX,y+44,11.5,'#8A968F','400');
+  g.fillStyle='#F2F5F3';g.fillRect(0,y,W,footH);
+  txt(PRT.cut?('※ 주황 점선 위가 시상 대상 ('+(PRT.cutLabel||PRT.cut+'명')+')'):'※ 실적조정으로 인한 순위변동이 있을 수 있습니다.',padX,y+24,13,'#5B6B64','700');
+  txt('출력 '+new Date().toLocaleDateString('ko-KR')+'  ·  시상·인센티브 조회 앱',padX,y+46,12.5,'#8A968F','400');
+
 
   var fname=(PRT.title||'순위').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_')+'.png';
   var dataUrl;
@@ -3445,7 +3462,7 @@ function prtExcel(){
 }
 
 // ===== 인센티브별 명단 출력 (관리자) =====
-function isb(fn){return '<button class="isbtn" onclick="'+fn+'">📤 출력</button>';}
+function isb(fn){return '<button class="isbtn" onclick="'+fn+'">📤 공유</button>';}
 function prtIncList(key){
   var L=APP.incList||[], T=APP.teachers||[];
   var tmap={};T.forEach(function(t){tmap[t.교사번호]=t;});
@@ -3473,8 +3490,11 @@ function prtIncList(key){
     return;
   }
   if(key==='jigu'){
-    var J=(APP.incJigu||[]).map(function(x){return {c:x[0],nm:x[1],mg:x[2],ns:Number(x[3])||0};})
-      .sort(function(p,q){return q.ns-p.ns;});
+    var J=(APP.incJigu||[]).map(function(x){
+      return Array.isArray(x)
+        ? {c:x[0],nm:x[1],mg:x[2],ns:Number(x[3])||0}
+        : {c:x.소속코드,nm:x.소속명,mg:x.관리자||'',ns:Number(x.회원순증)||0};
+    }).sort(function(p,q){return q.ns-p.ns;});
     var w=J.filter(function(x){return x.ns>=1;}).length;
     prtOpen({title:'[8월] 지구 회원순증 인센티브',
       sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(w)+'개 / 전체 '+fmt(J.length)+'개',
