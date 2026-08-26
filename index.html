@@ -1507,7 +1507,7 @@ function topTourStat(lv){
   var elig=arr.filter(function(x){return x.sun>=1;}).length;
   var win=Math.min(TO,elig);
   return '<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 순증 1↑ · 달성률 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'%</span></div>'
-    +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+'</span><span class="isamt">추계 TOP TOUR</span>'+isb("prtTopTour('"+lv+"')")+'</div></div>';
+    +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+' · '+(arr.length?(win/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">추계 TOP TOUR</span>'+isb("prtTopTour('"+lv+"')")+'</div></div>';
 }
 function coffeeCard(){
   var arr=[];
@@ -2609,7 +2609,7 @@ function ongTopStat(lv){
   arr.sort(function(a,b){return (b.per-a.per)||(b.ms-a.ms);});
   var top=arr[0], pay=(lv==='사업국')?500000:300000;
   return '<div class="incstat"><div class="isl">[하반기] 온공 Top ('+lv+')<span class="issub">1위 '+shortName(top.nm)+' '+top.mgr+' · 인당 '+fmtD2(top.per)+' (누적순증 '+fmt1(top.ms)+') · '+fmt(arr.length)+'개 중</span></div>'
-    +'<div class="isr"><span class="isn">1개</span><span class="isp">1위 시상</span><span class="isamt">'+fmt(pay)+'원</span>'+isb("prtOngOrg('"+lv+"')")+'</div></div>';
+    +'<div class="isr"><span class="isn">1개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtOngOrg('"+lv+"')")+'</div></div>';
 }
 function ongTopTeaStat(){
   var jul=APP.frozenTeaJul||null;
@@ -2620,7 +2620,7 @@ function ongTopTeaStat(){
   if(!arr.length)return '<div class="incstat na"><div class="isl">[하반기] 온공 Top (교사)</div><div class="isrna">실적 데이터 없음</div></div>';
   var n30=arr.filter(function(x){return x.t>=30;}).length;
   return '<div class="incstat"><div class="isl">[하반기] 온공 Top (교사)<span class="issub">1위 '+arr[0].nm+' ('+shortName(arr[0].so)+') 누적 '+fmt1(arr[0].t)+' · 누적 30↑ '+fmt(n30)+'명</span></div>'
-    +'<div class="isr"><span class="isn">'+fmt(n30?1:0)+'명</span><span class="isp">1위 시상</span><span class="isamt">500,000원</span>'+isb("prtOngTea()")+'</div></div>';
+    +'<div class="isr"><span class="isn">'+fmt(n30?1:0)+'명</span><span class="isp">T/O 1 · 자격 '+fmt(n30)+'명</span><span class="isamt">예상 '+fmt(n30?500000:0)+'원</span>'+isb("prtOngTea()")+'</div></div>';
 }
 function eliteStat(){
   var arr=eliteJiguRankAll();
@@ -2628,7 +2628,7 @@ function eliteStat(){
   var q=arr.filter(function(x){return x.자격;});
   var win=Math.min(20,q.length);
   return '<div class="incstat"><div class="isl">[3분기] 엘리트 지구장<span class="issub">달성률 100%↑ &amp; D순증 1↑ · 자격 충족 '+fmt(q.length)+'개 · 최고 '+fmt1(arr[0].달성률)+'%</span></div>'
-    +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O 20</span><span class="isamt">예상 '+fmt(win*200000)+'원</span>'+isb("prtElite()")+'</div></div>';
+    +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O 20 · '+(arr.length?(win/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(win*200000)+'원</span>'+isb("prtElite()")+'</div></div>';
 }
 function jikToiStat(){
   var arr=[];
@@ -2671,7 +2671,7 @@ function chongAchStat(){
   arr.sort(function(a,b){return b.ach-a.ach;});
   var plus=arr.filter(function(x){return x.sun>=1;}).length;
   return '<div class="incstat"><div class="isl">[8월] 총국 합산과목 달성률<span class="issub">1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'% · 순증 1↑ '+fmt(plus)+'개 · '+fmt(arr.length)+'개 총국</span></div>'
-    +'<div class="isr"><span class="isn">'+fmt1(arr[0].ach)+'%</span><span class="isp">최고 달성률</span><span class="isamt">순증 '+fmt1(arr[0].sun)+'</span>'+isb("prtOrgLv('총국')")+'</div></div>';
+    +'<div class="isr"><span class="isn">'+fmt(plus)+'개</span><span class="isp">순증 1↑ · '+fmt(arr.length)+'개 중</span><span class="isamt">최고 '+fmt1(arr[0].ach)+'%</span>'+isb("prtOrgLv('총국')")+'</div></div>';
 }
 function prtOrgLv(lv){
   var O=(APP.org[lv]||[]).slice();
@@ -2695,7 +2695,7 @@ function coffeeStat(){
   arr.sort(function(a,b){return b.ach-a.ach;});
   var top=arr[0], ok=(top.ach>=50);
   return '<div class="incstat"><div class="isl">[하반기] 커피차 (총국)<span class="issub">달성률 50%↑ 1위 총국 · 현재 1위 '+shortName(top.nm)+' '+top.mgr+' '+fmt1(top.ach)+'% · '+fmt(arr.length)+'개 중</span></div>'
-    +'<div class="isr"><span class="isn">'+(ok?1:0)+'개</span><span class="isp">1위 시상</span><span class="isamt">전략회의 커피차</span></div></div>';
+    +'<div class="isr"><span class="isn">'+(ok?1:0)+'개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">27년 1월 커피차</span>'+isb("prtOrgLv('총국')")+'</div></div>';
 }
 function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
@@ -2720,12 +2720,12 @@ function adminInc7(){
           var wk=Number(t.근무기간)||0, gwa=Number(t.전월말관리과목)||0;
           if(wk>=6&&gwa>=60){elig++;if(gwa>=130)pay130++;else pay60++;}
         });
-        mtStat='<div class="incstat"><div class="isl">[8월] 무퇴회 인센티브<span class="issub">근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(pay130)+'명(2만)·60~129 '+fmt(pay60)+'명(1만)</span></div><div class="isr"><span class="isn">'+fmt(elig)+'명</span><span class="isp">잠정</span><span class="isamt">예상 '+fmt(pay130*20000+pay60*10000)+'원</span>'+isb("prtIncList('mut')")+'</div></div>';
+        mtStat='<div class="incstat"><div class="isl">[8월] 무퇴회 인센티브<span class="issub">근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(pay130)+'명(2만)·60~129 '+fmt(pay60)+'명(1만)</span></div><div class="isr"><span class="isn">'+fmt(elig)+'명</span><span class="isp">'+((APP.teachers||[]).length?(elig/(APP.teachers||[]).length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(pay130*20000+pay60*10000)+'원</span>'+isb("prtIncList('mut')")+'</div></div>';
       }else{
         mtStat='<div class="incstat na"><div class="isl">[8월] 무퇴회 인센티브</div><div class="isrna">교사 실적 데이터 없음</div></div>';
       }
       body='<div class="incwrap">'
-        +'<div class="incstat"><div class="isl">[8월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 실물 사은품</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">폴딩웨건</span>'+isb("prtIncList('wol')")+'</div></div>'
+        +'<div class="incstat"><div class="isl">[8월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 실물 사은품</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">폴딩웨건 '+fmt(298000)+'원</span>'+isb("prtIncList('wol')")+'</div></div>'
         +mtStat+ongTopTeaStat()
         +'</div>';
     }
