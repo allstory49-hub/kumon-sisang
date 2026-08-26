@@ -1494,22 +1494,18 @@ function incJuly(){
   if(S.type==='org'&&S.pos==='총국')return julyChong();
   return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다.</div>';
 }
-function topTourStat(){
-  var out='';
-  ['총국','사업국'].forEach(function(lv){
-    var TO=(lv==='총국')?2:8;
-    var arr=[];
-    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
-      var f=q3get(code);if(!f)return;
-      arr.push({ach:f.목표?q3flr(f.순증/f.목표*100,2):0});});
-    if(!arr.length){out+='<div class="incstat na"><div class="isl">[3분기] TOP TOUR ('+lv+')</div><div class="isrna">실적 데이터 없음</div></div>';return;}
-    arr.sort(function(a,b){return b.ach-a.ach;});
-    var elig=arr.filter(function(x){return x.ach>=50;}).length;
-    var win=Math.min(TO,elig);
-    out+='<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 달성률 50%↑ 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 최고 '+fmt1(arr[0].ach)+'%</span></div>'
-      +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+'</span><span class="isamt">추계 TOP TOUR</span></div></div>';
-  });
-  return out;
+function topTourStat(lv){
+  var TO=(lv==='총국')?2:8;
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
+    var f=q3get(code);if(!f)return;
+    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:f.목표?q3flr(f.순증/f.목표*100,2):0});});
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[3분기] TOP TOUR ('+lv+'장)</div><div class="isrna">실적 데이터 없음</div></div>';
+  arr.sort(function(a,b){return b.ach-a.ach;});
+  var elig=arr.filter(function(x){return x.ach>=50;}).length;
+  var win=Math.min(TO,elig);
+  return '<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 달성률 50%↑ 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'%</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+'</span><span class="isamt">추계 TOP TOUR</span></div></div>';
 }
 function coffeeCard(){
   var arr=[];
@@ -2712,9 +2708,9 @@ function adminInc7(){
   }else if(S.aincRole==='지국'){
     body='<div class="incwrap">'+jikAchStat()+jikToiStat()+ongTopStat('지국')+sejongToiStat('지국')+'</div>';
   }else if(S.aincRole==='사업국'){
-    body='<div class="incwrap">'+eopAchStat()+eopToiStat()+ongTopStat('사업국')+sejongToiStat('사업국')+'</div>';
+    body='<div class="incwrap">'+eopAchStat()+eopToiStat()+topTourStat('사업국')+ongTopStat('사업국')+'</div>';
   }else{
-    body='<div class="incwrap">'+topTourStat()+coffeeStat()+'</div>';
+    body='<div class="incwrap">'+topTourStat('총국')+coffeeStat()+'</div>';
   }
   return head+body;
 }
