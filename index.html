@@ -1501,12 +1501,12 @@ function topTourStat(lv){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
     var f=q3get(code);if(!f)return;
-    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:f.목표?q3flr(f.순증/f.목표*100,2):0});});
+    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:f.목표?q3flr(f.순증/f.목표*100,2):0,sun:f.순증});});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[3분기] TOP TOUR ('+lv+'장)</div><div class="isrna">실적 데이터 없음</div></div>';
   arr.sort(function(a,b){return b.ach-a.ach;});
-  var elig=arr.filter(function(x){return x.ach>=50;}).length;
+  var elig=arr.filter(function(x){return x.sun>=1;}).length;
   var win=Math.min(TO,elig);
-  return '<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 달성률 50%↑ 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'%</span></div>'
+  return '<div class="incstat"><div class="isl">[3분기] TOP TOUR ('+lv+'장)<span class="issub">누적 순증 1↑ · 달성률 상위 '+TO+'명 · 자격 충족 '+fmt(elig)+'개 · 1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'%</span></div>'
     +'<div class="isr"><span class="isn">'+fmt(win)+'명</span><span class="isp">T/O '+TO+'</span><span class="isamt">추계 TOP TOUR</span>'+isb("prtTopTour('"+lv+"')")+'</div></div>';
 }
 function coffeeCard(){
@@ -1564,7 +1564,7 @@ function topTourCard(lv){
       일반순증인당:tno?q3flr(f.일반순증/tno,3):0,D순증인당:tno?q3flr(f.D순증/tno,3):0});});
   if(!arr.length)return '<div class="incsec"><div class="incsech">✈️ [3분기] TOP TOUR</div><div class="ib am">조직 실적 데이터가 없어요.</div></div>';
   arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.일반순증인당-a.일반순증인당)||(b.D순증인당-a.D순증인당);});
-  arr.forEach(function(x,i){x.rank=i+1;x.자격=(x.달성률>=50);});
+  arr.forEach(function(x,i){x.rank=i+1;x.자격=(x.순증>=1);});
   var code=(S.user&&S.user.소속코드)||'';
   var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
   var win=me&&me.rank<=TO&&me.자격;
@@ -1581,8 +1581,8 @@ function topTourCard(lv){
   var board='<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+show.map(row).join('')+extra+'</div>';
   var remain='';
   if(me&&!me.자격){
-    var need=q3flr(me.목표*0.5-me.순증,1);
-    remain='<div class="icremain">🎯 시상 조건(달성률 50%)까지 순증 <b>'+fmt1(need>0?need:0)+'</b> 남음</div>';
+    remain='<div class="icremain">🎯 시상 조건(누적 순증 1)까지 <b>'+fmt1(1-me.순증)+'</b> 남음</div>';
+  }else if(me&&me.rank>TO){
   }else if(me&&me.rank>TO){
     var t=arr[TO-1];
     var need2=q3flr(me.목표*t.달성률/100-me.순증,1);
@@ -1590,18 +1590,18 @@ function topTourCard(lv){
   }
   return '<div class="incsec"><div class="incsech"><span>✈️ [3분기] TOP TOUR ('+lv+') <span class="rqbadge">상대평가</span></span>'+prtBtn("prtTopTour(\'"+lv+"\')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 3분기 7~9월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
-    +critBlock('3분기 누적 합산과목 달성률 <b>50%↑</b> · '+lv+'장 상위 '+TO+'명')
+    +critBlock('3분기 누적 <b>순증 1 이상</b> · 달성률 '+lv+'장 상위 '+TO+'명')
     +'<div class="ictiers">추계 TOP TOUR (장소·일정 추후 공지) · 사업대표·사업센터장 동행</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">누적 달성률</div><div class="ig4v" style="color:'+(me&&me.자격?'var(--green)':'var(--t1)')+'">'+(me?fmt1(me.달성률):'-')+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위</div><div class="ig4v">'+(me?me.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">시상 T/O</div><div class="ig4v" style="font-size:15px">상위 '+TO+'명</div></div>'
-      +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?(me.자격?'충족':'미충족'):'-')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?fmt1(me.순증):'-')+'</div></div>'
     +'</div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':'달성률 50% 달성 시 시상 대상이에요'):'집계 대상 명단에 없어요'))+'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':'순증 1 이상 달성 시 시상 대상이에요'):'집계 대상 명단에 없어요'))+'</div>'
     +remain
     +board
-    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 3분기(7~9월) 누적 합산과목 순증 ÷ 누적 목표<br>· 동률 시: 일반과목순증(인당)↑ &gt; D순증(인당)↑<br>· 시상 일정·장소는 추후 공지돼요.</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 3분기(7~9월) 누적 <b>순증 1 이상</b>인 조직 중 달성률 상위 '+TO+'명 선정<br>· 달성률 = 누적 합산과목 순증 ÷ 누적 목표<br>· 동률 시: 일반과목순증(인당)↑ &gt; D순증(인당)↑<br>· 시상 일정·장소는 추후 공지돼요.</div></div>';
 }
 function eopDalseongCard(){
   var arr=(APP.org['사업국']||[]).slice();
@@ -2662,6 +2662,30 @@ function eopToiStat(){
   return '<div class="incstat"><div class="isl">[3분기] 사업국 퇴회율 &amp; 온공<span class="issub">퇴회율 4.6%↓ '+fmt(wa)+'개 · 온공 인당 1.5↑ '+fmt(wb)+'개 · 최저 퇴회율 '+fmtD2(best.rate)+'%</span></div>'
     +'<div class="isr"><span class="isn">'+fmt(wa+wb)+'건</span><span class="isp">각 50만원</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtIncList('eoptoi')")+'</div></div>';
 }
+function chongAchStat(){
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
+    var fr=orgFresh(code);if(!fr)return;
+    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:Number(fr.달성률)||0,sun:Number(fr.과목순증)||0});});
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[8월] 총국 달성률</div><div class="isrna">실적 데이터 없음</div></div>';
+  arr.sort(function(a,b){return b.ach-a.ach;});
+  var plus=arr.filter(function(x){return x.sun>=1;}).length;
+  return '<div class="incstat"><div class="isl">[8월] 총국 합산과목 달성률<span class="issub">1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'% · 순증 1↑ '+fmt(plus)+'개 · '+fmt(arr.length)+'개 총국</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt1(arr[0].ach)+'%</span><span class="isp">최고 달성률</span><span class="isamt">순증 '+fmt1(arr[0].sun)+'</span>'+isb("prtOrgLv('총국')")+'</div></div>';
+}
+function prtOrgLv(lv){
+  var O=(APP.org[lv]||[]).slice();
+  var isChong=(lv==='총국');
+  if(isChong)O.sort(function(a,b){return (b.달성률||0)-(a.달성률||0);});
+  prtOpen({
+    title:'[8월] '+lv+' 합산과목 달성률 순위',
+    sub:'달성률 내림차순 · 대상 '+fmt(O.length)+'개',
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'디지털순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1}],
+    rows:O.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자명:x.관리자명||'',
+      a:fmt1(x.과목순증),b:fmt(x.디지털순증),cc:fmt1(x.달성률||0)};}),
+    n:O.length
+  });
+}
 function coffeeStat(){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
@@ -2712,7 +2736,7 @@ function adminInc7(){
   }else if(S.aincRole==='사업국'){
     body='<div class="incwrap">'+eopAchStat()+eopToiStat()+topTourStat('사업국')+ongTopStat('사업국')+'</div>';
   }else{
-    body='<div class="incwrap">'+topTourStat('총국')+coffeeStat()+'</div>';
+    body='<div class="incwrap">'+chongAchStat()+topTourStat('총국')+coffeeStat()+'</div>';
   }
   return head+body;
 }
@@ -3141,10 +3165,10 @@ function prtTopTour(lv){
   var me=(S.user&&S.user.소속코드)||'';
   prtOpen({
     title:'[3분기] TOP TOUR ('+lv+') · 누적 달성률 순위',
-    sub:'달성률 50%↑ · '+lv+'장 상위 '+TO+'명 시상 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'자격',k:'d'}],
+    sub:'누적 순증 1↑ · 달성률 '+lv+'장 상위 '+TO+'명 시상 · 대상 '+fmt(arr.length)+'개',
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1,hi:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'자격',k:'d'}],
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),소속명:x.소속명,관리자:x.관리자,
-      a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(x.달성률>=50?'충족':'미충족')};}),
+      a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(x.순증>=1?'충족':'미충족')};}),
     cut:TO,cutLabel:'시상 T/O 상위 '+TO+'명',n:30
   });
 }
