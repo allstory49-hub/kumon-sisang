@@ -2701,7 +2701,7 @@ function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
-  var head='<div class="mt"><span>8월 인센티브 통계</span>'+prtBtn("prtAdminInc()")+'</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
+  var head='<div class="mt">8월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
   var L=APP.incList||[],n=L.length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   var body='';
@@ -2725,7 +2725,7 @@ function adminInc7(){
         mtStat='<div class="incstat na"><div class="isl">[8월] 무퇴회 인센티브</div><div class="isrna">교사 실적 데이터 없음</div></div>';
       }
       body='<div class="incwrap">'
-        +'<div class="incstat"><div class="isl">[8월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 실물 사은품</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">폴딩웨건 '+fmt(298000)+'원</span>'+isb("prtIncList('wol')")+'</div></div>'
+        +'<div class="incstat"><div class="isl">[8월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 폴딩웨건 (단가 '+fmt(38500)+'원)</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">예상 '+fmt(wSj*38500)+'원</span>'+isb("prtIncList('wol')")+'</div></div>'
         +mtStat+ongTopTeaStat()
         +'</div>';
     }
