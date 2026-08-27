@@ -1312,7 +1312,7 @@ function jikToiCard(){
   var eligible=(ach>=50);
   var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
   var unit=(row>=0)?JIKTOI[row].p:0;                  // 퇴회율 급간 단가 (달성률 무관)
-  var payTea=(st&&st.tea)?st.tea:(f.교사수||0);       // 시상 교사수: 9월 예상퇴회 파일 기준(8월말)
+  var payTea=Number(f.교사수당월)||0;                  // 시상 교사수: 당월(8월) 소평 실적 기준
   var pay=Math.round(payTea*unit*10000);            // 급간 기준 예상 시상금
   var win=(eligible&&pay>0);                          // 실제 시상 = 달성률50↑ + 급간 해당
   var remain='';
@@ -2643,7 +2643,7 @@ function jikToiStat(){
     var ach=(f.달성률!=null)?f.달성률:(f.목표?q3flr(f.순증/f.목표*100,2):0);
     var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
     var unit=(row>=0)?JIKTOI[row].p:0;
-    var pt=(st&&st.tea)?st.tea:(f.교사수당월||0);
+    var pt=Number(f.교사수당월)||0;
     arr.push({pay:(ach>=50&&unit)?Math.round(pt*unit*10000):0,toi:toi,ok:(ach>=50&&unit>0)});});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[3분기] 지국 퇴회율</div><div class="isrna">실적 데이터 없음</div></div>';
   var win=arr.filter(function(x){return x.pay>0;});
@@ -3555,8 +3555,8 @@ function prtIncList(key){
       var r2=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){r2=i;break;}}
       var u2=(achQ>=50&&r2>=0)?JIKTOI[r2].p:0;
       arr.push({nm:o.소속명,mg:o.관리자||'',ach8:ach8,sun8:sun8,tno:tno,u1:u1,pay1:Math.round(tno*u1*10000),
-        toi:toi,achQ:achQ,u2:u2,payTea:((st&&st.tea)?st.tea:(f.교사수||0)),
-        pay2:Math.round(((st&&st.tea)?st.tea:(f.교사수당월||0))*u2*10000)});});
+        toi:toi,achQ:achQ,u2:u2,payTea:(Number(f.교사수당월)||0),
+        pay2:Math.round((Number(f.교사수당월)||0)*u2*10000)});});
     if(key==='jikach'){
       arr.sort(function(p,q){return q.ach8-p.ach8;});
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
