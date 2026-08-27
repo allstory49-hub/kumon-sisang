@@ -520,7 +520,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null};
 
@@ -669,7 +669,7 @@ async function saveToGitHub(bakedJs){
 async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Date.now());if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
 async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongToi=j.data;APP.sejongToiRaw=j.raw||null;}}catch(e){APP.sejongToi=null;APP.sejongToiRaw=null;}}
-async function loadSejongItal(){try{var r=await dfetch('sejong/ital.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongItal=j.data;APP.sejongItalAsof=j.asof||'';}}catch(e){APP.sejongItal=null;}}
+async function loadSejongItal(){try{var r=await dfetch('sejong/ital.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongItal=j.data;APP.sejongItalAsof=j.asof||'';APP.sejongItalRaw=j.raw||null;}}catch(e){APP.sejongItal=null;APP.sejongItalRaw=null;}}
 async function loadSejongPrev(){try{var r=await dfetch('sejong/prev25.json?t='+Date.now());if(r.ok)APP.sejongPrev=(await r.json()).data;}catch(e){APP.sejongPrev=null;}}
 async function loadSejongMetrics(){try{var r=await dfetch('sejong/metrics.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongMet=j.data;APP.sejongMetAsof=j.asof||'';}}catch(e){APP.sejongMet=null;}}
 async function loadCumEnv(){try{var r=await dfetch('cumulative/env_q2.json?t='+Date.now());if(r.ok){var j=await r.json();APP.cumEnv=j.months45;}}catch(e){APP.cumEnv=null;}}
@@ -2310,7 +2310,7 @@ function sejongCriteria(lv){
   var toeMin=(lv==='지구')?'4.8%↓':'4.9%↓', toeMax=(lv==='지구')?'3.5%↓':'3.7%↓';
   var metrics=[
     {no:'①',t:'합산과목 퇴회율',minB:toeMin,minP:25,maxB:toeMax,maxP:50,grades:toe1,yoyL:'전년比 퇴회 감소율 대체 인정',yoy:[['2.5%↑',35],['2.0%↑',30],['1.5%↑',25],['1.0%↑',20],['0.5%↑',15]],sub:'더 높은 점수로 대체 (분기 5.5%↑ 제외)'},
-    {no:'②',t:'회원 이탈률',minB:'3.9%↓',minP:5,maxB:'2.4%↓ +전년比3%↓',maxP:30,grades:[['2.4%↓',20],['2.7%↓',17],['3.0%↓',14],['3.3%↓',11],['3.6%↓',8],['3.9%↓',5]],yoyL:'전년대비 감소 가산',yoy:[['3%↓','+10'],['2%↓','+8'],['1%↓','+5']],sub:'기준점수에 가산'},
+    {no:'②',t:'회원 이탈률 (7~8월 누적)',minB:'3.9%↓',minP:5,maxB:'2.4%↓ +전년比3%↓',maxP:30,grades:[['2.4%↓',20],['2.7%↓',17],['3.0%↓',14],['3.3%↓',11],['3.6%↓',8],['3.9%↓',5]],yoyL:'전년대비 감소 가산',yoy:[['3%↓','+10'],['2%↓','+8'],['1%↓','+5']],sub:'기준점수에 가산'},
     {no:'③',t:'주평균 교재제출장수',minB:'12장↑',minP:5,maxB:'20장↑',maxP:20,grades:[['20장↑',20],['18장↑',18],['16장↑',15],['14장↑',10],['12장↑',5]],yoy:null},
     {no:'④',t:'사이렌 회원 비율',minB:'35%미만',minP:5,maxB:'30%미만 +전년比10%↓',maxP:15,grades:[['30%미만',10],['33%미만',7],['35%미만',5]],yoyL:'전년대비 10% 감소',yoy:[['10%↓','+5']],sub:'기준점수에 가산'},
     {no:'⑤',t:'오답정정률',minB:'80%↑',minP:5,maxB:'80%↑',maxP:5,grades:[['80%↑',5]],yoy:null}
@@ -2364,10 +2364,21 @@ function italCard(code){
   if(!t)return '<div class="ib bl" style="margin-top:10px">② 회원 이탈률: 아직 실적 데이터가 없어요. (⑥ 회원증감_지구 업로드 필요)</div>';
   var yb=italYoyBonus(code,t.rate);
   var total=(t.score||0)+yb.bonus;
-  var yoyRow=(yb.prev!=null)?('<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 감소 가산</div><div class="icneed">전년(25.3Q) '+fmtD2(yb.prev)+'% → 올해 '+fmtD2(t.rate)+'% · '+(yb.drop>=0?'▼':'▲')+fmtD2(Math.abs(yb.drop))+'%p</div></div><div class="icright"><div class="icnum" style="color:'+(yb.bonus>0?'var(--green)':'var(--t3)')+'">+'+yb.bonus+'<span style="font-size:12px">점</span></div></div></div>'):'';
-  return '<div class="incsec" style="margin-top:10px"><div class="incsech">② 회원 이탈률 실적 <span class="rqbadge" style="background:var(--blue)">7월 (당월)</span></div>'
-    +'<div class="iclist"><div class="icrow"><div class="iclt"><div class="icl1">7월 이탈률</div><div class="icneed">이탈 '+fmt(t.ital)+'건 · 회원 순증(인계인수 제외) 기준</div></div><div class="icright"><div class="icnum">'+fmtD2(t.rate)+'<span style="font-size:12px">%</span></div></div></div>'+yoyRow+'</div>'
-    +'<div class="incres '+(total>0?'win':'lose')+'">이탈률 '+fmtD2(t.rate)+'% → 기본 '+(t.score||0)+'점'+(yb.bonus>0?' + 가산 '+yb.bonus+'점 = <b>'+total+'점</b>':' → <b>'+total+'점</b>')+'</div>'
+  function mr(l,o,sub){
+    if(!o)return '';
+    return '<div class="icrow"'+(sub?' style="background:var(--card2)"':'')+'><div class="iclt"><div class="icl1">'+l+'</div>'
+      +'<div class="icneed">이탈 '+fmt(o.ital)+'건 · 전월말 회원 '+fmt(o.mem)+'</div></div>'
+      +'<div class="icright"><div class="icnum">'+fmtD2(o.rate)+'<span style="font-size:12px">%</span></div></div></div>';
+  }
+  var yoyRow=(yb.prev!=null)?('<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 감소 가산</div><div class="icneed">전년(25.3Q) '+fmtD2(yb.prev)+'% → 올해 '+fmtD2(t.rate)+'% · '+((yb.drop||0)>=0?'▼':'▲')+fmtD2(Math.abs(yb.drop||0))+'%p</div></div><div class="icright"><div class="icnum"'+(yb.bonus>0?' style="color:var(--green)"':'')+'>'+(yb.bonus>0?'+'+yb.bonus:'+0')+'<span style="font-size:12px">점</span></div></div></div>'):'';
+  return '<div class="incsec" style="margin-top:10px"><div class="incsech">② 회원 이탈률 실적 <span class="rqbadge" style="background:var(--blue)">7~8월 누적</span></div>'
+    +'<div class="iclist">'
+      +mr('7월',t.m7)
+      +mr('8월',t.m8)
+      +mr('└ 7~8월 누적',{ital:t.ital,mem:t.mem,rate:t.rate},true)
+      +yoyRow
+    +'</div>'
+    +'<div class="incres '+(total>0?'win':'lose')+'">누적 이탈률 '+fmtD2(t.rate)+'% → 기본 '+(t.score||0)+'점'+(yb.bonus>0?' + 가산 '+yb.bonus+'점 = <b>'+total+'점</b>':' → <b>'+total+'점</b>')+'</div>'
     +'</div>';
 }
 function toiCard(code){
@@ -2489,7 +2500,7 @@ function sejongClub(){
   var S2=APP.sejong;
   if(!S.sjLv)S.sjLv='지국';
   var head='<div class="mt">관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7~9월 잠정</span></div>'
-    +'<div class="ib bl">3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(3분기 누적) · ② 이탈률(당월) · ③⑤(7/1~8/17 누적) · ④ 사이렌(7월 마감) 모두 반영 · 아래 클럽·시상금은 현재 실적 기준 잠정이에요.</div>';
+    +'<div class="ib bl">3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(3분기 누적) · ② 이탈률(7~8월 누적) · ③⑤(7/1~8/17 누적) · ④ 사이렌(7월 마감) 모두 반영 · 아래 클럽·시상금은 현재 실적 기준 잠정이에요.</div>';
   // 등급 카드
   var grades=[{n:'세종 클럽',p:'90점',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점',a:'10만원',c:'#0f7a4d'}];
   var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'<span class="sjup">↑</span></div><div class="sjga" style="color:'+g.c+'">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
@@ -3756,20 +3767,29 @@ function parseItal(data){
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
   var start=4;for(var i=0;i<20;i++){var r=rows[i];if(!r)continue;if(/^[A-Za-z]{2}\d{3}$/.test(String(r[0]||'').trim())){start=i;break;}}
   var m={};
-  for(var i=start;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;m[cc]={ital:Number(r[13])||0,rate:Number(r[14])||0};}
+  for(var i=start;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;m[cc]={ital:Number(r[13])||0,rate:Number(r[14])||0,mem:Number(r[5])||0};}
   return m;
 }
 function buildSejongItal(){
-  // 대상: sejong/orgs.json 지구·지국. ⑧ 파일(UP.jigu)에서 7월 이탈률.
+  // 이탈률 = 7월(고정) + 8월(당월 업로드) 누적. ⑥ 파일(UP.jigu)에서 8월분 파싱.
   var sej=APP.sejong;if(!sej)return null;
   var src=UP.jigu?parseItal(UP.jigu.data):null;
   if(!src)return null;
+  var jul=(APP.sejongItalRaw&&APP.sejongItalRaw.jul)||null;
   var targets={};(sej.지구||[]).forEach(function(o){targets[o.code]='지구';});(sej.지국||[]).forEach(function(o){targets[o.code]='지국';});
   var out={};
   Object.keys(targets).forEach(function(code){
-    var lv=targets[code];var s=src[code];
-    var rate=s?s.rate:0, ital=s?s.ital:0;
-    out[code]={lv:lv,rate:rate,ital:ital,score:sejongItalScore(rate),inFile:!!s};
+    var lv=targets[code];
+    var j=jul&&jul[code], s=src[code];
+    var i7=j?(Number(j.ital)||0):0, m7=j?(Number(j.mem)||0):0;
+    var i8=s?(Number(s.ital)||0):0, m8=s?(Number(s.mem)||0):0;
+    var r7=m7?q3flr(i7/m7*100,2):0, r8=m8?q3flr(i8/m8*100,2):0;
+    var it=i7+i8, mm=m7+m8;
+    var rate=mm?q3flr(it/mm*100,2):0;
+    out[code]={lv:lv,rate:rate,ital:it,mem:mm,
+      m7:{ital:i7,mem:m7,rate:r7,inFile:!!j},
+      m8:{ital:i8,mem:m8,rate:r8,inFile:!!s},
+      score:sejongItalScore(rate),inFile:!!(j||s)};
   });
   return out;
 }
@@ -4020,7 +4040,7 @@ async function doUpload(){
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-08',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
     if(UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
-    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,month:'2026-08',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
+    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~8월 누적',data:sital,raw:{jul:(APP.sejongItalRaw&&APP.sejongItalRaw.jul)||null}}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
