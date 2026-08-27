@@ -1539,7 +1539,7 @@ function coffeeCard(){
     var need2=q3flr(me.목표*arr[0].달성률/100-me.순증,1);
     remain='<div class="icnext">⬆️ 1위까지 순증 <b>'+fmt1(need2>0?need2:0)+'</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(1위 '+orgPerson(arr[0])+' '+fmt1(arr[0].달성률)+'%)</span></div>';
   }
-  return '<div class="incsec"><div class="incsech">☕ [하반기] 커피차 (총국) <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech"><span>☕ [하반기] 커피차 (총국) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtCoffee()")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('하반기 누적 합산과목 달성률 <b>50%↑</b> · <b>1위 총국</b>')
     +'<div class="ictiers">27년 1월 총국 전략회의 <b>커피차 지원</b></div>'
@@ -2694,12 +2694,30 @@ function coffeeStat(){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
     var f=q3get(code);if(!f)return;
-    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:f.목표?q3flr(f.순증/f.목표*100,2):0});});
+    arr.push({nm:o.소속명,mgr:o.관리자||'',ach:f.목표?q3flr(f.순증/f.목표*100,2):0,sun:f.순증,mok:f.목표});});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[하반기] 커피차 (총국)</div><div class="isrna">실적 데이터 없음</div></div>';
   arr.sort(function(a,b){return b.ach-a.ach;});
   var top=arr[0], ok=(top.ach>=50);
-  return '<div class="incstat"><div class="isl">[하반기] 커피차 (총국)<span class="issub">달성률 50%↑ 1위 총국 · 현재 1위 '+shortName(top.nm)+' '+top.mgr+' '+fmt1(top.ach)+'% · '+fmt(arr.length)+'개 중</span></div>'
-    +'<div class="isr"><span class="isn">'+(ok?1:0)+'개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">27년 1월 커피차</span>'+isb("prtOrgLv('총국')")+'</div></div>';
+  return '<div class="incstat"><div class="isl">[하반기] 커피차 (총국)<span class="issub">하반기 누적 달성률 50%↑ 1위 총국 · 현재 1위 '+shortName(top.nm)+' '+top.mgr+' '+fmt1(top.ach)+'% · '+fmt(arr.length)+'개 중</span></div>'
+    +'<div class="isr"><span class="isn">'+(ok?1:0)+'개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">27년 1월 커피차</span>'+isb("prtCoffee()")+'</div></div>';
+}
+function prtCoffee(){
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
+    var f=q3get(code);if(!f)return;
+    arr.push({code:code,nm:o.소속명,mgr:o.관리자||'',mok:f.목표,sun:f.순증,
+      ach:f.목표?q3flr(f.순증/f.목표*100,2):0,D:f.D순증});});
+  arr.sort(function(a,b){return b.ach-a.ach;});
+  var me=(S.user&&S.user.소속코드)||'';
+  var elig=arr.filter(function(x){return x.ach>=50;}).length;
+  prtOpen({
+    title:'[하반기] 커피차 (총국) · 누적 달성률 순위',
+    sub:'하반기(7~12월) 누적 달성률 50%↑ 1위 총국 · 27년 1월 전략회의 커피차 · 자격 충족 '+fmt(elig)+'개',
+    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'D순증',k:'cc',num:1},{h:'달성률(%)',k:'d',num:1,hi:1}],
+    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),nm:x.nm,mgr:x.mgr,
+      a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt1(x.D),d:fmt1(x.ach)};}),
+    cut:1,cutLabel:'시상 1위 총국',n:arr.length
+  });
 }
 function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
