@@ -2239,10 +2239,15 @@ function prtOrg(scope){
   prtOpen({
     title:pos+' '+(isChong?'달성률':'시상점수')+' 순위 ('+label+')',
     sub:(isChong?'달성률':'시상점수')+' 내림차순 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
-      {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
-      {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
-      {h:'시상점수',k:'f',num:1},scoreCol],
+    cols:(isChong
+      ? [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+         {h:'과목순증',k:'a',num:1},{h:'달성률(%)',k:'v',num:1,hi:1},
+         {h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1}]
+      : [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+         {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
+         {h:'시상점수',k:'f',num:1},scoreCol]),
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
       소속명:x.소속명,관리자명:x.관리자명||'',
       a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
@@ -2587,10 +2592,15 @@ function prtAdminSisang(){
   prtOpen({
     title:'[전사] '+pos+' '+(isChong?'달성률':'시상점수')+' 순위',
     sub:'시상점수 = 과목순증 + 온공약정점수 + 디지털순증 + 태블릿점수 + SKN재약정점수  ·  시상 대상 '+fmt(qo)+'개 / 전체 '+fmt(O.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
-      {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
-      {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
-      {h:(isChong?'달성률(%)':(pos==='지구'?'시상점수':'지구당 점수')),k:'g',num:1}],
+    cols:(isChong
+      ? [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+         {h:'과목순증',k:'a',num:1},{h:'달성률(%)',k:'g',num:1,hi:1},
+         {h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1}]
+      : [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
+         {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
+         {h:(pos==='지구'?'시상점수':'지구당 점수'),k:'g',num:1,hi:1}]),
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
       a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
       f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
@@ -2684,7 +2694,7 @@ function prtOrgLv(lv){
   prtOpen({
     title:'[8월] '+lv+' 합산과목 달성률 순위',
     sub:'달성률 내림차순 · 대상 '+fmt(O.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'디지털순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1}],
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'디지털순증',k:'b',num:1}],
     rows:O.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자명:x.관리자명||'',
       a:fmt1(x.과목순증),b:fmt(x.디지털순증),cc:fmt1(x.달성률||0)};}),
     n:O.length
@@ -2713,7 +2723,7 @@ function prtCoffee(){
   prtOpen({
     title:'[하반기] 커피차 (총국) · 누적 달성률 순위',
     sub:'하반기(7~12월) 누적 달성률 50%↑ 1위 총국 · 27년 1월 전략회의 커피차 · 자격 충족 '+fmt(elig)+'개',
-    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'D순증',k:'cc',num:1},{h:'달성률(%)',k:'d',num:1,hi:1}],
+    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'d',num:1,hi:1},{h:'D순증',k:'cc',num:1}],
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),nm:x.nm,mgr:x.mgr,
       a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt1(x.D),d:fmt1(x.ach)};}),
     cut:1,cutLabel:'시상 1위 총국',n:arr.length
@@ -3272,7 +3282,7 @@ function prtAdminInc(){
     prtOpen({
       title:'[8월] 지국 달성률 인센티브',
       sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(win2)+'개 / 전체 '+fmt(arr2.length)+'개',
-      cols:[{h:'지국',k:'소속명'},{h:'지국장',k:'관리자'},{h:'달성률(%)',k:'a',num:1},{h:'순증',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1}],
+      cols:[{h:'지국',k:'소속명'},{h:'지국장',k:'관리자'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1}],
       rows:arr2.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
         a:fmt1(x.ach),b:fmt1(x.sun),cc:fmt(x.tno),d:x.unit?fmtD(x.unit):'-',e:x.pay?fmt(x.pay):'-'};}),
       cut:(win2||1),cutLabel:'시상 대상 '+fmt(win2)+'개',n:50
@@ -3580,7 +3590,7 @@ function prtIncList(key){
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
       prtOpen({title:'[8월] 지국 달성률 인센티브',
         sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(w1)+'개 / 전체 '+fmt(arr.length)+'개',
-        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'순증',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
+        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
         rows:arr.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:fmt(x.tno),d:x.u1?fmtD(x.u1):'-',e:x.pay1?fmt(x.pay1):'-'};}),
         cut:(w1||1),cutLabel:'시상 대상 '+fmt(w1)+'개',n:50});
     }else{
@@ -3608,7 +3618,7 @@ function prtIncList(key){
       e.forEach(function(x,i){var r=i+1;x.pay=0;if(x.sun8>=1){x.pay=r<=3?500000:r<=10?300000:r<=20?200000:r<=30?100000:0;}if(x.pay){cnt++;tot+=x.pay;}});
       prtOpen({title:'[8월] 사업국 달성률 인센티브',
         sub:'달성률 순위별 (순증 1↑) · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만 · 대상 '+fmt(cnt)+'개',
-        cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'달성률(%)',k:'a',num:1},{h:'순증',k:'b',num:1},{h:'시상금',k:'cc',num:1}],
+        cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'시상금',k:'cc',num:1,hi:1}],
         rows:e.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:x.pay?fmt(x.pay):'-'};}),
         cut:30,cutLabel:'상위 30위',n:e.length});
     }else{
