@@ -2734,7 +2734,7 @@ function adminInc7(){
         +'</div>';
     }
   }else if(S.aincRole==='지구'){
-    body='<div class="incwrap">'+jiguStat()+eliteStat()+ongTopStat('지구')+'</div>';
+    body='<div class="incwrap">'+jiguStat()+eliteStat()+ongTopStat('지구')+sejongToiStat('지구')+'</div>';
   }else if(S.aincRole==='지국'){
     body='<div class="incwrap">'+jikAchStat()+jikToiStat()+ongTopStat('지국')+sejongToiStat('지국')+'</div>';
   }else if(S.aincRole==='사업국'){
@@ -2790,7 +2790,7 @@ function sejongToiStat(lv){
   });
   var win=se+yu+tg;
   return '<div class="incstat"><div class="isl">[3분기] 관리자 세종클럽 ('+lv+')<span class="issub">세종 '+se+'·율곡 '+yu+'·퇴계 '+tg+' · 평균 '+fmtD2(sumS/codes.length)+'점 · '+fmt(codes.length)+'개 조직</span></div>'
-    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(codes.length?(win/codes.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(tot)+'원</span></div></div>';
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(codes.length?(win/codes.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtSejong('"+lv+"')")+'</div></div>';
 }
 function adminInc6(){
   if(!APP.incList.length)return '<div class="mt">인센티브 통계</div><div class="empty">데이터가 없습니다. 파일을 업로드해주세요.</div>';
