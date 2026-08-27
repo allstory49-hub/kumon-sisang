@@ -1310,7 +1310,8 @@ function jikToiCard(){
   var eligible=(ach>=50);
   var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
   var unit=(row>=0)?JIKTOI[row].p:0;                  // 퇴회율 급간 단가 (달성률 무관)
-  var pay=Math.round(f.교사수*unit*10000);            // 급간 기준 예상 시상금
+  var payTea=(st&&st.tea)?st.tea:(f.교사수||0);       // 시상 교사수: 9월 예상퇴회 파일 기준(8월말)
+  var pay=Math.round(payTea*unit*10000);            // 급간 기준 예상 시상금
   var win=(eligible&&pay>0);                          // 실제 시상 = 달성률50↑ + 급간 해당
   var remain='';
   // ① 퇴회율: 다음(더 높은) 급간까지 줄여야 하는 퇴회 건수 (급간 "이하"=다음 0.1 미만)
@@ -1324,7 +1325,7 @@ function jikToiCard(){
     remain+='<div class="icnext">⬆️ 4.6% 급간(교사수 × 0.5만원)까지 <b>퇴회 '+fmt(toiCut(4.6))+'건</b> 줄이면 돼요 <span style="font-size:11px;opacity:.8">(현재 '+fmtD2(toi)+'%)</span></div>';
   }else if(row>0){
     var ng=JIKTOI[row-1];
-    var addPay=Math.round(f.교사수*(ng.p-JIKTOI[row].p)*10000);
+    var addPay=Math.round(payTea*(ng.p-JIKTOI[row].p)*10000);
     remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 <b>퇴회 '+fmt(toiCut(ng.max))+'건</b> 줄이면 돼요'+(addPay>0?' <span style="font-size:11px;opacity:.8">(+'+fmt(addPay)+'원)</span>':'')+'</div>';
   }
   // ② 달성률: 시상 기본조건 50%까지 남은 순증
@@ -1352,7 +1353,7 @@ function jikToiCard(){
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(pay>0?'var(--green)':'var(--t2)')+'">'+(pay>0?fmt(pay)+'원':'-')+'</div></div>'
     +'</div>'
     +breakdown
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(pay>0?'예상 시상금 '+fmt(pay)+'원 (교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원) · <b>달성률 50% 달성 시 시상</b>':(eligible?'현재 퇴회율 급간 미해당':'퇴회율 급간 미해당 · 달성률 50% 달성 시 시상')))+'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(payTea)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(pay>0?'예상 시상금 '+fmt(pay)+'원 (교사수 '+fmt(f.교사수)+' × '+fmtD(unit)+'만원) · <b>달성률 50% 달성 시 시상</b>':(eligible?'현재 퇴회율 급간 미해당':'퇴회율 급간 미해당 · 달성률 50% 달성 시 시상')))+'</div>'
     +remain
     +'<div class="ib bl" style="margin-bottom:0">· 퇴회율 = 퇴회(7~9월 누적) ÷ 전월말 관리과목(6월말~8월말 누적) × 100 (둘째자리 절사)<br>· 단, 합산과목 달성률 50% 이상 조직만 대상 · 최소 2개월 실적 보유 관리자만 인정<br>· 시상금은 10월 운영비에 포함하여 일괄 지급돼요.</div></div>';
 }
@@ -2640,7 +2641,8 @@ function jikToiStat(){
     var ach=(f.달성률!=null)?f.달성률:(f.목표?q3flr(f.순증/f.목표*100,2):0);
     var row=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){row=i;break;}}
     var unit=(row>=0)?JIKTOI[row].p:0;
-    arr.push({pay:(ach>=50&&unit)?Math.round(f.교사수*unit*10000):0,toi:toi,ok:(ach>=50&&unit>0)});});
+    var pt=(st&&st.tea)?st.tea:(f.교사수||0);
+    arr.push({pay:(ach>=50&&unit)?Math.round(pt*unit*10000):0,toi:toi,ok:(ach>=50&&unit>0)});});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[3분기] 지국 퇴회율</div><div class="isrna">실적 데이터 없음</div></div>';
   var win=arr.filter(function(x){return x.pay>0;});
   var tot=win.reduce(function(s,x){return s+x.pay;},0);
@@ -3551,7 +3553,8 @@ function prtIncList(key){
       var r2=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){r2=i;break;}}
       var u2=(achQ>=50&&r2>=0)?JIKTOI[r2].p:0;
       arr.push({nm:o.소속명,mg:o.관리자||'',ach8:ach8,sun8:sun8,tno:tno,u1:u1,pay1:Math.round(tno*u1*10000),
-        toi:toi,achQ:achQ,u2:u2,pay2:Math.round(f.교사수*u2*10000)});});
+        toi:toi,achQ:achQ,u2:u2,payTea:((st&&st.tea)?st.tea:(f.교사수||0)),
+        pay2:Math.round(((st&&st.tea)?st.tea:(f.교사수||0))*u2*10000)});});
     if(key==='jikach'){
       arr.sort(function(p,q){return q.ach8-p.ach8;});
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
@@ -3565,8 +3568,8 @@ function prtIncList(key){
       var w2=arr.filter(function(x){return x.pay2>0;}).length;
       prtOpen({title:'[3분기] 지국 퇴회율 인센티브',
         sub:'3분기 누적 퇴회율 급간 × 교사수 (달성률 50%↑) · 대상 '+fmt(w2)+'개 / 전체 '+fmt(arr.length)+'개',
-        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1},{h:'단가(만원)',k:'cc',num:1},{h:'시상금',k:'d',num:1,hi:1}],
-        rows:arr.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:x.u2?fmtD(x.u2):'-',d:x.pay2?fmt(x.pay2):'-'};}),
+        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
+        rows:arr.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:fmt(x.payTea),d:x.u2?fmtD(x.u2):'-',e:x.pay2?fmt(x.pay2):'-'};}),
         cut:(w2||1),cutLabel:'시상 대상 '+fmt(w2)+'개',n:50});
     }
     return;
@@ -3701,10 +3704,11 @@ var SEJONG_TOI_GRADES_JIGU=[[3.5,50],[3.7,46],[3.9,42],[4.1,38],[4.3,34],[4.5,30
 var SEJONG_TOI_GRADES_OTH=[[3.7,50],[3.9,46],[4.1,42],[4.3,38],[4.5,34],[4.7,30],[4.9,25]];
 function sejongToiScore(rate,lv){var t=(lv==='지구')?SEJONG_TOI_GRADES_JIGU:SEJONG_TOI_GRADES_OTH;for(var i=0;i<t.length;i++){if(rate<t[i][0]+0.1)return t[i][1];}return 0;}
 function parseToiFile(data){
-  // 예상퇴회 파일: 소속코드(0) 전월말과목(4) 예상퇴회(6). header 2줄.
+  // 예상퇴회 파일: 소속코드(0) 전월말과목(4) 교사수(5) 예상퇴회(6). header 2줄.
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
   var m={};
-  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;m[cc]={toi:Number(r[6])||0,gwa:Number(r[4])||0};}
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;
+    m[cc]={toi:Number(r[6])||0,gwa:Number(r[4])||0,tea:Number(r[5])||0};}
   return m;
 }
 function parseMutoe(data){
@@ -3758,7 +3762,7 @@ function buildSejongToi(){
     var m9t=s?s.toi:0, m9g=s?s.gwa:m8g;
     var m9r=m9g?q3flr(m9t/m9g*100,2):0;
     var qt=c8t+m9t,qg=c8g+m9g,qr=qg?q3flr(qt/qg*100,2):0;
-    out[code]={lv:lv,m7:{toi:m7t,gwa:m7g,rate:m7r},m8:{toi:m8t,gwa:m8g,rate:m8r,inFile:!!b.퇴회},cum8:{toi:c8t,gwa:c8g,rate:c8r},m9:{toi:m9t,gwa:m9g,rate:m9r,inFile:!!s},quarter:{toi:qt,gwa:qg,rate:qr},score:sejongToiScore(qr,lv)};
+    out[code]={lv:lv,m7:{toi:m7t,gwa:m7g,rate:m7r},m8:{toi:m8t,gwa:m8g,rate:m8r,inFile:!!b.퇴회},cum8:{toi:c8t,gwa:c8g,rate:c8r},m9:{toi:m9t,gwa:m9g,rate:m9r,inFile:!!s},quarter:{toi:qt,gwa:qg,rate:qr},tea:(s&&s.tea)||0,score:sejongToiScore(qr,lv)};
   });
   return {data:out,raw:{sep:sep}};
 }
