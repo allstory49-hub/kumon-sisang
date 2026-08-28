@@ -3287,10 +3287,7 @@ function prtOpen(cfg){
     +'</div>'
     +(PRT.cut?'<div style="font-size:12px;color:var(--t3);margin-bottom:10px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'')
     +'<div id="prtHint" style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:14px"></div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button id="prtImg" style="flex:1;padding:14px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer">다음</button>'
-    +'<button id="prtXls" style="flex:0 0 130px;padding:14px 6px;border:1.5px solid #1D6F42;border-radius:11px;background:var(--card);color:#1D6F42;font-size:14px;font-weight:800;cursor:pointer">📊 엑셀</button>'
-    +'</div>'
+    +'<button id="prtImg" style="width:100%;padding:14px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer">다음</button>'
     +'<button id="prtX" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
     +'</div>';
   document.body.appendChild(ov);
@@ -3298,7 +3295,7 @@ function prtOpen(cfg){
     var h=ov.querySelector('#prtHint');if(!h)return;
     h.innerHTML=(PRT.n>40)
       ?'⚠️ '+fmt(PRT.n)+'명은 이미지가 세로로 길어져요. 카카오톡 공유는 <b>30명 이하</b>, 많은 인원은 <b>인쇄(A4 분할)</b>를 권해요.'
-      :'· 다음 화면에서 <b>공유 · 저장 · 인쇄</b>를 고를 수 있어요.';
+      :'· 다음 화면에서 <b>공유 · 저장 · 인쇄 · 엑셀</b>을 고를 수 있어요.';
   }
   ov.querySelectorAll('.prtb').forEach(function(b){b.onclick=function(){
     ov.querySelectorAll('.prtb').forEach(function(z){z.classList.remove('on');});
@@ -3306,7 +3303,6 @@ function prtOpen(cfg){
   hint();
   ov.querySelector('#prtX').onclick=function(){ov.remove();};
   ov.querySelector('#prtImg').onclick=function(){ov.remove();prtImage();};
-  ov.querySelector('#prtXls').onclick=function(){ov.remove();prtExcel();};
 }
 function prtEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function prtRender(){
