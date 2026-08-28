@@ -1271,7 +1271,7 @@ function jikAchieveCard(){
   var code=(S.user&&S.user.소속코드)||'';
   var fr=code?orgFresh(code):null;               // 8월 단월 실적(baked)
   var q=code?q3get(code):null;                   // 교사수 등 보조
-  if(!fr||!q||q.lv!=='지국')return '<div class="incsec"><div class="incsech">📈 [8월] 지국 달성률</div><div class="ib am">이번 지국 달성률 명단에 없어요.</div></div>';
+  if(!fr||!q||q.lv!=='지국')return '<div class="incsec"><div class="incsech">📈 ['+curMonth()+'월] 지국 달성률</div><div class="ib am">이번 지국 달성률 명단에 없어요.</div></div>';
   var ach=Number(fr.달성률)||0;                   // 8월 단월 달성률
   var sun=Number(fr.과목순증)||0;                  // 8월 단월 순증
   var tno=Number(fr.전월말)||Number(q.교사수)||0;
@@ -1299,8 +1299,8 @@ function jikAchieveCard(){
       }
     }
   }
-  return '<div class="incsec"><div class="incsech">📈 [8월] 지국 달성률</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월 (단월)</div>'
+  return '<div class="incsec"><div class="incsech">📈 ['+curMonth()+'월] 지국 달성률</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월 (단월)</div>'
     +critBlock('합산과목 달성률 급간별 시상금')
     +'<div class="jtiers">'+tiers+'</div>'
     +'<div class="incgrid4">'
@@ -1623,7 +1623,7 @@ function eopDalseongCard(){
   arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.과목순증-a.과목순증);});
   arr.forEach(function(x,i){x.dRank=i+1;});
   var code=(S.user&&S.user.소속코드)||'';var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
-  if(!me)return '<div class="incsec"><div class="incsech">🎯 [8월] 사업국 합산과목 달성률 <span class="rqbadge">상대평가</span></div><div class="ib am">이번 사업국 달성률 명단에 없어요.</div></div>';
+  if(!me)return '<div class="incsec"><div class="incsech">🎯 ['+curMonth()+'월] 사업국 합산과목 달성률 <span class="rqbadge">상대평가</span></div><div class="ib am">이번 사업국 달성률 명단에 없어요.</div></div>';
   function rw(rk){return rk<=3?500000:rk<=10?300000:rk<=20?200000:rk<=30?100000:0;}
   var eligible=(me.과목순증>=1);
   var reward=eligible?rw(me.dRank):0;var win=reward>0;
@@ -1631,8 +1631,8 @@ function eopDalseongCard(){
   var remain='';
   if(!eligible){remain='<div class="icremain">🎯 시상 자격(과목순증 1↑)까지 <b>'+fmt1(1-me.과목순증)+'</b> 남음</div>';}
   else if(win&&me.dRank>1){var above=arr[me.dRank-2];var nextCut=me.dRank<=3?null:me.dRank<=10?3:me.dRank<=20?10:20;if(nextCut){var target=arr[nextCut-1];remain='<div class="icnext">⬆️ '+nextCut+'위(상위 급간)까지 달성률 <b>'+fmtD(target.달성률-me.달성률)+'%p</b> 남음</div>';}}
-  return '<div class="incsec"><div class="incsech">🎯 [8월] 사업국 합산과목 달성률 <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
+  return '<div class="incsec"><div class="incsech">🎯 ['+curMonth()+'월] 사업국 합산과목 달성률 <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div>'
     +critBlock('합산과목 달성률 순위 (단, 과목순증 1↑)')
     +'<div class="ictiers">1~3위 → <b>50만원</b> · 4~10위 → <b>30만원</b> · 11~20위 → <b>20만원</b> · 21~30위 → <b>10만원</b></div>'
     +'<div class="incgrid4">'
@@ -1731,7 +1731,7 @@ function shinhanJulyCard(){
   var cnt=JUL_SHINHAN[code]||0;
   var pay=cnt*30000;var win=cnt>0;
   return '<div class="incsec"><div class="incsech">💳 지국 신한카드 발급</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div>'
     +critBlock('신한카드 발급 건수 (지국별 전용 URL 신청 건만 인정)')
     +'<div class="ictiers">발급 건수 × <b>30,000원</b> (운영비)</div>'
     +'<div class="incgrid4"><div class="ig4"><div class="ig4l">7월 발급 건수</div><div class="ig4v" style="color:'+(win?'var(--green)':'var(--t1)')+'">'+fmt(cnt)+'<span style="font-size:13px">건</span></div></div>'
@@ -1743,7 +1743,7 @@ function mutoeCard(){
   var u=S.user||{}, tno=u.교사번호;
   // 교평(①) 데이터의 퇴회 건수로 판정
   var tea=null;for(var i=0;i<(APP.teachers||[]).length;i++){if(APP.teachers[i].교사번호===tno){tea=APP.teachers[i];break;}}
-  if(!tea)return '<div class="incsec"><div class="incsech">🛡️ [8월] 무퇴회</div><div class="ib gr" style="margin-top:0">📅 8월</div>'
+  if(!tea)return '<div class="incsec"><div class="incsech">🛡️ ['+curMonth()+'월] 무퇴회</div><div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div>'
     +critBlock('8월 무퇴회 · 실적월 기준 근무 6개월↑ · 7월말 관리과목 60↑')
     +'<div class="ib bl" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--blue)">130과목 이상 → 20,000원<br>60~129과목 → 10,000원</div>'
     +'<div class="ib am" style="margin-bottom:0">📋 이번 무퇴회 명단에 없어요.</div></div>';
@@ -1755,8 +1755,8 @@ function mutoeCard(){
   var tier=gwa>=130?20000:gwa>=60?10000:0;
   var win=noToe&&wkOk&&gwaOk;
   var pay=win?tier:0;
-  return '<div class="incsec"><div class="incsech">🛡️ [8월] 무퇴회</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
+  return '<div class="incsec"><div class="incsech">🛡️ ['+curMonth()+'월] 무퇴회</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('8월 무퇴회 · 실적월 기준 근무 6개월↑ · 7월말 관리과목 60↑')
     +'<div class="ib bl" style="font-weight:800;font-size:13.5px;border:1.5px solid var(--blue)">130과목 이상 → 20,000원<br>60~129과목 → 10,000원</div>'
     +'<div class="incgrid4">'
@@ -1873,8 +1873,8 @@ function julyTeacher(){
     var ip=inc?(Number(inc.입회)||0):0;
     var okS=sj>=6, okI=ip>=13, ok=okS||okI;
     var rS=fmt1(6-sj), rI=fmt1(13-ip);
-    body='<div class="incsec"><div class="incsech">🏆 [8월] 월 성과</div>'
-      +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
+    body='<div class="incsec"><div class="incsech">🏆 ['+curMonth()+'월] 월 성과</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div>'
       +critBlock('합산과목 순증 <b>6 이상</b> <span style="color:var(--t3)">또는</span> 합산과목 입회 <b>13 이상</b>')
       +'<div class="stl" style="margin-top:14px">사은품</div>'
       +'<div class="giftbox"><img class="giftimg" src="wagon.jpg" alt="레비오사 롱 익스펜션 폴딩웨건"><div style="font-weight:700;font-size:14px;color:var(--t1)">레비오사 롱 익스펜션 폴딩웨건</div><div class="giftpr">소비자가 298,000원</div></div>'
@@ -2103,10 +2103,10 @@ function jigukInc(){
 }
 function jiguMemberJuly(){
   var u=S.user||{}, j=APP.incJiguMap[u.소속코드];
-  if(!j)return '<div class="incsec"><div class="incsech">👥 [8월] 지구 회원 순증</div><div class="ib gr" style="margin-top:0">📅 8월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑥ 회원증감_지구 파일 반영 필요)</div></div>';
+  if(!j)return '<div class="incsec"><div class="incsech">👥 ['+curMonth()+'월] 지구 회원 순증</div><div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div><div class="ib am" style="margin-bottom:0">이번 회원순증 명단에 없어요. (⑥ 회원증감_지구 파일 반영 필요)</div></div>';
   var ns=j.회원순증||0, win=ns>=1, pay=win?ns*10000:0;
-  return '<div class="incsec"><div class="incsech">👥 [8월] 지구 회원 순증</div>'
-    +'<div class="ib gr" style="margin-top:0">📅 8월</div>'
+  return '<div class="incsec"><div class="incsech">👥 ['+curMonth()+'월] 지구 회원 순증</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+curMonth()+'월</div>'
     +critBlock('지구 회원 순증 <b>1 이상</b>')
     +'<div class="ictiers">회원순증수 × <b>10,000원</b> (운영비)</div>'
     +'<div class="incgrid4"><div class="ig4"><div class="ig4l">현재 회원순증</div><div class="ig4v" style="color:'+(ns<0?'var(--red)':win?'var(--green)':'var(--t1)')+'">'+fmt(ns)+'</div></div>'
@@ -2169,7 +2169,7 @@ function teacherInc(){
     +'<div class="hc" style="margin-bottom:14px"><div class="ht"><div class="av av-sq">'+sn+'</div><div><div class="hn">'+inc.교사명+'</div><div class="hsb">'+inc.소속명+'</div></div></div>'
     +'<div class="hbadges">'+hbadge('월성과',ach1)+hbadge('신규회원',ach2)+hbadge('온공',msWin)+'</div></div>';
   var period='<div class="ib gr">📅 기간: <b>26년 6월</b> · 지급월: 26년 7월</div>';
-  var sec1=period+'<div class="incsec"><div class="incsech">🏆 [8월] 월 성과 인센티브</div>'
+  var sec1=period+'<div class="incsec"><div class="incsech">🏆 ['+curMonth()+'월] 월 성과 인센티브</div>'
     +'<div class="incres '+(ach1?'win':'lose')+'">'+(ach1?'🎉 지급 대상입니다!':'아직 미달성이에요')+'</div>'
     +'<div class="ic2row">'+cond2('합산과목 순증',sj,5,okS)+'<div class="ic2or">또는</div>'+cond2('합산과목 입회',ip,12,okI)+'</div>'
     +(ach1?'<div class="icgift">🎁 스퀘어가든 3in1 마스터 멀티다지기</div>':'<div class="icguide">두 조건 중 <b>하나라도</b> 달성하면 지급돼요.</div>')
@@ -2925,10 +2925,10 @@ function chongAchStat(){
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='총국')return;
     var fr=orgFresh(code);if(!fr)return;
     arr.push({nm:o.소속명,mgr:o.관리자||'',ach:Number(fr.달성률)||0,sun:Number(fr.과목순증)||0});});
-  if(!arr.length)return '<div class="incstat na"><div class="isl">[8월] 총국 달성률</div><div class="isrna">실적 데이터 없음</div></div>';
+  if(!arr.length)return '<div class="incstat na"><div class="isl">['+curMonth()+'월] 총국 달성률</div><div class="isrna">실적 데이터 없음</div></div>';
   arr.sort(function(a,b){return b.ach-a.ach;});
   var plus=arr.filter(function(x){return x.sun>=1;}).length;
-  return '<div class="incstat"><div class="isl">[8월] 총국 합산과목 달성률<span class="issub">1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'% · 순증 1↑ '+fmt(plus)+'개 · '+fmt(arr.length)+'개 총국</span></div>'
+  return '<div class="incstat"><div class="isl">['+curMonth()+'월] 총국 합산과목 달성률<span class="issub">1위 '+shortName(arr[0].nm)+' '+arr[0].mgr+' '+fmt1(arr[0].ach)+'% · 순증 1↑ '+fmt(plus)+'개 · '+fmt(arr.length)+'개 총국</span></div>'
     +'<div class="isr"><span class="isn">'+fmt(plus)+'개</span><span class="isp">순증 1↑ · '+fmt(arr.length)+'개 중</span><span class="isamt">최고 '+fmt1(arr[0].ach)+'%</span>'+isb("prtOrgLv('총국')")+'</div></div>';
 }
 function prtOrgLv(lv){
@@ -2936,7 +2936,7 @@ function prtOrgLv(lv){
   var isChong=(lv==='총국');
   if(isChong)O.sort(function(a,b){return (b.달성률||0)-(a.달성률||0);});
   prtOpen({
-    title:'[8월] '+lv+' 합산과목 달성률 순위',
+    title:'['+curMonth()+'월] '+lv+' 합산과목 달성률 순위',
     sub:'달성률 내림차순 · 대상 '+fmt(O.length)+'개',
     cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'과목순증',k:'a',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'디지털순증',k:'b',num:1}],
     rows:O.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자명:x.관리자명||'',
@@ -2996,12 +2996,12 @@ function adminInc7(){
           var wk=Number(t.근무기간)||0, gwa=Number(t.전월말관리과목)||0;
           if(wk>=6&&gwa>=60){elig++;if(gwa>=130)pay130++;else pay60++;}
         });
-        mtStat='<div class="incstat"><div class="isl">[8월] 무퇴회 인센티브<span class="issub">근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(pay130)+'명(2만)·60~129 '+fmt(pay60)+'명(1만)</span></div><div class="isr"><span class="isn">'+fmt(elig)+'명</span><span class="isp">'+((APP.teachers||[]).length?(elig/(APP.teachers||[]).length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(pay130*20000+pay60*10000)+'원</span>'+isb("prtIncList('mut')")+'</div></div>';
+        mtStat='<div class="incstat"><div class="isl">['+curMonth()+'월] 무퇴회 인센티브<span class="issub">근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(pay130)+'명(2만)·60~129 '+fmt(pay60)+'명(1만)</span></div><div class="isr"><span class="isn">'+fmt(elig)+'명</span><span class="isp">'+((APP.teachers||[]).length?(elig/(APP.teachers||[]).length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(pay130*20000+pay60*10000)+'원</span>'+isb("prtIncList('mut')")+'</div></div>';
       }else{
-        mtStat='<div class="incstat na"><div class="isl">[8월] 무퇴회 인센티브</div><div class="isrna">교사 실적 데이터 없음</div></div>';
+        mtStat='<div class="incstat na"><div class="isl">['+curMonth()+'월] 무퇴회 인센티브</div><div class="isrna">교사 실적 데이터 없음</div></div>';
       }
       body='<div class="incwrap">'
-        +'<div class="incstat"><div class="isl">[8월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 폴딩웨건 (단가 '+fmt(38500)+'원)</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">예상 '+fmt(wSj*38500)+'원</span>'+isb("prtIncList('wol')")+'</div></div>'
+        +'<div class="incstat"><div class="isl">['+curMonth()+'월] 월 성과 인센티브 (폴딩웨건)<span class="issub">합산과목 순증 6↑('+fmt(wSjA)+'명) 또는 입회 13↑('+fmt(wSjB)+'명) · 폴딩웨건 (단가 '+fmt(38500)+'원)</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">예상 '+fmt(wSj*38500)+'원</span>'+isb("prtIncList('wol')")+'</div></div>'
         +mtStat+ongTopTeaStat()
         +'</div>';
     }
@@ -3023,25 +3023,25 @@ function jikAchStat(){
     var row=-1;for(var i=0;i<JIKACH.length;i++){if(ach>=JIKACH[i].min){row=i;break;}}
     var unit=(row>=0)?JIKACH[row].p:(sun>=1?0.5:0);
     arr.push({unit:unit,pay:Math.round(tno*unit*10000)});});
-  if(!arr.length)return '<div class="incstat na"><div class="isl">[8월] 지국 달성률</div><div class="isrna">조직 실적 데이터 없음</div></div>';
+  if(!arr.length)return '<div class="incstat na"><div class="isl">['+curMonth()+'월] 지국 달성률</div><div class="isrna">조직 실적 데이터 없음</div></div>';
   var win=arr.filter(function(x){return x.pay>0;});
   var tot=win.reduce(function(s,x){return s+x.pay;},0);
   var c20=arr.filter(function(x){return x.unit===2.0;}).length,c15=arr.filter(function(x){return x.unit===1.5;}).length,
       c10=arr.filter(function(x){return x.unit===1.0;}).length,c05=arr.filter(function(x){return x.unit===0.5;}).length;
-  return '<div class="incstat"><div class="isl">[8월] 지국 달성률<span class="issub">200%↑ '+c20+'개·100%↑ '+c15+'개·50%↑ '+c10+'개·순증1↑ '+c05+'개</span></div>'
+  return '<div class="incstat"><div class="isl">['+curMonth()+'월] 지국 달성률<span class="issub">200%↑ '+c20+'개·100%↑ '+c15+'개·50%↑ '+c10+'개·순증1↑ '+c05+'개</span></div>'
     +'<div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+(arr.length?(win.length/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtIncList('jikach')")+'</div></div>';
 }
 function eopAchStat(){
   var arr=[];Object.keys(APP.q3cur||{}).forEach(function(c){var o=APP.q3cur[c];if(o.lv!=='사업국')return;
     var fr=orgFresh(c);if(!fr)return;
     arr.push({code:c,달성률:Number(fr.달성률)||0,순증:Number(fr.과목순증)||0});});
-  if(!arr.length)return '<div class="incstat na"><div class="isl">[8월] 사업국 달성률</div><div class="isrna">조직 실적 데이터 없음</div></div>';
+  if(!arr.length)return '<div class="incstat na"><div class="isl">['+curMonth()+'월] 사업국 달성률</div><div class="isrna">조직 실적 데이터 없음</div></div>';
   arr.sort(function(a,b){return b.달성률-a.달성률;});
   var tot=0,cnt=0;
   arr.forEach(function(x,i){var r=i+1;if(x.순증<1)return;
     var p=r<=3?500000:r<=10?300000:r<=20?200000:r<=30?100000:0;
     if(p){tot+=p;cnt++;}});
-  return '<div class="incstat"><div class="isl">[8월] 사업국 달성률<span class="issub">달성률 순위별 시상 (순증 1↑) · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만</span></div>'
+  return '<div class="incstat"><div class="isl">['+curMonth()+'월] 사업국 달성률<span class="issub">달성률 순위별 시상 (순증 1↑) · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만</span></div>'
     +'<div class="isr"><span class="isn">'+fmt(cnt)+'개</span><span class="isp">'+(arr.length?(cnt/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtIncList('eopach')")+'</div></div>';
 }
 function shinhanStat(){
@@ -3129,9 +3129,9 @@ function jiguStat(){
   var J=APP.incJigu||[];
   var win=J.filter(function(x){return x.회원순증>=1;});
   var pay=win.reduce(function(s,x){return s+x.회원순증*10000;},0);
-  if(!J.length)return '<div class="incstat na"><div class="isl">[8월] 지구 회원순증</div><div class="isrna">준비 중</div></div>';
+  if(!J.length)return '<div class="incstat na"><div class="isl">['+curMonth()+'월] 지구 회원순증</div><div class="isrna">준비 중</div></div>';
   var jp=J.length?(win.length/J.length*100).toFixed(1)+'%':'-';
-  return '<div class="incstat"><div class="isl">[8월] 지구 회원순증<span class="issub">회원순증 1↑ → 순증×1만원 · 전체 '+fmt(J.length)+'개 지구</span></div><div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+jp+'</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtIncList('jigu')")+'</div></div>';
+  return '<div class="incstat"><div class="isl">['+curMonth()+'월] 지구 회원순증<span class="issub">회원순증 1↑ → 순증×1만원 · 전체 '+fmt(J.length)+'개 지구</span></div><div class="isr"><span class="isn">'+fmt(win.length)+'개</span><span class="isp">'+jp+'</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtIncList('jigu')")+'</div></div>';
 }
 
 var ICON_UP='<svg viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
@@ -3489,7 +3489,7 @@ function prtAdminInc(){
     }).filter(function(x){return x.win;})
       .sort(function(a,b){return (b.sort-a.sort)||(b.sj-a.sj);});
     prtOpen({
-      title:'[8월] 교사 인센티브 대상자',
+      title:'['+curMonth()+'월] 교사 인센티브 대상자',
       sub:'월성과(순증6↑ 또는 입회13↑) · 무퇴회(퇴회0·근무6↑·과목60↑) · 대상 '+fmt(arr.length)+'명',
       cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'과목순증',k:'a',num:1},{h:'입회',k:'b',num:1},
         {h:'퇴회',k:'cc',num:1},{h:'과목수',k:'d',num:1},{h:'월성과',k:'e'},{h:'무퇴회',k:'f'},{h:'무퇴회 시상금',k:'g',num:1}],
@@ -3508,7 +3508,7 @@ function prtAdminInc(){
     }).sort(function(a,b){return b.ns-a.ns;});
     var win=J.filter(function(x){return x.ns>=1;}).length;
     prtOpen({
-      title:'[8월] 지구 회원순증 인센티브',
+      title:'['+curMonth()+'월] 지구 회원순증 인센티브',
       sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(win)+'개 / 전체 '+fmt(J.length)+'개',
       cols:[{h:'지구',k:'소속명'},{h:'지구장',k:'관리자'},{h:'회원순증',k:'a',num:1},{h:'시상금',k:'b',num:1}],
       rows:J.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
@@ -3528,7 +3528,7 @@ function prtAdminInc(){
     arr2.sort(function(a,b){return b.ach-a.ach;});
     var win2=arr2.filter(function(x){return x.pay>0;}).length;
     prtOpen({
-      title:'[8월] 지국 달성률 인센티브',
+      title:'['+curMonth()+'월] 지국 달성률 인센티브',
       sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(win2)+'개 / 전체 '+fmt(arr2.length)+'개',
       cols:[{h:'지국',k:'소속명'},{h:'지국장',k:'관리자'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1}],
       rows:arr2.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
@@ -3784,7 +3784,7 @@ function prtIncList(key){
   if(key==='wol'){
     var a=L.filter(function(x){return (Number(x.과목순증)||0)>=6||(Number(x.입회)||0)>=13;})
       .sort(function(p,q){return (Number(q.과목순증)||0)-(Number(p.과목순증)||0);});
-    prtOpen({title:'[8월] 교사 월 성과 인센티브 대상자',
+    prtOpen({title:'['+curMonth()+'월] 교사 월 성과 인센티브 대상자',
       sub:'합산과목 순증 6↑ 또는 입회 13↑ · 사은품 레비오사 폴딩웨건 · 대상 '+fmt(a.length)+'명',
       cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'과목순증',k:'a',num:1,hi:1},{h:'입회',k:'b',num:1,hi:1},{h:'충족',k:'cc'}],
       rows:a.map(function(x,i){var s=Number(x.과목순증)||0,ip=Number(x.입회)||0;
@@ -3796,7 +3796,7 @@ function prtIncList(key){
     var m=T.filter(function(t){return (Number(t.퇴회)||0)===0&&(Number(t.근무기간)||0)>=6&&(Number(t.전월말관리과목)||0)>=60;})
       .sort(function(p,q){return (Number(q.전월말관리과목)||0)-(Number(p.전월말관리과목)||0);});
     var tot=m.reduce(function(s,t){return s+((Number(t.전월말관리과목)||0)>=130?20000:10000);},0);
-    prtOpen({title:'[8월] 교사 무퇴회 인센티브 대상자',
+    prtOpen({title:'['+curMonth()+'월] 교사 무퇴회 인센티브 대상자',
       sub:'퇴회 0 · 근무 6개월↑ · 7월말 과목 60↑ · 예상 지급 '+fmt(tot)+'원 · 대상 '+fmt(m.length)+'명',
       cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'근무',k:'a',num:1},{h:'관리과목',k:'b',num:1,hi:1},{h:'시상금',k:'cc',num:1,hi:1}],
       rows:m.map(function(t,i){var g=Number(t.전월말관리과목)||0;
@@ -3811,7 +3811,7 @@ function prtIncList(key){
         : {c:x.소속코드,nm:x.소속명,mg:x.관리자||'',ns:Number(x.회원순증)||0};
     }).sort(function(p,q){return q.ns-p.ns;});
     var w=J.filter(function(x){return x.ns>=1;}).length;
-    prtOpen({title:'[8월] 지구 회원순증 인센티브',
+    prtOpen({title:'['+curMonth()+'월] 지구 회원순증 인센티브',
       sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(w)+'개 / 전체 '+fmt(J.length)+'개',
       cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'회원순증',k:'a',num:1,hi:1},{h:'시상금',k:'b',num:1,hi:1}],
       rows:J.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt(Math.round(x.ns)),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
@@ -3836,7 +3836,7 @@ function prtIncList(key){
     if(key==='jikach'){
       arr.sort(function(p,q){return q.ach8-p.ach8;});
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
-      prtOpen({title:'[8월] 지국 달성률 인센티브',
+      prtOpen({title:'['+curMonth()+'월] 지국 달성률 인센티브',
         sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(w1)+'개 / 전체 '+fmt(arr.length)+'개',
         cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
         rows:arr.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:fmt(x.tno),d:x.u1?fmtD(x.u1):'-',e:x.pay1?fmt(x.pay1):'-'};}),
@@ -3864,7 +3864,7 @@ function prtIncList(key){
       e.sort(function(p,q){return q.ach8-p.ach8;});
       var cnt=0,tot=0;
       e.forEach(function(x,i){var r=i+1;x.pay=0;if(x.sun8>=1){x.pay=r<=3?500000:r<=10?300000:r<=20?200000:r<=30?100000:0;}if(x.pay){cnt++;tot+=x.pay;}});
-      prtOpen({title:'[8월] 사업국 달성률 인센티브',
+      prtOpen({title:'['+curMonth()+'월] 사업국 달성률 인센티브',
         sub:'달성률 순위별 (순증 1↑) · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만 · 대상 '+fmt(cnt)+'개',
         cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'시상금',k:'cc',num:1,hi:1}],
         rows:e.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:x.pay?fmt(x.pay):'-'};}),
