@@ -2165,7 +2165,7 @@ function prtTea(scope){
       {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
       {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'시상점수',k:'f',num:1}],
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===r.교사번호),소속명:x.소속명,교사명:x.교사명,
-      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),f:fmt1(x.시상계)};}),
+      a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),f:fmt1(x.시상계)};}),
     n:30
   });
 }
@@ -2250,7 +2250,7 @@ function prtOrg(scope){
          {h:'시상점수',k:'f',num:1},scoreCol]),
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
       소속명:x.소속명,관리자명:x.관리자명||'',
-      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
+      a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:fmt1(x.시상점수),
       v:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?arr.length:30
@@ -2589,8 +2589,8 @@ function prtAdminSisang(){
         {h:'과목순증',k:'b',num:1},{h:'온공약정',k:'cc',num:1},{h:'디지털순증',k:'d',num:1},
         {h:'태블릿',k:'e',num:1},{h:'SKN재약정',k:'f',num:1},{h:'대상',k:'g'},{h:'시상점수',k:'h',num:1}],
       rows:T.map(function(x,i){return {_rank:x.순위||(i+1),소속명:x.소속명,교사명:x.교사명,
-        a:fmt(x.근무기간),b:fmt1(x.과목순증),cc:fmtD2(x.특별점수),d:fmt(x.디지털순증),
-        e:fmt1(x.태블릿점수),f:fmtD2(x.스구N재약정),
+        a:fmt(x.근무기간),b:fmt1(x.과목순증),cc:fmt1(x.특별점수),d:fmt(x.디지털순증),
+        e:fmt(Math.round(x.태블릿점수)),f:fmt1(x.스구N재약정),
         g:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',h:fmt1(x.시상계)};}),
       n:30
     });
@@ -2613,7 +2613,7 @@ function prtAdminSisang(){
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
          {h:(pos==='지구'?'시상점수':'지구당 점수'),k:'g',num:1,hi:1}]),
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
-      a:fmt1(x.과목순증),b:fmtD2(x.특별점수),cc:fmt(x.디지털순증),d:fmt1(x.태블릿점수),e:fmtD2(x.스구N재약정),
+      a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
       g:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?O.length:30
@@ -3275,7 +3275,7 @@ function prtAdminInc(){
       sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(win)+'개 / 전체 '+fmt(J.length)+'개',
       cols:[{h:'지구',k:'소속명'},{h:'지구장',k:'관리자'},{h:'회원순증',k:'a',num:1},{h:'시상금',k:'b',num:1}],
       rows:J.map(function(x,i){return {_rank:i+1,소속명:x.소속명,관리자:x.관리자,
-        a:fmt1(x.ns),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
+        a:fmt(Math.round(x.ns)),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
       cut:(win||1),cutLabel:'시상 대상 '+fmt(win)+'개 (순증 1↑)',n:50
     });
     return;
@@ -3577,7 +3577,7 @@ function prtIncList(key){
     prtOpen({title:'[8월] 지구 회원순증 인센티브',
       sub:'회원순증 1↑ · 순증수 × 1만원 · 대상 '+fmt(w)+'개 / 전체 '+fmt(J.length)+'개',
       cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'회원순증',k:'a',num:1,hi:1},{h:'시상금',k:'b',num:1,hi:1}],
-      rows:J.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt1(x.ns),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
+      rows:J.map(function(x,i){return {_rank:i+1,nm:x.nm,mg:x.mg,a:fmt(Math.round(x.ns)),b:x.ns>=1?fmt(Math.round(x.ns*10000)):'-'};}),
       cut:(w||1),cutLabel:'시상 대상 '+fmt(w)+'개',n:50});
     return;
   }
