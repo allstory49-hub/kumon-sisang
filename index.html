@@ -520,7 +520,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null};
 
@@ -1260,6 +1260,11 @@ function rankTop20All(sorted,myCode){
 // ===== 지국 퇴회율 (3분기) =====
 var JIKTOI=[{max:3.8,p:3.0},{max:4.1,p:2.0},{max:4.4,p:1.0},{max:4.6,p:0.5}];
 var JIKACH=[{min:200,p:2.0,l:'200% 이상'},{min:100,p:1.5,l:'100% 이상'},{min:50,p:1.0,l:'50% 이상'}];
+// ===== 9월 급간 =====
+var JIGUACH9=[{min:500,p:3.0,l:'500% 이상'},{min:300,p:2.0,l:'300% 이상'},{min:200,p:1.5,l:'200% 이상'},{min:100,p:1.0,l:'100% 이상'}];
+var JIGUJAE9=[{min:100,p:8000,l:'100%'},{min:90,p:5000,l:'90% 이상'},{min:80,p:3000,l:'80% 이상'}];
+var JIK9TO={'Legend':{to:10,p:2.0},'Best':{to:20,p:1.5},'Great':{to:30,p:1.0},'Good':{to:40,p:0.5}};
+var JIK9CHONG={'동부':{Best:3,Great:5,Good:6},'경서':{Best:6,Great:8,Good:12},'북부':{Best:3,Great:4,Good:5},'충청':{Best:2,Great:4,Good:5},'호남':{Best:2,Great:3,Good:4},'경상':{Best:4,Great:6,Good:8}};
 function jikAchieveCard(){
   var code=(S.user&&S.user.소속코드)||'';
   var fr=code?orgFresh(code):null;               // 8월 단월 실적(baked)
@@ -1497,8 +1502,8 @@ function eopJune(){
 }
 function incJuly(){
   if(S.type==='teacher')return (curMonth()>=9?julTeacherSep():julyTeacher());
-  if(S.type==='org'&&S.pos==='지구')return julyJigu();
-  if(S.type==='org'&&S.pos==='지국')return julyJiguk();
+  if(S.type==='org'&&S.pos==='지구')return (curMonth()>=9?julJiguSep():julyJigu());
+  if(S.type==='org'&&S.pos==='지국')return (curMonth()>=9?julJigukSep():julyJiguk());
   if(S.type==='org'&&S.pos==='사업국')return julyEop();
   if(S.type==='org'&&S.pos==='총국')return julyChong();
   return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 '+S.pos+' 7월 인센티브는 준비 중입니다.</div>';
@@ -1881,6 +1886,88 @@ function julyTeacher(){
   else body=mastaTopJulyCard();
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 김성희 매니저 (02-397-9436)');
 }
+// ===== 9월 지구 인센티브 =====
+function julJiguSep(){
+  var tabs=['재약정률','달성률','엘리트지구장','세종클럽','온공Top'];
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='재약정률';
+  var body;
+  if(S.jtab==='재약정률')body=jaeYakCard();
+  else if(S.jtab==='달성률')body=jiguAchCard9();
+  else if(S.jtab==='엘리트지구장')body=eliteJiguCard();
+  else if(S.jtab==='세종클럽')body=sejongPersonal();
+  else body=mastaTopHalf2Org('지구');
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
+}
+function jaeYakCard(){
+  var code=(S.user&&S.user.소속코드)||'';
+  var d=APP.jaeyak&&APP.jaeyak[code];
+  var tb=JIGUJAE9.map(function(g,i){
+    var on=d&&(d.rate>=g.min)&&(i===0?d.rate>=100:true)&&(JIGUJAE9.findIndex(function(x){return d.rate>=x.min;})===i);
+    return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">재약정률 '+g.l+'</div><div class="jtr">재약정 건수 × <b>'+fmt(g.p)+'원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
+  if(!d)return '<div class="incsec"><div class="incsech">🔄 [9월] 지구 재약정률</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
+    +critBlock('스마트구몬N 재약정률 급간별 시상')
+    +'<div class="jtiers">'+tb+'</div>'
+    +'<div class="ib am" style="margin-bottom:0">📋 아직 재약정 실적 데이터가 업로드되지 않았어요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 회원수 ÷ 약정 만료 예정 회원수 × 100<br>· 확인: KSS &gt; 약정상품 &gt; 약정만료 예정리스트 &gt; 만료년월 2026.09 &gt; 스마트구몬N<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+  var row=-1;for(var i=0;i<JIGUJAE9.length;i++){if(d.rate>=JIGUJAE9[i].min){row=i;break;}}
+  var unit=(row>=0)?JIGUJAE9[row].p:0;
+  var pay=Math.round((d.cnt||0)*unit); var win=pay>0;
+  var remain='';
+  if(row!==0){
+    var tg=(row<0)?JIGUJAE9[JIGUJAE9.length-1]:JIGUJAE9[row-1];
+    var needCnt=Math.max(0,Math.ceil((d.exp||0)*tg.min/100-(d.cnt||0)));
+    if(needCnt>0)remain='<div class="icnext">⬆️ '+tg.l+'(건당 '+fmt(tg.p)+'원)까지 <b>재약정 '+fmt(needCnt)+'건</b> 더 필요해요</div>';
+  }
+  return '<div class="incsec"><div class="incsech">🔄 [9월] 지구 재약정률</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
+    +critBlock('스마트구몬N 재약정률 급간별 시상')
+    +'<div class="jtiers">'+tb+'</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">재약정률</div><div class="ig4v" style="color:'+(win?'var(--green)':'var(--t1)')+'">'+fmt1(d.rate)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">재약정 건수</div><div class="ig4v">'+fmt(d.cnt)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">만료 예정</div><div class="ig4v">'+fmt(d.exp)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(pay)+'원':'-')+'</div></div>'
+    +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 재약정 '+fmt(d.cnt)+'건 × '+fmt(unit)+'원 = '+fmt(pay)+'원':'아직 80% 미만이에요')+'</div>'
+    +remain
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 회원수 ÷ 약정 만료 예정 회원수 × 100<br>· 확인: KSS &gt; 약정상품 &gt; 약정만료 예정리스트 &gt; 만료년월 2026.09 &gt; 스마트구몬N<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+}
+function jiguAchCard9(){
+  var code=(S.user&&S.user.소속코드)||'';
+  var fr=code?orgFresh(code):null, q=code?q3get(code):null;
+  if(!fr||!q||q.lv!=='지구')return '<div class="incsec"><div class="incsech">📈 [9월] 지구 달성률</div><div class="ib am">이번 명단에 없어요.</div></div>';
+  var ach=Number(fr.달성률)||0, D=Number(fr.디지털순증)||0;
+  var tno=Number(fr.전월말)||Number(q.교사수당월)||0;
+  var row=-1;for(var i=0;i<JIGUACH9.length;i++){if(ach>=JIGUACH9[i].min){row=i;break;}}
+  var unit=(row>=0)?JIGUACH9[row].p:0;
+  var dOk=(D>=1);
+  var pay=(dOk&&unit)?Math.round(tno*unit*10000):0;
+  var win=pay>0;
+  var tb=JIGUACH9.map(function(g,i){var on=(row===i);
+    return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">달성률 '+g.l+'</div><div class="jtr">교사수 × <b>'+fmtD(g.p)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
+  var mok=Number((APP.q3cur&&APP.q3cur[code]&&APP.q3cur[code].목표))||0;
+  var remain='';
+  if(!dOk)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-D)+'</b> 남음 (필수 조건)</div>';
+  if(row!==0&&mok){
+    var tg=(row<0)?JIGUACH9[JIGUACH9.length-1]:JIGUACH9[row-1];
+    var need=q3flr(mok*tg.min/100-(Number(fr.과목순증)||0),1);
+    if(need>0)remain+='<div class="icnext">⬆️ 달성률 '+tg.min+'%(교사수 × '+fmtD(tg.p)+'만원)까지 순증 <b>'+fmt1(need)+'</b> 필요</div>';
+  }
+  return '<div class="incsec"><div class="incsech">📈 [9월] 지구 달성률</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 (단월) · 지급 26년 10월</div>'
+    +critBlock('합산과목 달성률 급간별 시상 <span style="color:var(--t3)">(단, D순증 1 이상)</span>')
+    +'<div class="jtiers">'+tb+'</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">달성률</div><div class="ig4v" style="color:'+(unit?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(dOk?'var(--green)':'var(--red)')+'">'+fmt1(D)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(tno)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(pay)+'원':'-')+'</div></div>'
+    +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 교사수 '+fmt(tno)+' × '+fmtD(unit)+'만원 = '+fmt(pay)+'원':(unit&&!dOk?'급간은 충족했지만 D순증 1 이상이 필요해요':'아직 시상 기준 미달이에요'))+'</div>'
+    +remain
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 9월 합산과목 순증 ÷ 9월 목표 × 100<br>· 과목입회는 당복·NKU를 포함해요.<br>· <b>8월말 기준 교사수</b>로 시상금을 지급해요.<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+}
 function julyJigu(){
   var tabs=['회원순증','엘리트지구장','세종클럽','온공Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='회원순증';
@@ -1889,6 +1976,94 @@ function julyJigu(){
   else if(S.jtab==='엘리트지구장')body=eliteJiguCard();
   else if(S.jtab==='세종클럽')body=sejongPersonal('지구');
   else body=mastaTopHalf2Org('지구');
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
+}
+// ===== 9월 지국 인센티브 =====
+function jikRank9(){
+  // 9월 지국 달성률: 자격(달성률100↑ & D순증1↑) → 전사 Legend 10, 이후 총국별 T/O
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지국')return;
+    var fr=orgFresh(code);if(!fr)return;
+    var q=q3get(code)||{};
+    arr.push({code:code,nm:o.소속명,mg:o.관리자||'',chong:o.총국||'',
+      ach:Number(fr.달성률)||0,sun:Number(fr.과목순증)||0,D:Number(fr.디지털순증)||0,
+      tno:Number(fr.전월말)||Number(q.교사수당월)||0,
+      ilPer:(q.교사수당월?q3flr((q.일반순증||0)/q.교사수당월,3):0),
+      dPer:(q.교사수당월?q3flr((q.D순증||0)/q.교사수당월,3):0)});});
+  arr.sort(function(a,b){return (b.ach-a.ach)||(b.ilPer-a.ilPer)||(b.dPer-a.dPer);});
+  var elig=arr.filter(function(x){return x.ach>=100&&x.D>=1;});
+  var used={},cnt={};
+  elig.forEach(function(x,i){
+    if(i<JIK9TO.Legend.to){x.grade='Legend';x.unit=JIK9TO.Legend.p;return;}
+    var ch=shortName(x.chong).replace('총국','');
+    var q=JIK9CHONG[ch];if(!q)return;
+    cnt[ch]=cnt[ch]||{Best:0,Great:0,Good:0};
+    if(cnt[ch].Best<q.Best){cnt[ch].Best++;x.grade='Best';x.unit=1.5;}
+    else if(cnt[ch].Great<q.Great){cnt[ch].Great++;x.grade='Great';x.unit=1.0;}
+    else if(cnt[ch].Good<q.Good){cnt[ch].Good++;x.grade='Good';x.unit=0.5;}
+  });
+  arr.forEach(function(x,i){x.rank=i+1;x.pay=(x.unit?Math.round(x.tno*x.unit*10000):0);});
+  return arr;
+}
+function jikAchCard9(){
+  var code=(S.user&&S.user.소속코드)||'';
+  var arr=jikRank9();
+  var me=null;for(var i=0;i<arr.length;i++){if(arr[i].code===code){me=arr[i];break;}}
+  if(!me)return '<div class="incsec"><div class="incsech">📈 [9월] 지국 달성률</div><div class="ib am">이번 명단에 없어요.</div></div>';
+  var win=me.pay>0;
+  var grades=[['Legend','전사 10',2.0],['Best','총국별',1.5],['Great','총국별',1.0],['Good','총국별',0.5]];
+  var tb=grades.map(function(g){var on=(me.grade===g[0]);
+    return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">'+g[0]+' <span style="font-size:10px;color:var(--t3)">'+g[1]+'</span></div><div class="jtr">교사수 × <b>'+fmtD(g[2])+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
+  var qual=(me.ach>=100&&me.D>=1);
+  var remain='';
+  if(!qual){
+    if(me.D<1)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-me.D)+'</b> 남음 (필수)</div>';
+    var mok=Number((APP.q3cur&&APP.q3cur[code]&&APP.q3cur[code].목표))||0;
+    if(me.ach<100&&mok){var need=q3flr(mok-me.sun,1);
+      if(need>0)remain+='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(need)+'</b> 남음 (필수)</div>;'.replace(';','');}
+  }else if(!me.grade){
+    remain='<div class="icnext">⬆️ 자격은 충족했지만 T/O(총 100개) 밖이에요 · 현재 전사 '+me.rank+'위</div>';
+  }
+  return '<div class="incsec"><div class="incsech">📈 [9월] 지국 달성률 <span class="rqbadge">상대평가</span></div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 (단월) · 지급 26년 10월</div>'
+    +critBlock('달성률 <b>100%↑ & D순증 1↑</b> 중 상위 T/O 100개 (전사 Legend 10 + 총국별 90)')
+    +'<div class="jtiers">'+tb+'</div>'
+    +'<div class="incgrid4">'
+      +'<div class="ig4"><div class="ig4l">달성률</div><div class="ig4v" style="color:'+(me.ach>=100?'var(--green)':'var(--t1)')+'">'+fmt1(me.ach)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(me.D>=1?'var(--green)':'var(--red)')+'">'+fmt1(me.D)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 등급</div><div class="ig4v" style="font-size:15px;color:'+(me.grade?'var(--green)':'var(--t2)')+'">'+(me.grade||'미해당')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(me.pay)+'원':'-')+'</div></div>'
+    +'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 '+me.grade+' · 교사수 '+fmt(me.tno)+' × '+fmtD(me.unit)+'만원 = '+fmt(me.pay)+'원':'아직 시상 기준 미달이에요')+'</div>'
+    +remain
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 9월 합산과목 순증 ÷ 9월 목표 × 100 (둘째자리 절사)<br>· 동률 시: 일반과목 순증(인당)↑ &gt; D순증(인당)↑<br>· <b>8월말 기준 교사수</b>로 시상금 지급 · 10월 운영비 포함</div></div>';
+}
+function managerCard9(){
+  var code=(S.user&&S.user.소속코드)||'';
+  var fr=code?orgFresh(code):null;
+  var ach=fr?(Number(fr.달성률)||0):0;
+  var ok=ach>=80;
+  return '<div class="incsec"><div class="incsech">🎁 [9월] 매니저 인센티브</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
+    +critBlock('지국 합산과목 달성률 <b>80% 이상</b>')
+    +'<div class="stl" style="margin-top:14px">시상품</div>'
+    +'<div class="giftbox"><img class="giftimg" src="grill.jpg" alt="퀸나 3in1 마블 와이드 전기그릴"><div style="font-weight:700;font-size:14px;color:var(--t1)">[퀸나] 3in1 마블 와이드 전기그릴</div><div class="giftpr">소비자가 120,000원</div></div>'
+    +'<div class="incgrid4"><div class="ig4"><div class="ig4l">지국 달성률 <span style="font-size:9px;color:var(--t3)">(80%↑)</span></div><div class="ig4v" style="color:'+(ok?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
+    +'<div class="ig4"><div class="ig4l">달성 여부</div><div class="ig4v" style="font-size:15px;color:'+(ok?'var(--green)':'var(--t2)')+'">'+(ok?'충족':'미달')+'</div></div></div>'
+    +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 매니저 시상품 지급 대상입니다':'아직 80% 미만이에요')+'</div>'
+    +(ok?'':'<div class="icremain">🎯 달성률 80%까지 <b>'+fmt1(80-ach)+'%p</b> 남음</div>')
+    +'<div class="ib bl" style="margin-bottom:0">· 지급월(10월) 기준 재직 중인 매니저에 한해 지급<br>· 겸직 매니저는 한 지국만 달성해도 지급 (중복 없음)<br>· 시행월(9월) 기준 근무지로 배송 · A/S: 엠앤제이마케팅 031-984-6117</div></div>';
+}
+function julJigukSep(){
+  var tabs=['달성률','퇴회율','매니저','온공10CLUB','세종클럽','온공Top'];
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='달성률';
+  var body;
+  if(S.jtab==='달성률')body=jikAchCard9();
+  else if(S.jtab==='퇴회율')body=jikToiCard();
+  else if(S.jtab==='매니저')body=managerCard9();
+  else if(S.jtab==='온공10CLUB')body=club10Card();
+  else if(S.jtab==='세종클럽')body=sejongPersonal();
+  else body=mastaTopHalf2Org('지국');
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function julyJiguk(){
