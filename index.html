@@ -786,23 +786,27 @@ function histPersonalInc(){
 }
 function renderIncentive(){
   var b=document.getElementById('iBody');
-  if(!S.imonth||S.imonth==='6')S.imonth='8';
-  var months=[{id:'8',l:'8월'},{id:'7',l:'7월 (확정)'}];
+  var cm=curMonth(), pm=cm-1;
+  if(!S.imonth||[String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
+  var months=[{id:String(cm),l:cm+'월'},{id:String(pm),l:pm+'월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderIncentive()">'+m.l+'</button>';}).join('')+'</div>';
-  var body=S.imonth==='8'?incJuly():incJulFixed();
+  var body=(S.imonth===String(cm))?incJuly():incFixedMonth(pm);
   b.innerHTML=mtab+body;
 }
 // ===== 7월 (확정) =====
-async function loadJulSnap(){
-  if(APP.histCache['2026-07'])return APP.histCache['2026-07'];
-  try{var r=await dfetch('history/2026-07.json?t='+Date.now());if(r.ok){APP.histCache['2026-07']=await r.json();return APP.histCache['2026-07'];}}catch(e){}
+function snapKey(m){return '2026-'+(m<10?'0':'')+m;}
+async function loadMonthSnap(m){
+  var k=snapKey(m);
+  if(APP.histCache[k])return APP.histCache[k];
+  try{var r=await dfetch('history/'+k+'.json?t='+Date.now());if(r.ok){APP.histCache[k]=await r.json();return APP.histCache[k];}}catch(e){}
   return null;
 }
+async function loadJulSnap(){return loadMonthSnap(7);}
 function julFixLabel(s){return String(s||'').replace(/마\.스\.타/g,'온공');}
-function incJulFixed(){
-  var snap=APP.histCache['2026-07'];
-  if(!snap){loadJulSnap().then(function(x){if(x)renderIncentive();});return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
-  var head='<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
+function incFixedMonth(m){
+  var snap=APP.histCache[snapKey(m)];
+  if(!snap){loadMonthSnap(m).then(function(x){if(x)renderIncentive();});return '<div class="mt">'+m+'월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
+  var head='<div class="mt">'+m+'월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
     +'<div class="ib gr">📅 '+snap.label+' · '+snap.date+'</div>';
   var items=[];
   if(S.type==='org'&&S.pos==='지구'){
@@ -813,9 +817,9 @@ function incJulFixed(){
   }
   var body;
   if(!items.length){
-    body='<div class="ib am">7월 확정 수혜 내역이 없어요.</div>';
+    body='<div class="ib am">'+m+'월 확정 수혜 내역이 없어요.</div>';
   }else{
-    body='<div class="incsec"><div class="incsech">🎁 7월 확정 수혜 내역</div>'
+    body='<div class="incsec"><div class="incsech">🎁 '+m+'월 확정 수혜 내역</div>'
       +items.map(function(it){return '<div class="histrow"><span>'+julFixLabel(it.name)+'</span><b style="color:var(--green);font-size:13px">'+julFixLabel(it.award)+'</b></div>';}).join('')
       +'</div>';
   }
@@ -824,32 +828,32 @@ function incJulFixed(){
   if(S.type==='teacher'){
     var t=snap.t&&snap.t[(S.user&&S.user.교사번호)||''];
     if(t)extra='<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">7월 시상계</div><div class="ig4v" style="color:'+(t.s<0?'var(--red)':'var(--green)')+'">'+fmt1(t.s)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">'+m+'월 시상계</div><div class="ig4v" style="color:'+(t.s<0?'var(--red)':'var(--green)')+'">'+fmt1(t.s)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">전사 순위</div><div class="ig4v">'+fmt(t.n)+'<span style="font-size:12px">위</span></div></div>'
       +'<div class="ig4"><div class="ig4l">총국 순위</div><div class="ig4v">'+fmt(t.c)+'<span style="font-size:12px">위</span></div></div>'
       +'<div class="ig4"><div class="ig4l">온공 순증</div><div class="ig4v">'+fmt1(t.mj)+'</div></div></div>';
   }else if(S.type==='org'){
     var o=snap.o&&snap.o[(S.user&&S.user.소속코드)||''];
     if(o)extra='<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">7월 시상점수</div><div class="ig4v" style="color:'+(o.d<0?'var(--red)':'var(--green)')+'">'+fmt1(o.d)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">'+m+'월 시상점수</div><div class="ig4v" style="color:'+(o.d<0?'var(--red)':'var(--green)')+'">'+fmt1(o.d)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">전사 순위</div><div class="ig4v">'+fmt(o.n)+'<span style="font-size:12px">위</span></div></div>'
       +'<div class="ig4"><div class="ig4l">총국 순위</div><div class="ig4v">'+fmt(o.c)+'<span style="font-size:12px">위</span></div></div>'
       +'<div class="ig4"><div class="ig4l">온공 약정점수</div><div class="ig4v">'+fmt1(o.mj)+'</div></div></div>';
   }
-  return head+extra+body+'<div class="ib bl" style="margin-bottom:0">· 7월 마감 확정 실적이에요. 이후 실적조정이 있어도 이 값은 변경되지 않아요.</div>';
+  return head+extra+body+'<div class="ib bl" style="margin-bottom:0">· '+m+'월 마감 확정 실적이에요. 이후 실적조정이 있어도 이 값은 변경되지 않아요.</div>';
 }
-function adminIncJulFixed(){
-  var snap=APP.histCache['2026-07'];
-  if(!snap){loadJulSnap().then(function(x){if(x)renderAdmin();});return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
+function adminIncFixedMonth(m){
+  var snap=APP.histCache[snapKey(m)];
+  if(!snap){loadMonthSnap(m).then(function(x){if(x)renderAdmin();});return '<div class="mt">'+m+'월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div><div class="ib bl">불러오는 중...</div>';}
   var rows=(snap.agg||[]).map(function(a){
     return '<div class="incstat"><div class="isl">'+julFixLabel(a.name)+(a.pct?'<span class="issub">'+a.pct+'%</span>':'')+'</div>'
       +'<div class="isr"><span class="isn">'+fmt(a.cnt)+a.unit+'</span>'+(a.amt?'<span class="isamt">'+fmt(a.amt)+'원</span>':'')+'</div></div>';
   }).join('');
   var tot=(snap.agg||[]).reduce(function(s,a){return s+(a.amt||0);},0);
-  return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
+  return '<div class="mt">'+m+'월 인센티브 <span class="rqbadge" style="background:var(--green)">확정</span></div>'
     +'<div class="ib gr">📅 '+snap.label+' · '+snap.date+'</div>'
     +'<div class="incwrap">'+rows+'</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 총 시상금 <b>'+fmt(tot)+'원</b> (실물 사은품 제외)<br>· 7월 마감 확정 기록이라 이후 변경되지 않아요.</div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 총 시상금 <b>'+fmt(tot)+'원</b> (실물 사은품 제외)<br>· '+m+'월 마감 확정 기록이라 이후 변경되지 않아요.</div>';
 }
 function incJune(){
   if(S.type==='teacher')return teacherInc();
@@ -1492,7 +1496,7 @@ function eopJune(){
   return '<div class="mt">사업국 인센티브</div>'+sub+body+incNotice();
 }
 function incJuly(){
-  if(S.type==='teacher')return julyTeacher();
+  if(S.type==='teacher')return (curMonth()>=9?julTeacherSep():julyTeacher());
   if(S.type==='org'&&S.pos==='지구')return julyJigu();
   if(S.type==='org'&&S.pos==='지국')return julyJiguk();
   if(S.type==='org'&&S.pos==='사업국')return julyEop();
@@ -1800,6 +1804,57 @@ function mastaTopJulyCard(){
     +board
     +'<div class="ib am" style="margin-bottom:0">⚠️ 7월 확정 + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 누적 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
+}
+// ===== 현재 실적월 판정 =====
+function curMonth(){
+  var d=(APP.meta&&APP.meta.date)||'';
+  var m=/(\d{4})년\s*(\d{1,2})월/.exec(d);
+  if(m)return Number(m[2]);
+  return new Date().getMonth()+1;
+}
+function julTeacherSep(){
+  // 9월 교사 인센티브: 월성과(순증6↑·전기그릴) / 온공순증(급간) / 온공Top
+  var tabs=['월성과','온공순증','온공Top'];
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='월성과';
+  var inc=APP.incMap[(S.user&&S.user.교사번호)||''];
+  var body;
+  if(S.jtab==='월성과'){
+    var sj=inc?(Number(inc.과목순증)||0):0;
+    var ok=sj>=6, rS=fmt1(6-sj);
+    body='<div class="incsec"><div class="incsech">🏆 [9월] 월 성과</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
+      +critBlock('합산과목 순증 <b>6 이상</b>')
+      +'<div class="stl" style="margin-top:14px">시상품</div>'
+      +'<div class="giftbox"><img class="giftimg" src="grill.jpg" alt="퀸나 3in1 마블 와이드 전기그릴"><div style="font-weight:700;font-size:14px;color:var(--t1)">[퀸나] 3in1 마블 와이드 전기그릴</div><div class="giftpr">소비자가 120,000원</div></div>'
+      +'<div class="incgrid4"><div class="ig4"><div class="ig4l">합산과목 순증 <span style="font-size:9px;color:var(--t3)">(6↑)</span></div><div class="ig4v" style="color:'+(ok?'var(--green)':(sj<0?'var(--red)':'var(--t1)'))+'">'+fmt1(sj)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">달성 여부</div><div class="ig4v" style="font-size:15px;color:'+(ok?'var(--green)':'var(--t2)')+'">'+(ok?'충족':'미달')+'</div></div></div>'
+      +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 달성! 전기그릴 지급 대상입니다':'아직 미달이에요')+'</div>'
+      +(ok?'':'<div class="icremain">🎯 순증 6까지 <b>'+rS+'</b> 남음</div>')
+      +'<div class="ib bl" style="margin-bottom:0">· 합산과목 <b>순증</b>은 인정입회·NKU·<b>당복 포함</b><br>· 지급월(10월) 기준 재직 중인 일반교사에 한해 지급<br>· A/S: ㈜반디 1899-8311<br>· 대상자는 10월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
+  }
+  else if(S.jtab==='온공순증')body=ongJeungCard();
+  else body=mastaTopJulyCard();
+  return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 김성희 매니저 (02-397-9436)');
+}
+function ongJeungCard(){
+  var inc=APP.incMap[(S.user&&S.user.교사번호)||''];
+  var ms=inc?(Number(inc.마스타순증)||0):0;
+  var pay=ms>=5?20000:ms>=3?10000:0;
+  var win=pay>0;
+  var tiers=[{min:5,p:20000},{min:3,p:10000}];
+  var row=-1;for(var i=0;i<tiers.length;i++){if(ms>=tiers[i].min){row=i;break;}}
+  var tb=tiers.map(function(g,i){var on=(row===i);
+    return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">온공 순증 '+g.min+' 이상</div><div class="jtr"><b>'+fmt(g.p)+'원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
+  var need=row<0?fmt1(3-ms):(row===1?fmt1(5-ms):0);
+  return '<div class="incsec"><div class="incsech">⭐ [9월] 온공 순증</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
+    +critBlock('온공 순증 급간별 시상')
+    +'<div class="jtiers">'+tb+'</div>'
+    +'<div class="incgrid4"><div class="ig4"><div class="ig4l">온공 순증</div><div class="ig4v" style="color:'+(win?'var(--green)':(ms<0?'var(--red)':'var(--t1)'))+'">'+fmt1(ms)+'</div></div>'
+    +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:16px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(pay)+'원':'-')+'</div></div></div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 시상금 '+fmt(pay)+'원 대상입니다':'아직 시상 기준 미달이에요')+'</div>'
+    +(need&&Number(need)>0?'<div class="icremain">🎯 '+(row<0?'3':'5')+' 이상까지 <b>'+need+'</b> 남음'+(row===1?' (2만원 급간)':'')+'</div>':'')
+    +'<div class="ib bl" style="margin-bottom:0">· 온공 순증은 <b>당복 포함</b><br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 관리과목 실적 통계 &gt; 교사별 실적통계 &gt; 온공과목 &gt; 순증<br>· 시상금은 9월 수수료에 포함 지급(10/15 명세서, 수수료 기타1)<br>· 지급월(10월) 기준 재직 중인 일반교사에 한해 지급</div></div>';
 }
 function julyTeacher(){
   var tabs=['월성과','무퇴회','온공Top'];
@@ -2620,10 +2675,11 @@ function prtAdminSisang(){
   });
 }
 function adminInc(){
-  if(!S.imonth||S.imonth==='6')S.imonth='8';
-  var months=[{id:'8',l:'8월'},{id:'7',l:'7월 (확정)'}];
+  var cm=curMonth(), pm=cm-1;
+  if(!S.imonth||[String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
+  var months=[{id:String(cm),l:cm+'월'},{id:String(pm),l:pm+'월 (확정)'}];
   var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
-  return mtab+(S.imonth==='8'?adminInc7():adminIncJulFixed());
+  return mtab+((S.imonth===String(cm))?adminInc7():adminIncFixedMonth(pm));
 }
 function ongTopStat(lv){
   var arr=[];
