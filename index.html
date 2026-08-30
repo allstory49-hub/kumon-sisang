@@ -2429,7 +2429,7 @@ function orgRank(){
       :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
     +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':((x.전월말순증||0)>0?'var(--blue)':'var(--t3)')))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
   function block(title,arr,full,pfn){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
@@ -2447,7 +2447,7 @@ function orgRank(){
     var crows=ca.map(function(x,i){var im=(x.사번&&x.사번===r.사번);
       return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(i+1)+'">'+(i+1)+'</div>'
         +'<div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
-        +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':((x.전월말순증||0)>0?'var(--blue)':'var(--t3)')))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'
+        +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.과목순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.디지털순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
         +'<div class="rcol big w2"><div class="rcol-v" style="color:'+((x.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(x.달성률||0)+'%</div></div></div>';}).join('');
@@ -3328,7 +3328,7 @@ function prtRender(){
         if(cl.num)cc.push('num');
         if(cl.num&&(anyHi?cl.hi:(k===lastIdx)))cc.push('val');
         if(/^-/.test(v))cc.push('neg');
-        else if(/전월말/.test(cl.h)&&v!=='0'&&v!=='—'&&v!=='')cc.push('pos');
+        else if(/전월말/.test(cl.h)&&v!=='—'&&v!=='')cc.push('pos');
         return '<td'+(cc.length?' class="'+cc.join(' ')+'"':'')+'>'+prtEsc(v)+'</td>';
       }).join('')+'</tr>';
   }).join('');
@@ -3666,7 +3666,7 @@ function prtImage(){
       var v=String(r[c.k]==null?'':r[c.k]);
       var em=hasHi?!!c.hi:(k===numKeys.length-1);
       var isPrev=/전월말/.test(c.h);
-      var col=out?'#A9B5AF':(em?TH.ac:(/^-/.test(v)?'#DC2626':(isPrev&&v!=='0'&&v!=='—'?'#2478C0':'#3C4C45')));
+      var col=out?'#A9B5AF':(em?TH.ac:(/^-/.test(v)?'#DC2626':(isPrev&&v!=='—'?'#2478C0':'#3C4C45')));
       txt(v,padX+rkW+10+nameW+k*numW+numW-8,by,em?21:16,col,em?'800':'700','right');
     });
     g.strokeStyle='#EDF1EF';g.lineWidth=1;
