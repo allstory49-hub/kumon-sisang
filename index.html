@@ -2429,7 +2429,7 @@ function orgRank(){
       :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
     +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+((x.전월말순증||0)<0?'var(--red)':'var(--t3)')+'">'+fmt1(x.전월말순증||0)+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--t3)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
   function block(title,arr,full,pfn){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
@@ -2447,7 +2447,7 @@ function orgRank(){
     var crows=ca.map(function(x,i){var im=(x.사번&&x.사번===r.사번);
       return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(i+1)+'">'+(i+1)+'</div>'
         +'<div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
-        +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+((x.전월말순증||0)<0?'var(--red)':'var(--t3)')+'">'+fmt1(x.전월말순증||0)+'</div></div>'
+        +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--t3)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.과목순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.디지털순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
         +'<div class="rcol big w2"><div class="rcol-v" style="color:'+((x.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(x.달성률||0)+'%</div></div></div>';}).join('');
@@ -2482,7 +2482,7 @@ function prtOrg(scope){
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
          {h:'시상점수',k:'f',num:1},scoreCol]),
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
-      소속명:x.소속명,관리자명:x.관리자명||'',p:fmt1(x.전월말순증||0),
+      소속명:x.소속명,관리자명:x.관리자명||'',p:(x.전월말순증==null?'—':fmt1(x.전월말순증)),
       a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:fmt1(x.시상점수),
       v:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
@@ -2846,7 +2846,7 @@ function prtAdminSisang(){
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
          {h:(pos==='지구'?'시상점수':'지구당 점수'),k:'g',num:1,hi:1}]),
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
-      p:fmt1(x.전월말순증||0),a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
+      p:(x.전월말순증==null?'—':fmt1(x.전월말순증)),a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
       g:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?O.length:30
@@ -4239,7 +4239,7 @@ function parseOrg(data){
     var mn=String(row[C.관리자명]||'').trim(),sb=String(row[C.사번]||'').trim().split('.')[0];
     if(mn==='nan')mn='';if(sb==='nan')sb='';
     res[rl].push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn||'(공석)',사번:sb,
-      전월말:Number(row[C.전월말])||0,전월말순증:fmt2(Number(row[C.전월말순증])||0),과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
+      전월말:Number(row[C.전월말])||0,전월말순증:(function(v){var s=String(v==null?'':v).trim();return s===''?null:fmt2(Number(v)||0);})(row[C.전월말순증]),과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
       태블릿점수:fmt2(Number(row[C.태블릿])||0),펜세트점수:fmt2(Number(row[C.펜세트])||0),스구N전환재약정:fmt2(Number(row[C.스구N전환재약정])||0),스구N재약정:fmt2(Number(row[C.스구N재약정])||0),
       시상점수:fmt2(Number(row[C.시상점수])||0),지구수:Number(row[C.지구수])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:fmt2(Number(row[C.달성률])||0)});
   }
@@ -4305,6 +4305,19 @@ async function doUpload(){
     if(elite6){try{await saveFile('cumulative/elite_jun.json',JSON.stringify({asof:meta.date,jiguk:elite6}),'elite june update');APP.elite6=elite6;}catch(e){}}
     var mt6={};var mg6=parseMastaTop6One(UP.jigu2?UP.jigu2.data:null,'지구');if(mg6)Object.assign(mt6,mg6);var me6=parseMastaTop6One(UP.eop?UP.eop.data:null,'사업국');if(me6)Object.assign(mt6,me6);
     if(Object.keys(mt6).length){try{await saveFile('cumulative/mastatop6.json',JSON.stringify({jiguSaup:mt6}),'mastatop june jigu/saup');APP.mastaTop6=Object.assign(APP.mastaTop6||{},mt6);}catch(e){}}
+    // 전월말 순증 공란 조직 알림 (0으로 처리하지 않고 담당자에게 확인 요청)
+    try{
+      var blanks=[];
+      ['지구','지국','사업국','총국'].forEach(function(lv){
+        (APP.org[lv]||[]).forEach(function(o){if(o.전월말순증==null)blanks.push(lv+' '+o.소속명);});
+      });
+      if(blanks.length){
+        var msg='⚠️ 소평 파일에서 「전월말 순증」이 비어 있는 조직이 '+blanks.length+'개 있어요.\n\n'
+          +blanks.slice(0,15).join('\n')+(blanks.length>15?'\n… 외 '+(blanks.length-15)+'개':'')
+          +'\n\n0으로 처리하지 않고 «—»로 표시했어요. 확인이 필요하면 담당자에게 문의해 주세요.';
+        setTimeout(function(){alert(msg);},400);
+      }
+    }catch(e){}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-08',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
     if(UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jae){try{var jk=parseJaeyakSafe(UP.jae.data);if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:'2026-09',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
