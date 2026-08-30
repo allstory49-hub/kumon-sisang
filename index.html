@@ -4364,8 +4364,8 @@ function adminOrg(){
     +'<div class="top1"><div class="top1l">디지털순증 1위</div><div class="top1v">'+(t1D?shortName(t1D.소속명)+' '+t1D.관리자명+' '+fmt(t1D.디지털순증):'-')+'</div></div>'
     +'</div>';
   var rows='<div class="cl">'
-    +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
-    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('')+'</div>';
+    +'<div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10.5px">전월말<br>순증</div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
+    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('')+'</div>';
   return sum+rows;
 }
 
