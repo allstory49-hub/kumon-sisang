@@ -2273,7 +2273,7 @@ function myOrg(){
         +(x.순위!=null?'<br><span class="rorgrk">전사 '+fmt(x.순위)+'위 · 총국 '+fmt(x.총국순위)+'위</span>':'')+'</div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
-        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(d1?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';}).join('');
+        +'<div class="rcol big w2"><div class="rcol-v" style="color:'+scoreColor(x,x.지구당)+'">'+(d1?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';}).join('');
   }
   function teaRows(arr){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
@@ -2426,10 +2426,10 @@ function orgRank(){
     +'<div><div class="m3l">디지털순증</div><div class="m3v'+(r.디지털순증<0?' rd':'')+'">'+fmt(r.디지털순증)+'</div></div>'
     +(pos==='총국'
       ?'<div><div class="m3l">달성률</div><div class="m3v" style="color:'+((r.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(r.달성률||0)+'%</div></div></div></div>'
-      :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
+      :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+scoreColor(r,r.지구당)+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
     +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+scoreColor(x,x.지구당)+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
   function block(title,arr,full,pfn){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
@@ -2482,6 +2482,7 @@ function prtOrg(scope){
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
          {h:'시상점수',k:'f',num:1},scoreCol]),
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
+      _prevNeg:(x.전월말순증!=null&&Number(x.전월말순증)<0),
       소속명:x.소속명,관리자명:x.관리자명||'',p:(x.전월말순증==null?'—':fmt1(x.전월말순증)),
       a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:fmt1(x.시상점수),
@@ -2846,6 +2847,7 @@ function prtAdminSisang(){
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
          {h:(pos==='지구'?'시상점수':'지구당 점수'),k:'g',num:1,hi:1}]),
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
+      _prevNeg:(x.전월말순증!=null&&Number(x.전월말순증)<0),
       p:(x.전월말순증==null?'—':fmt1(x.전월말순증)),a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
       g:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
@@ -3327,6 +3329,7 @@ function prtRender(){
         var cc=[];
         if(cl.num)cc.push('num');
         if(cl.num&&(anyHi?cl.hi:(k===lastIdx)))cc.push('val');
+        if(/시상점수|지구당/.test(cl.h)&&r._prevNeg&&!/^-/.test(v))cc.push('blk');
         if(/^-/.test(v))cc.push('neg');
         else if(/전월말/.test(cl.h)&&v!=='—'&&v!=='')cc.push('pos');
         return '<td'+(cc.length?' class="'+cc.join(' ')+'"':'')+'>'+prtEsc(v)+'</td>';
@@ -3360,6 +3363,7 @@ function prtRender(){
     +'td.val{font-weight:800;color:#1D9E75;font-size:12px}'
     +'td.neg{color:#DC2626}'
     +'td.pos{color:#2478C0}'
+    +'td.blk{color:#16241E!important}'
     +'tr.cut td{border-top:2px dashed #E8590C}'
     +'tr.out td{color:#A9B5AF;background:#F5F7F6!important;font-style:italic}'
     +'tr.out td.val{color:#A9B5AF}'
@@ -3666,7 +3670,14 @@ function prtImage(){
       var v=String(r[c.k]==null?'':r[c.k]);
       var em=hasHi?!!c.hi:(k===numKeys.length-1);
       var isPrev=/전월말/.test(c.h);
-      var col=out?'#A9B5AF':(em?TH.ac:(/^-/.test(v)?'#DC2626':(isPrev&&v!=='—'?'#2478C0':'#3C4C45')));
+      var isScore=/시상점수|지구당/.test(c.h);
+      var col;
+      if(out)col='#A9B5AF';
+      else if(/^-/.test(v))col='#DC2626';
+      else if(isScore&&r._prevNeg)col='#16241E';
+      else if(em)col=TH.ac;
+      else if(isPrev)col='#2478C0';
+      else col='#3C4C45';
       txt(v,padX+rkW+10+nameW+k*numW+numW-8,by,em?21:16,col,em?'800':'700','right');
     });
     g.strokeStyle='#EDF1EF';g.lineWidth=1;
@@ -3882,6 +3893,12 @@ function prtIncList(key){
     }
     return;
   }
+}
+function scoreColor(x,v){
+  // v<0 → 빨강 / 전월말순증<0 이면 양수 점수는 검정 / 그 외 초록
+  if((v||0)<0)return 'var(--red)';
+  if(x&&x.전월말순증!=null&&Number(x.전월말순증)<0)return 'var(--t1)';
+  return 'var(--green)';
 }
 function rankTeachers(rec){
   function cmp(a,b){return (b.시상계-a.시상계)||(b.전월말관리과목-a.전월말관리과목);}
@@ -4365,7 +4382,7 @@ function adminOrg(){
     +'</div>';
   var rows='<div class="cl">'
     +'<div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10.5px">전월말<br>순증</div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabel+'</div></div>'
-    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('')+'</div>';
+    +arr.map(function(x){return '<div class="rr"><div class="rb" style="'+badgeStyle(x.순위)+'">'+x.순위+'</div><div class="rn2">'+x.관리자명+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(x.전월말순증==null?'var(--amber)':((x.전월말순증||0)<0?'var(--red)':'var(--blue)'))+'">'+(x.전월말순증==null?'—':fmt1(x.전월말순증))+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+scoreColor(x,x.지구당)+'">'+fmtD2(x.지구당)+'</div></div></div>';}).join('')+'</div>';
   return sum+rows;
 }
 
