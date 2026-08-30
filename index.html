@@ -2429,7 +2429,7 @@ function orgRank(){
       :'<div><div class="m3l">'+scoreLabel+'</div><div class="m3v" style="color:'+(r.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(r.지구당):fmtD2(r.지구당))+'</div></div></div></div>')
     +(pos==='총국'?'':topCard(APP.org[pos]||[],(r.소속코드||'').charAt(0),function(o){return shortName(o.소속명)+' '+o.관리자명;},false));
   function orow(x,rank,im){
-    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div><div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
+    return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(rank)+'">'+rank+'</div><div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'+'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+((x.전월말순증||0)<0?'var(--red)':'var(--t3)')+'">'+fmt1(x.전월말순증||0)+'</div></div>'+'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div><div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div><div class="rcol big w2"><div class="rcol-v" style="color:'+(x.지구당<0?'var(--red)':'var(--green)')+'">'+(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';
   }
   function block(title,arr,full,pfn){
     var ttl='<div class="rkstl" style="border-left-color:'+(title.indexOf('전사')>=0?'var(--amber)':title.indexOf('총국')>=0?'var(--blue)':'var(--green)')+'"><span>'+title+' <span class="rkstlsub">(시상점수순)</span></span>'+(pfn?prtBtn(pfn):'')+'</div>';
@@ -2439,7 +2439,7 @@ function orgRank(){
     if(full){var mi=-1;for(var k=0;k<full.length;k++){if(full[k].사번&&full[k].사번===r.사번){mi=k;break;}}
       if(mi>=arr.length){myExtra='<div class="rrsep">···</div>'+orow(full[mi],mi+1,true);}}
     return ttl+'<div class="cl">'
-      +'<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabelBr+'</div></div>'
+      +'<div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10.5px">전월말<br>순증</div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLabelBr+'</div></div>'
       +rows+myExtra+'</div>';
   }
   if(pos==='총국'){
@@ -2447,12 +2447,13 @@ function orgRank(){
     var crows=ca.map(function(x,i){var im=(x.사번&&x.사번===r.사번);
       return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(i+1)+'">'+(i+1)+'</div>'
         +'<div class="rn2">'+x.관리자명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
+        +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+((x.전월말순증||0)<0?'var(--red)':'var(--t3)')+'">'+fmt1(x.전월말순증||0)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.과목순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+((x.디지털순증||0)<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
         +'<div class="rcol big w2"><div class="rcol-v" style="color:'+((x.달성률||0)<0?'var(--red)':'var(--green)')+'">'+fmt1(x.달성률||0)+'%</div></div></div>';}).join('');
     return '<div class="mt">총국 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
       +'<div class="rkstl" style="border-left-color:var(--amber)"><span>전사 순위 <span class="rkstlsub">(달성률순)</span></span>'+prtBtn("prtOrg('n')")+'</div>'
-      +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">달성률</div></div>'+crows+'</div>';
+      +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10.5px">전월말<br>순증</div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">달성률</div></div>'+crows+'</div>';
   }
   return '<div class="mt">'+pos+' 순위 <span class="mtnote">※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span></div>'+sum
     +block('전사 순위',national,nationalFull,"prtOrg('n')")
@@ -2477,11 +2478,11 @@ function prtOrg(scope){
          {h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1}]
       : [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
-         {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'전월말순증',k:'p',num:1},{h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},
          {h:'시상점수',k:'f',num:1},scoreCol]),
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.사번&&x.사번===r.사번),
-      소속명:x.소속명,관리자명:x.관리자명||'',
+      소속명:x.소속명,관리자명:x.관리자명||'',p:fmt1(x.전월말순증||0),
       a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:fmt1(x.시상점수),
       v:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
@@ -2841,11 +2842,11 @@ function prtAdminSisang(){
          {h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1}]
       : [{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},
-         {h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
+         {h:'전월말순증',k:'p',num:1},{h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},
          {h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:'대상',k:'f'},
          {h:(pos==='지구'?'시상점수':'지구당 점수'),k:'g',num:1,hi:1}]),
     rows:O.map(function(x,i){return {_rank:(isChong?(i+1):(x.순위||(i+1))),소속명:x.소속명,관리자명:x.관리자명||'',
-      a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
+      p:fmt1(x.전월말순증||0),a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
       f:((x.과목순증||0)>=1&&(x.디지털순증||0)>=1)?'○':'-',
       g:isChong?fmt1(x.달성률||0):(pos==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
     n:(pos==='사업국'||isChong)?O.length:30
@@ -4228,7 +4229,7 @@ function parseOrg(data){
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   var h=mergeHeader(rows);
-  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['온공약정점수','MST약정점수','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
+  var C={소속코드:findCol(h,['소속코드']),소속명:findCol(h,['소속명']),관리자명:findCol(h,['관리자명']),사번:findCol(h,['사번']),전월말:findCol(h,['전월말']),전월말순증:8,과목순증:findCol(h,['과목순증']),특별점수:findCol(h,['온공약정점수','MST약정점수','특별점수']),디지털순증:findCol(h,['디지털순증']),태블릿:findCol(h,['태블릿']),펜세트:findCol(h,['펜세트']),스구N전환재약정:findCol(h,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h,['스구N 재약정']),시상점수:findCol(h,['시상점수']),지구수:findCol(h,['지구수']),지구당:findCol(h,['지구당']),달성률:findCol(h,['달성률'])};
   if(C.소속코드<0)throw new Error('소속코드 열을 찾지 못했습니다.');
   var res={지구:[],지국:[],사업국:[],총국:[]};
   for(var i=2;i<rows.length;i++){
@@ -4238,7 +4239,7 @@ function parseOrg(data){
     var mn=String(row[C.관리자명]||'').trim(),sb=String(row[C.사번]||'').trim().split('.')[0];
     if(mn==='nan')mn='';if(sb==='nan')sb='';
     res[rl].push({소속코드:code,소속명:String(row[C.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn||'(공석)',사번:sb,
-      전월말:Number(row[C.전월말])||0,과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
+      전월말:Number(row[C.전월말])||0,전월말순증:fmt2(Number(row[C.전월말순증])||0),과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
       태블릿점수:fmt2(Number(row[C.태블릿])||0),펜세트점수:fmt2(Number(row[C.펜세트])||0),스구N전환재약정:fmt2(Number(row[C.스구N전환재약정])||0),스구N재약정:fmt2(Number(row[C.스구N재약정])||0),
       시상점수:fmt2(Number(row[C.시상점수])||0),지구수:Number(row[C.지구수])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:fmt2(Number(row[C.달성률])||0)});
   }
