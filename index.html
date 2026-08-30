@@ -449,6 +449,106 @@ input,button{font-family:inherit;font-size:14px}
 .icrew{margin-top:9px;background:linear-gradient(135deg,rgba(29,158,117,.09),rgba(29,158,117,.03));border:1px solid rgba(29,158,117,.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:13px}
 .icrew-t{font-size:13.5px;font-weight:700;color:var(--t1);line-height:1.5}
 .icrew-s{font-size:11.5px;font-weight:600;color:var(--t3)}
+
+/* ===== 모바일 최적화 (≤430px) ===== */
+@media (max-width:430px){
+  /* 순위표: 열 폭 축소해 이름 영역 확보 */
+  .rr{gap:6px;padding:10px 11px}
+  .rcol{width:44px}
+  .rcol .rcol-v{font-size:12px}
+  .rcol.big .rcol-v{font-size:14.5px}
+  .w2{width:52px}
+  .rhead{padding:8px 11px;gap:6px}
+  .rhc{width:44px;font-size:9.5px}
+  .rhc.w2{width:52px}
+  .rn2{font-size:12.5px}
+  .rsb{font-size:10.5px}
+  .rb{width:24px;height:24px;font-size:11px}
+
+  /* 온공Top·엘리트 순위표 */
+  .r20{gap:6px;padding:8px 9px;font-size:12px}
+  .r20-col{width:44px}
+  .r20-col2{width:50px}
+  .r20-cv{font-size:12px}
+  .r20-cs{font-size:11.5px}
+  .r20h .r20-col,.r20h .r20-col2{font-size:9px}
+  .r20-n{width:20px}
+
+  /* 세종클럽 표 */
+  .sjr{gap:4px;padding:8px 9px}
+  .sjr-sc{width:30px;font-size:11px}
+  .sjr-nm{font-size:11.5px}
+  .sjr-tot{width:32px}
+  .sjr-no{width:20px}
+
+  /* 인센티브 카드 */
+  .incgrid4{gap:6px}
+  .ig4{padding:9px 8px}
+  .ig4l{font-size:10.5px}
+  .ig4v{font-size:17px}
+  .incsech{font-size:14.5px}
+  .jtier{padding:8px 10px}
+  .jtl{font-size:12px}
+  .jtr{font-size:12px}
+  .incres{font-size:13px;padding:11px 12px}
+  .icremain,.icnext{font-size:12px;padding:9px 10px}
+
+  /* 통계 카드 */
+  .incstat{padding:11px 11px;gap:8px}
+  .isl{font-size:13px}
+  .issub{font-size:10.5px}
+  .isn{font-size:18px}
+  .isamt{font-size:11px}
+  .isbtn{font-size:10px;padding:4px 8px}
+
+  /* 상단 요약·제목 */
+  .mt{font-size:16.5px}
+  .m3v{font-size:19px}
+  .m3l{font-size:10.5px}
+  .sb .sn{font-size:20px}
+  .slb{font-size:10.5px}
+
+  /* 탭·버튼 */
+  .jsub{gap:5px}
+  .jsb{padding:7px 11px;font-size:12px}
+  .montab{padding:3px}
+  .monb{font-size:13px;padding:9px 0}
+  .prtlink{font-size:10.5px;padding:5px 9px}
+  .hdr{padding:0 .7rem;height:50px}
+
+  /* 항목별 내역 */
+  .cr{padding:9px 11px}
+  .cll{font-size:12.5px}
+  .cv{font-size:12.5px}
+
+  /* 공유 모달 */
+  .prtb{padding:7px 11px;font-size:12.5px}
+}
+
+  /* 상단 탭: 스크롤 가능 힌트 + 여백 */
+  .tb{-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-right:24px;
+      -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+      mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
+  .tb::-webkit-scrollbar{display:none}
+  .tbb{flex:0 0 auto}
+  /* 역할 토글도 가로 스크롤 */
+  .rtog{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .rtog::-webkit-scrollbar{display:none}
+  .rtb{flex:0 0 auto}
+  /* 하위 탭 줄바꿈 유지 */
+  .jsub{flex-wrap:wrap}
+
+/* 아주 좁은 화면 (≤360px) */
+@media (max-width:360px){
+  .rcol{width:40px}
+  .w2{width:48px}
+  .rhc{width:40px;font-size:9px}
+  .rhc.w2{width:48px}
+  .rr{gap:5px;padding:9px 9px}
+  .rn2{font-size:12px}
+  .r20-col2{width:46px}
+  .ig4v{font-size:16px}
+}
 </style>
 </head>
 <body>
