@@ -1253,8 +1253,20 @@ function orgFresh(code){
   if(!APP._orgIdx){APP._orgIdx={};var O=APP.org||{};['지구','지국','사업국','총국'].forEach(function(lv){(O[lv]||[]).forEach(function(o){if(o.소속코드)APP._orgIdx[o.소속코드]=o;});});}
   return APP._orgIdx[code]||null;
 }
+function q3cumSum(code){
+  // q3cum(프로즌 월들, byMonth)의 해당 코드 데이터를 전부 합산
+  var cum=APP.q3cum||{}, months=cum.months||[], byMonth=cum.byMonth||{};
+  var out=null;
+  months.forEach(function(mk){
+    var o=byMonth[mk]&&byMonth[mk][code];if(!o)return;
+    if(!out)out={lv:o.lv,소속명:o.소속명,관리자:o.관리자,총국:o.총국,순증:0,일반순증:0,목표:0,D순증:0,퇴회:0,과목수:0,교사수:0,마스타순증:0,마스타교사:0};
+    ['순증','일반순증','목표','D순증','퇴회','과목수','교사수','마스타순증','마스타교사'].forEach(function(k){out[k]=(out[k]||0)+(Number(o[k])||0);});
+    out.lv=o.lv;out.소속명=o.소속명;out.관리자=o.관리자;out.총국=o.총국||out.총국;
+  });
+  return out;
+}
 function q3get(code){
-  var a=(APP.q3cum||{})[code], b=(APP.q3cur||{})[code];
+  var a=q3cumSum(code), b=(APP.q3cur||{})[code];
   if(!a&&!b)return null;
   var f={순증:0,목표:0,퇴회:0,과목수:0,D순증:0,일반순증:0,교사수:0,마스타순증:0,마스타교사:0};
   var meta=b||a;
@@ -1299,26 +1311,31 @@ function eliteJiguList(){
 // 전체 지구 달성률 순위 (자격 무관 · 순위 항상 노출용)
 function eliteJiguRankAll(){
   // 엘리트지구장은 "관리자 시상"이라 지구 소속코드가 아닌 관리자 사번 기준으로 분기 집계.
-  // 최신월(q3cur)에 있는 사번만 대상 → 7월엔 있었는데 최신월에 없는 관리자는 자동 제외.
-  // 같은 사번이 이전월에도 있으면 실적을 합산(그 사람이 그때 담당했던 지구 실적), 없으면 최신월분만.
-  var cum=APP.q3cum||{}, cur=APP.q3cur||{};
-  var julBySb={};
-  Object.keys(cum).forEach(function(c){var v=cum[c];if(v.lv==='지구'&&v.사번)julBySb[v.사번]=v;});
+  // 최신월(q3cur)에 있는 사번만 대상 → 이전월엔 있었는데 최신월에 없는 관리자는 자동 제외.
+  // q3cum의 프로즌 월들(byMonth) 중 그 사번이 담당했던 지구의 실적을 전부 찾아 합산.
+  var cum=APP.q3cum||{}, months=cum.months||[], byMonth=cum.byMonth||{}, cur=APP.q3cur||{};
   var arr=[];
   Object.keys(cur).forEach(function(code){
     var b=cur[code];if(b.lv!=='지구')return;
     var sb=b.사번;if(!sb)return;   // 사번 없는 구자료는 안전하게 제외
-    var a=julBySb[sb]||null;
-    var sun=(a?(Number(a.순증)||0):0)+(Number(b.순증)||0);
-    var ilsun=(a?(Number(a.일반순증)||0):0)+(Number(b.일반순증)||0);
-    var mok=(a?(Number(a.목표)||0):0)+(Number(b.목표)||0);
-    var D=(a?(Number(a.D순증)||0):0)+(Number(b.D순증)||0);
+    var sun=Number(b.순증)||0, ilsun=Number(b.일반순증)||0, mok=Number(b.목표)||0, D=Number(b.D순증)||0;
+    var found=false;
+    months.forEach(function(mk){
+      var mo=byMonth[mk];if(!mo)return;
+      Object.keys(mo).forEach(function(c2){
+        var v=mo[c2];
+        if(v.lv==='지구'&&v.사번===sb){
+          found=true;
+          sun+=Number(v.순증)||0; ilsun+=Number(v.일반순증)||0; mok+=Number(v.목표)||0; D+=Number(v.D순증)||0;
+        }
+      });
+    });
     var tno=Number(b.교사수)||0;   // 최신월 교사수(5인이하 판정·인당 계산 분모)
     var ach=mok?q3flr(sun/mok*100,1):0;
     var dPer=tno?q3flr(D/tno,3):0, ilPer=tno?q3flr(ilsun/tno,3):0;
     arr.push({소속코드:code,사번:sb,소속명:b.소속명,관리자:b.관리자,총국:b.총국,
       달성률:ach,목표:mok,순증:sun,D순증:D,D순증인당:dPer,일반순증인당:ilPer,교사수:tno,
-      신규:!a,자격:(ach>=100&&D>=1&&tno>5)});
+      신규:!found,자격:(ach>=100&&D>=1&&tno>5)});
   });
   arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.일반순증인당-a.일반순증인당)||(b.D순증인당-a.D순증인당);});
   arr.forEach(function(x,i){x.rank=i+1;});
@@ -1480,7 +1497,7 @@ function jikToiCard(){
     +critBlock('합산과목 퇴회율 급간 (단, 달성률 <b>50%↑</b>)')
     +tierBox
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7·8월+9월예상)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7~9월 누적·실측)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">달성률 <span style="font-size:9px;color:var(--t3)">(50%↑ 조건)</span></div><div class="ig4v" style="color:'+(ach>=50?'var(--green)':'var(--red)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">퇴회율 급간</div><div class="ig4v" style="font-size:15px;color:'+(row>=0?'var(--green)':'var(--t2)')+'">'+(row>=0?JIKTOI[row].max+'%↓':'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(pay>0?'var(--green)':'var(--t2)')+'">'+(pay>0?fmt(pay)+'원':'-')+'</div></div>'
@@ -1492,32 +1509,51 @@ function jikToiCard(){
 }
 // ===== 사업국 퇴회율 & 온공 (3분기) =====
 function q3Toi(code){
-  // 3분기 누적 퇴회율: 7월 확정 + 8월 실적 + 9월 예상퇴회(⑧ 파일)
-  var a=(APP.q3cum||{})[code]||{}, b=(APP.q3cur||{})[code]||{};
-  var t7=Number(a.퇴회)||0, g7=Number(a.과목수)||0;
-  var t8=Number(b.퇴회)||0, g8=Number(b.과목수)||g7;
-  var sep=(APP.sejongToiRaw&&APP.sejongToiRaw.sep)||null;
-  var s=sep&&sep[code];
-  var t9=s?(Number(s.toi)||0):0, g9=s?(Number(s.gwa)||0):0;
-  var toi=t7+t8+t9, gwa=g7+g8+g9;
-  return {toi:toi,gwa:gwa,rate:gwa?q3flr(toi/gwa*100,2):0,
-    m7:{toi:t7,gwa:g7,rate:g7?q3flr(t7/g7*100,2):0},
-    m8:{toi:t8,gwa:g8,rate:g8?q3flr(t8/g8*100,2):0},
-    m9:{toi:t9,gwa:g9,rate:g9?q3flr(t9/g9*100,2):0,inFile:!!s}};
+  // 3분기 누적 퇴회율: 프로즌 월들(byMonth) + 당월(q3cur, 실측)
+  var cum=APP.q3cum||{}, months=cum.months||[], byMonth=cum.byMonth||{};
+  var monthly={}, toi=0, gwa=0;
+  months.forEach(function(mk){
+    var o=byMonth[mk]&&byMonth[mk][code];
+    var t=Number(o&&o.퇴회)||0, g=Number(o&&o.과목수)||0;
+    monthly[mk]={toi:t,gwa:g,rate:g?q3flr(t/g*100,2):0};
+    toi+=t; gwa+=g;
+  });
+  var b=(APP.q3cur||{})[code]||{};
+  var curKey=curMonthKey();
+  var ct=Number(b.퇴회)||0, cg=Number(b.과목수)||0;
+  monthly[curKey]={toi:ct,gwa:cg,rate:cg?q3flr(ct/cg*100,2):0,inFile:!!b.퇴회};
+  toi+=ct; gwa+=cg;
+  return {toi:toi,gwa:gwa,rate:gwa?q3flr(toi/gwa*100,2):0,monthly:monthly,
+    m7:monthly[months[0]]||{toi:0,gwa:0,rate:0},
+    m8:monthly[months[1]]||{toi:0,gwa:0,rate:0},
+    m9:monthly[curKey]};
 }
 function ongPerCap(code){
-  // 온공 누적 인당순증 = 월별 (온공순증 ÷ 그 달 교사수)의 합
-  var a=(APP.q3cum||{})[code]||{}, b=(APP.q3cur||{})[code]||{};
-  var ms7=Number(a.마스타순증)||0, t7=Number(a.마스타교사)||Number(a.교사수)||0;
-  var ms8=Number(b.마스타순증)||0, t8=Number(b.마스타교사)||Number(b.교사수)||0;
-  var p7=t7?q3flr(ms7/t7,2):0, p8=t8?q3flr(ms8/t8,2):0;
-  return {per7:p7,per8:p8,per:Math.round((p7+p8)*100)/100,
-          ms7:ms7,ms8:ms8,ms:Math.round((ms7+ms8)*100)/100,tea7:t7,tea8:t8};
+  // 온공 누적 인당순증 = 월별 (온공순증 ÷ 그 달 교사수)의 합 — 프로즌 월들 + 당월
+  var cum=APP.q3cum||{}, months=cum.months||[], byMonth=cum.byMonth||{};
+  var per=0, msSum=0;
+  var byM={};
+  months.forEach(function(mk){
+    var o=byMonth[mk]&&byMonth[mk][code];
+    var ms=Number(o&&o.마스타순증)||0, t=Number(o&&(o.마스타교사||o.교사수))||0;
+    var p=t?q3flr(ms/t,2):0;
+    byM[mk]={ms:ms,tea:t,per:p};
+    per+=p; msSum+=ms;
+  });
+  var b=(APP.q3cur||{})[code]||{};
+  var ms8=Number(b.마스타순증)||0, t8=Number(b.마스타교사||b.교사수)||0;
+  var p8=t8?q3flr(ms8/t8,2):0;
+  per+=p8; msSum+=ms8;
+  // 호환용 필드 (7·8월 2개월 가정 화면에서 쓰던 것) — 첫 프로즌월/마지막 프로즌월 기준
+  var mk0=months[0], mk1=months[months.length-1];
+  return {per:Math.round(per*100)/100, ms:Math.round(msSum*100)/100,
+    per7:(byM[mk0]?byM[mk0].per:0), ms7:(byM[mk0]?byM[mk0].ms:0), tea7:(byM[mk0]?byM[mk0].tea:0),
+    per8:p8, ms8:ms8, tea8:t8};
 }
 function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
   if(!f||f.lv!=='사업국')return '<div class="incsec"><div class="incsech">📉 [3분기] 퇴회율 & 온공 (사업국)</div><div class="ib am">이번 명단에 없어요.</div></div>';
-  var qt=q3Toi(code);var toi=qt.rate;   // 3분기 누적(7+8월 실적 + 9월 예상)
+  var qt=q3Toi(code);var toi=qt.rate;   // 3분기 누적(월별 실측 합산)
   var toiOk=(toi<4.7&&f.순증>=1);
   var op=ongPerCap(code);var mPer=op.per;var mOk=(mPer>=1.5);
   var total=(toiOk?500000:0)+(mOk?500000:0);
@@ -1529,7 +1565,7 @@ function eopToiMastaCard(){
       +'<div class="jtier'+(mOk?' on':'')+'"><div class="jtl">3분기 누적 온공 인당순증 1.5 이상</div><div class="jtr"><b>50만원</b>'+(mOk?' <span class="jtnow">달성</span>':'')+'</div></div>'
     +'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7·8월+9월예상)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">3분기 누적 퇴회율 <span style="font-size:9px;color:var(--t3)">(7~9월 누적·실측)</span></div><div class="ig4v" style="color:'+(toi<4.7?'var(--green)':'var(--amber)')+'">'+fmtD2(toi)+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑ 조건)</span></div><div class="ig4v" style="color:'+(f.순증>=1?'var(--green)':'var(--red)')+'">'+fmt1(f.순증)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">온공 누적 인당순증 <span style="font-size:9px;color:var(--t3)">(월별 합산)</span></div><div class="ig4v" style="color:'+(mOk?'var(--green)':'var(--t1)')+'">'+fmtD2(mPer)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(total>0?'var(--green)':'var(--t2)')+'">'+(total>0?fmt(total)+'원':'-')+'</div></div>'
@@ -4224,27 +4260,37 @@ function buildSejongItal(){
 }
 function buildSejongToi(){
   var sej=APP.sejong;if(!sej)return null;
-  var cum=APP.q3cum||{};   // 7월 확정
-  var cur=APP.q3cur||{};   // 8월 실적(당월)
-  var sep=UP.toi9?parseToiFile(UP.toi9.data):(APP.sejongToiRaw&&APP.sejongToiRaw.sep)||null;
+  var cum=APP.q3cum||{}, months=cum.months||[], byMonth=cum.byMonth||{};
+  var cur=APP.q3cur||{};   // 당월(9월) 실적 — 이제 "예상"이 아니라 실측치를 그대로 사용
   var targets={};(sej.지구||[]).forEach(function(o){targets[o.code]='지구';});(sej.지국||[]).forEach(function(o){targets[o.code]='지국';});
   var out={};
   Object.keys(targets).forEach(function(code){
     var lv=targets[code];
-    var a=cum[code]||{}, b=cur[code]||{};
-    var m7t=Number(a.퇴회)||0,m7g=Number(a.과목수)||0;
-    var m7r=m7g?q3flr(m7t/m7g*100,2):0;
-    var m8t=Number(b.퇴회)||0,m8g=Number(b.과목수)||m7g;
-    var m8r=m8g?q3flr(m8t/m8g*100,2):0;
-    var c8t=m7t+m8t,c8g=m7g+m8g,c8r=c8g?q3flr(c8t/c8g*100,2):0;
-    var s=sep&&sep[code];
-    var m9t=s?s.toi:0, m9g=s?s.gwa:m8g;
-    var m9r=m9g?q3flr(m9t/m9g*100,2):0;
-    var qt=c8t+m9t,qg=c8g+m9g,qr=qg?q3flr(qt/qg*100,2):0;
-    out[code]={lv:lv,m7:{toi:m7t,gwa:m7g,rate:m7r},m8:{toi:m8t,gwa:m8g,rate:m8r,inFile:!!b.퇴회},cum8:{toi:c8t,gwa:c8g,rate:c8r},m9:{toi:m9t,gwa:m9g,rate:m9r,inFile:!!s},quarter:{toi:qt,gwa:qg,rate:qr},tea:(s&&s.tea)||0,score:sejongToiScore(qr,lv)};
+    var monthly={};   // {월키: {toi,gwa,rate,inFile}}
+    var qt=0,qg=0;
+    months.forEach(function(mk){
+      var o=byMonth[mk]&&byMonth[mk][code];
+      var t=Number(o&&o.퇴회)||0, g=Number(o&&o.과목수)||0;
+      monthly[mk]={toi:t,gwa:g,rate:g?q3flr(t/g*100,2):0,inFile:!!o};
+      qt+=t; qg+=g;
+    });
+    var b=cur[code];
+    var curKey=curMonthKey();
+    var ct=Number(b&&b.퇴회)||0, cg=Number(b&&b.과목수)||0;
+    monthly[curKey]={toi:ct,gwa:cg,rate:cg?q3flr(ct/cg*100,2):0,inFile:!!b};
+    qt+=ct; qg+=cg;
+    var qr=qg?q3flr(qt/qg*100,2):0;
+    out[code]={lv:lv,monthly:monthly,quarter:{toi:qt,gwa:qg,rate:qr},
+      // 호환용: m7/m8/m9/cum8 필드도 함께 채워둠(기존 화면 코드 호환)
+      m7:monthly[months[0]]||{toi:0,gwa:0,rate:0,inFile:false},
+      m8:monthly[months[1]]||{toi:0,gwa:0,rate:0,inFile:false},
+      m9:monthly[curKey],
+      tea:Number(b&&b.교사수)||0,
+      score:sejongToiScore(qr,lv)};
   });
-  return {data:out,raw:{sep:sep}};
+  return {data:out,raw:{}};
 }
+function curMonthKey(){var m=curMonth();return '2026-'+(m<10?'0':'')+m;}
 function parseCross(data){
   if(!data)return APP.incCross||{};
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
