@@ -791,7 +791,7 @@ async function loadClubElite(){
   try{var rmt=await dfetch('cumulative/mutoe8.json?t='+Date.now());if(rmt.ok){var mj=await rmt.json();APP.mutoe=mj.cnt||{};APP.mutoeAsof=mj.asof||'';}}catch(e){APP.mutoe=null;}
   try{var r7=await dfetch('cumulative/env_final.json?t='+Date.now());if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
   try{var q1=await dfetch('cumulative/q3cur.json?t='+Date.now());if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
-  try{var q2=await dfetch('cumulative/q3cum.json?t='+Date.now());if(q2.ok)APP.q3cum=(await q2.json()).org||{};}catch(e){APP.q3cum={};}
+  try{var q2=await dfetch('cumulative/q3cum.json?t='+Date.now());if(q2.ok)APP.q3cum=await q2.json();}catch(e){APP.q3cum={months:[],byMonth:{}};}
   try{var q3=await dfetch('cumulative/q3cur_tea.json?t='+Date.now());if(q3.ok)APP.q3curTea=(await q3.json()).tea||{};}catch(e){APP.q3curTea={};}
   try{var q4=await dfetch('cumulative/q3cum_tea.json?t='+Date.now());if(q4.ok)APP.q3cumTea=(await q4.json()).tea||{};}catch(e){APP.q3cumTea={};}
 }
@@ -1013,36 +1013,41 @@ function mtoList(lv){
   arr.forEach(function(x,i){x.rank=i+1;});
   return arr;
 }
+function mShort(mk){var m=Number((mk||'').split('-')[1])||0;return m+'월';}
 function mastaTopHalf2Org(lv){
   var reward=(lv==='사업국')?500000:300000;
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
     var op=ongPerCap(code);   // 월별 인당 합산 (공용 헬퍼)
     arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,총국:o.총국,
-      온공7:op.ms7,인당7:op.per7,온공당월:op.ms8,인당당월:op.per8,마스타순증:op.ms,인당:op.per,교사수:op.tea8});
+      마스타순증:op.ms,인당:op.per,교사수:op.tea8,months:op.months,byMonth:op.byMonth});
   });
   arr.sort(function(a,b){return (b.인당-a.인당)||(b.마스타순증-a.마스타순증);});
   arr.forEach(function(x,i){x.rank=i+1;});
   var code=(S.user&&S.user.소속코드)||'';
   var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].소속코드===code){mi=k;break;}}
   var me=mi>=0?arr[mi]:null;
+  var months=(arr[0]&&arr[0].months)||[];
   function row(x){var im=(x.소속코드===code);
+    var cols=months.map(function(mk){var v=x.byMonth[mk]||{ms:0,per:0};
+      return '<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(v.ms)+'</div><div class="r20-cs">'+fmtD2(v.per)+'</div></div>';}).join('');
     return '<div class="r20'+(im?' me':'')+(x.rank===1?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
       +'<div class="r20-nm">'+orgPerson(x)+(im?' <span class="r20-me">나</span>':'')+'</div>'
-      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(x.온공7)+'</div><div class="r20-cs">'+fmtD2(x.인당7)+'</div></div>'
-      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(x.온공당월)+'</div><div class="r20-cs">'+fmtD2(x.인당당월)+'</div></div>'
+      +cols
       +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t2)">'+fmt1(x.마스타순증)+'</div><div class="r20-cs" style="font-weight:900;color:'+(x.인당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.인당)+'</div></div></div>';}
-  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col2">7월<br><span style="font-weight:600">순증/인당</span></div><div class="r20-col2">8월<br><span style="font-weight:600">순증/인당</span></div><div class="r20-col2">누적<br><span style="font-weight:600">순증/인당</span></div></div>';
+  var headCols=months.map(function(mk){return '<div class="r20-col2">'+mShort(mk)+'<br><span style="font-weight:600">순증/인당</span></div>';}).join('');
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div>'+headCols+'<div class="r20-col2">누적<br><span style="font-weight:600">순증/인당</span></div></div>';
   var top20=arr.slice(0,20);var rows=top20.map(row).join('');
   var myExtra=(mi>=20)?('<div class="r20cut">···</div>'+row(arr[mi])):'';
   var board='<div class="r20wrap"><div class="r20head">📊 하반기 누적 온공 인당순증 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
+  var meBreak=me?months.map(function(mk){return mShort(mk)+' '+fmtD2((me.byMonth[mk]||{}).per||0);}).join(' + '):'';
   return '<div class="incsec"><div class="incsech"><span>👑 [하반기] 온공 Top ('+lv+') <span class="rqbadge">상대평가</span></span>'+prtBtn("prtOngOrg(\'"+lv+"\')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
-    +'<div class="incres '+(me&&me.rank===1?'win':'lose')+'">'+(me?'현재 전사 '+me.rank+'위 · 누적 인당순증 '+fmtD2(me.인당)+' <span style="font-size:11px;opacity:.85">(7월 '+fmtD2(me.인당7)+' + 8월 '+fmtD2(me.인당당월)+')</span>':'집계 대상 명단에 없어요')+'</div>'
+    +'<div class="incres '+(me&&me.rank===1?'win':'lose')+'">'+(me?'현재 전사 '+me.rank+'위 · 누적 인당순증 '+fmtD2(me.인당)+' <span style="font-size:11px;opacity:.85">('+meBreak+')</span>':'집계 대상 명단에 없어요')+'</div>'
     +'<div class="ictiers">'+lv+' 온공 인당순증 1위 → <b>시상금 '+fmt(reward)+'원</b></div>'
     +(me&&me.rank>1?'<div class="icnext">⬆️ 1위까지 <b>온공 '+fmt(Math.max(0,Math.ceil((arr[0].인당-me.인당)*(me.교사수||1))))+'건</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(내 인당 '+fmtD2(me.인당)+' · 1위 '+fmtD2(arr[0].인당)+' '+orgPerson(arr[0])+')</span></div>':(me&&me.rank===1?'<div class="icnext win">🥇 현재 '+lv+' 1위!</div>':''))
     +board
-    +'<div class="ib am" style="margin-bottom:0">⚠️ 7월 확정 + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 프로즌 월(7·8월 확정) + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 인당순증 = <b>월별 인당순증(온공 순증 ÷ 그 달 교사수)의 누적 합</b> (월별 둘째자리 절사)<br>· 동률 시: 하반기 달성률↑ > D순증(인당)↑ > 퇴회율↓<br>· 시상금은 27년 1월 운영비에 포함하여 일괄 지급돼요.</div></div>';
 }
 function mtoCard(lv){
@@ -1541,14 +1546,17 @@ function ongPerCap(code){
     per+=p; msSum+=ms;
   });
   var b=(APP.q3cur||{})[code]||{};
+  var ck=curMonthKey();
   var ms8=Number(b.마스타순증)||0, t8=Number(b.마스타교사||b.교사수)||0;
   var p8=t8?q3flr(ms8/t8,2):0;
+  byM[ck]={ms:ms8,tea:t8,per:p8};
   per+=p8; msSum+=ms8;
   // 호환용 필드 (7·8월 2개월 가정 화면에서 쓰던 것) — 첫 프로즌월/마지막 프로즌월 기준
   var mk0=months[0], mk1=months[months.length-1];
   return {per:Math.round(per*100)/100, ms:Math.round(msSum*100)/100,
     per7:(byM[mk0]?byM[mk0].per:0), ms7:(byM[mk0]?byM[mk0].ms:0), tea7:(byM[mk0]?byM[mk0].tea:0),
-    per8:p8, ms8:ms8, tea8:t8};
+    per8:p8, ms8:ms8, tea8:t8,
+    months:months.concat([ck]), byMonth:byM};
 }
 function eopToiMastaCard(){
   var code=(S.user&&S.user.소속코드)||'', f=code?q3get(code):null;
@@ -4280,10 +4288,12 @@ function buildSejongToi(){
     monthly[curKey]={toi:ct,gwa:cg,rate:cg?q3flr(ct/cg*100,2):0,inFile:!!b};
     qt+=ct; qg+=cg;
     var qr=qg?q3flr(qt/qg*100,2):0;
+    var m7v=monthly[months[0]]||{toi:0,gwa:0,rate:0,inFile:false};
+    var m8v=monthly[months[1]]||{toi:0,gwa:0,rate:0,inFile:false};
+    var c8t=m7v.toi+m8v.toi, c8g=m7v.gwa+m8v.gwa, c8r=c8g?q3flr(c8t/c8g*100,2):0;
     out[code]={lv:lv,monthly:monthly,quarter:{toi:qt,gwa:qg,rate:qr},
-      // 호환용: m7/m8/m9/cum8 필드도 함께 채워둠(기존 화면 코드 호환)
-      m7:monthly[months[0]]||{toi:0,gwa:0,rate:0,inFile:false},
-      m8:monthly[months[1]]||{toi:0,gwa:0,rate:0,inFile:false},
+      // 호환용: m7/m8/cum8/m9 필드도 함께 채워둠(기존 화면 코드 호환)
+      m7:m7v,m8:m8v,cum8:{toi:c8t,gwa:c8g,rate:c8r},
       m9:monthly[curKey],
       tea:Number(b&&b.교사수)||0,
       score:sejongToiScore(qr,lv)};
