@@ -2023,12 +2023,13 @@ function mastaTopJulyCard(){
       +'<div class="rcol big"><div class="rcol-v" style="color:'+(x.온공누적<0?'var(--red)':'var(--green)')+'">'+fmt1(x.온공누적)+'</div></div></div>';
   }
   var top20=arr.slice(0,20);
-  var rows=top20.map(function(x){return row(x,x.교사번호===tno);}).join('');
+  var rowsHtml='';
+  top20.forEach(function(x){rowsHtml+=row(x,x.교사번호===tno);if(x.mtRank===1)rowsHtml+='<div class="r20cutline">— 시상 기준선 (1위, 누적 30↑) —</div>';});
   var myExtra='';
   if(mi>=20){myExtra='<div class="rrsep">···</div>'+row(arr[mi],true);}
   var asof=(APP.meta&&APP.meta.date)||'';
   var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7·8·9월 온공 순증</span></div>'
-    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:9.5px">7월<br>마감</div><div class="rhc" style="font-size:9.5px">8월<br>마감</div><div class="rhc" style="font-size:9.5px">9월<br>전일</div><div class="rhc">누적</div></div>'+rows+myExtra+'</div>';
+    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:9.5px">7월<br>마감</div><div class="rhc" style="font-size:9.5px">8월<br>마감</div><div class="rhc" style="font-size:9.5px">9월<br>전일</div><div class="rhc">누적</div></div>'+rowsHtml+myExtra+'</div>';
   var need=myMs<30?fmt1(30-myMs):0;
   return '<div class="incsec"><div class="incsech"><span>👑 [하반기] 온공 Top (전직책) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtOngTea()")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+asof+' 기준</span></div>'
@@ -3716,7 +3717,7 @@ function prtOngTea(){
     sub:'누적 30 이상 · 1위 교사 시상금 50만원 · 7·8월 마감+9월 전일 · 대상 '+fmt(arr.length)+'명',
     cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'7월',k:'a',num:1},{h:'8월',k:'b',num:1},{h:'9월',k:'c',num:1},{h:'누적',k:'cc',num:1,hi:1}],
     rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===tno),_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.j),b:fmt1(x.a),c:fmt1(x.c),cc:fmt1(x.t)};}),
-    cut:(n30||1),cutLabel:'누적 30 이상 '+fmt(n30)+'명',n:30
+    cut:1,cutLabel:'시상 1위 (누적 30↑ 자격 '+fmt(n30)+'명)',n:30
   });
 }
 function prtElite(){
