@@ -781,7 +781,7 @@ async function loadMastaTopOrg(){try{var r=await dfetch('cumulative/mastatop_org
 async function loadMastaTopTea(){try{var r=await dfetch('cumulative/mastatop_teachers.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
 async function loadJjk(){try{var r=await dfetch('cumulative/jigujikyeora.json?t='+Date.now());if(r.ok){APP.jjk45=(await r.json()).jigu||{};}var r2=await dfetch('cumulative/jigujikyeora_jun.json?t='+Date.now());if(r2.ok){APP.jjk6=(await r2.json()).jigu||{};}}catch(e){APP.jjk45=APP.jjk45||{};APP.jjk6=APP.jjk6||{};}}
 async function loadClubElite(){
-  try{var r=await dfetch('cumulative/club10.json?t='+Date.now());if(r.ok)APP.club10=(await r.json()).jiguk||{};}catch(e){APP.club10=null;}
+  try{var r=await dfetch('cumulative/club10.json?t='+Date.now());if(r.ok)APP.club10=await r.json();}catch(e){APP.club10=null;}
   try{var r2=await dfetch('cumulative/elite.json?t='+Date.now());if(r2.ok)APP.elite45=(await r2.json()).jiguk||{};}catch(e){APP.elite45=null;}
   try{var r3=await dfetch('cumulative/elite_jun.json?t='+Date.now());if(r3.ok)APP.elite6=(await r3.json()).jiguk||{};}catch(e){APP.elite6=null;}
   try{var r4=await dfetch('cumulative/mastatop6.json?t='+Date.now());if(r4.ok)APP.mastaTop6=(await r4.json()).jiguSaup||{};}catch(e){}
@@ -1164,44 +1164,88 @@ function club10List(){
   return arr;
 }
 function club10Card(){
-  if(!APP.club10)return '<div class="ib am">온공 10 CLUB 데이터를 불러오는 중이거나 없습니다.</div>';
+  if(!APP.club10||!APP.club10.data)return '<div class="ib am">온공 10 CLUB 데이터를 불러오는 중이거나 없습니다.</div>';
   var u=S.user, code=u.소속코드;
-  var lockedHtml='<div class="clublocked"><div class="cllk-t">🏅 기선정 1~5호점</div>'
-    +Object.keys(CLUB_LOCKED).sort(function(a,b){return CLUB_LOCKED[a].ho-CLUB_LOCKED[b].ho;}).map(function(c){var L=CLUB_LOCKED[c];return '<div class="cllk-r'+(c===code?' me':'')+'"><span class="cllk-ho">'+L.ho+'호점</span><span class="cllk-nm">'+L.nm+(c===code?' <span class="r20-me">나</span>':'')+'</span><span class="cllk-wh">'+L.when+' 달성</span></div>';}).join('')+'</div>';
-  // 본인이 기선정 1~5호점
-  if(CLUB_LOCKED[code]){var L=CLUB_LOCKED[code];
-    return '<div class="incsec"><div class="incsech">🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></div>'
-      +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 · <b style="color:var(--green)">✅ 최종 확정</b></div>'
-      +'<div class="incres win">🎖️ 이미 '+L.ho+'호점으로 선정되었습니다! ('+L.when+' 달성)</div>'
+  var D=APP.club10.data, N=APP.club10.notice||{};
+  // 9월분은 관통(q3cur 온공)으로 매일 갱신 — 있으면 덮어씀
+  function sepOng(cc){var o=(APP.q3cur||{})[cc];if(!o)return null;
+    var ms=Number(o.마스타순증)||0, t=Number(o.마스타교사||o.교사수)||0;
+    return {ms:ms,per:t?Math.floor(ms/t*100)/100:0};}
+  // 1~7호점 달성 기록 (공지: 잔여 없음 = 달성 완료)
+  var lockedCodes=Object.keys(N).filter(function(c){return N[c].호점;}).sort(function(a,b){return N[a].rank-N[b].rank;});
+  var lockedHtml='<div class="clublocked"><div class="cllk-t">🏅 달성 완료 (1~7호점)</div>'
+    +lockedCodes.map(function(c){var o=N[c],d=D[c]||{};return '<div class="cllk-r'+(c===code?' me':'')+'"><span class="cllk-ho">'+o.rank+'위</span><span class="cllk-nm">'+(d.nm||c)+' '+(d.mgr||'')+(c===code?' <span class="r20-me">나</span>':'')+'</span><span class="cllk-wh">'+o.호점.replace('호점','호점 ·').replace(' (',' ').replace(')','')+'</span></div>';}).join('')+'</div>';
+  var shareBtn=prtBtn("prtClub10()");
+  // 본인이 이미 1~7호점
+  if(N[code]&&N[code].호점){var o=N[code];
+    return '<div class="incsec"><div class="incsech"><span>🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></span>'+shareBtn+'</div>'
+      +'<div class="ib gr" style="margin-top:0">📅 1~7호점 달성 완료 · 8~10호점 달성 시까지</div>'
+      +'<div class="incres win">🎖️ 이미 '+o.호점+'으로 선정 완료!</div>'
       +'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함 교체 · 대표님/사업센터장님 지국 방문</div>'
       +lockedHtml
-      +'<div class="ib bl" style="margin-bottom:0">· 1~5호점은 기선정 완료 · 이번 인센티브는 6~10호점 선정이에요.</div></div>';
+      +'<div class="ib bl" style="margin-bottom:0">· 1~7호점은 이미 달성 완료 · 이번 인센티브는 8~10호점 선정이에요.</div></div>';
   }
-  var list=club10List();
-  var me=null;for(var i=0;i<list.length;i++){if(list[i].소속코드===code){me=list[i];break;}}
-  if(!me)return '<div class="incsec"><div class="incsech">🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></div><div class="ib am">이번 10 CLUB 기준 명단에 없어요.</div>'+lockedHtml+'</div>';
-  // 6~10호점 경쟁: 기선정 제외 + 누적 10↑ 상위 5개
-  var open=list.filter(function(x){return !x.locked;});
-  var elig=open.filter(function(x){return x.total>=10;});
-  var selRank=-1;for(var i=0;i<elig.length;i++){if(elig[i].소속코드===code){selRank=i+1;break;}}
-  var meet=me.total>=10, win=meet&&selRank>0&&selRank<=5;
+  // 8~10호점 경쟁: 달성완료(1~7호점) 제외한 지국들, ~9월 누적 인당순증 순
+  var arr=[];
+  Object.keys(D).forEach(function(cc){if(N[cc]&&N[cc].호점)return;   // 달성완료 제외
+    var o=D[cc];var s=sepOng(cc);
+    var cum8_ms=o.cum8_ms||0, cum8_per=o.cum8_per||0;
+    var sep_ms=(s?s.ms:o.sep_ms)||0, sep_per=(s?s.per:o.sep_per)||0;
+    var cum9_per=Math.floor((cum8_per+sep_per)*100)/100;
+    var cum9_ms=cum8_ms+sep_ms;
+    arr.push({소속코드:cc,소속명:o.nm,관리자:o.mgr,총국:o.chong,
+      cum8_ms:cum8_ms,cum8_per:cum8_per,sep_ms:sep_ms,sep_per:sep_per,cum9_ms:cum9_ms,cum9_per:cum9_per});
+  });
+  arr.sort(function(a,b){return b.cum9_per-a.cum9_per;});
+  arr.forEach(function(x,i){x.rank=i+1;});
+  var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  if(!me)return '<div class="incsec"><div class="incsech"><span>🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></span>'+shareBtn+'</div><div class="ib am">이번 10 CLUB 기준 명단에 없어요.</div>'+lockedHtml+'</div>';
+  var win=me.rank<=3;   // 8~10호점 = 상위 3
   var remain='';
-  if(!meet){remain='<div class="icremain">🎯 최소 기준(누적 10)까지 <b>'+fmtD2(10-me.total)+'</b> 남음</div>';}
-  else if(!win){var above=elig[4];remain='<div class="icnext">⬆️ 6~10호점(상위 5개)까지 <b>'+fmtD2((above?above.total:me.total)-me.total)+'</b> 남음 · 현재 자격 '+selRank+'위</div>';}
-  return '<div class="incsec"><div class="incsech">🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></div>'
-    +'<div class="ib gr" style="margin-top:0">📅 상반기 1~6월 누적 · <b>6~10호점</b> · <b style="color:var(--green)">✅ 최종 확정</b></div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 6~10호점 선정권! (6~10호점 자격 '+selRank+'위)':(meet?'기준 충족 · 6~10호점 자격 '+selRank+'위 (상위 5개 선정)':'아직 누적 10 미달이에요'))+'</div>'
+  if(!win){var above=arr[2];if(above)remain='<div class="icnext">⬆️ 8~10호점(상위 3개)까지 <b>'+fmtD2(above.cum9_per-me.cum9_per)+'</b> 남음 · 현재 '+me.rank+'위</div>';}
+  function row(x){var m=(x.소속코드===code);
+    return '<div class="r20'+(m?' me':'')+(x.rank<=3?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
+      +'<div class="r20-nm">'+shortName(x.소속명)+' '+(x.관리자||'')+(m?' <span class="r20-me">나</span>':'')+'</div>'
+      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(x.cum8_ms)+'</div><div class="r20-cs">'+fmtD2(x.cum8_per)+'</div></div>'
+      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(x.sep_ms)+'</div><div class="r20-cs">'+fmtD2(x.sep_per)+'</div></div>'
+      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t2)">'+fmt1(x.cum9_ms)+'</div><div class="r20-cs" style="font-weight:900;color:'+(x.cum9_per<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.cum9_per)+'</div></div></div>';}
+  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">지국</div><div class="r20-col2">~8월<br>순증/인당</div><div class="r20-col2">9월<br>순증/인당</div><div class="r20-col2">~9월누적<br>순증/인당</div></div>';
+  var top=arr.slice(0,20);var rowsHtml='';
+  top.forEach(function(x){rowsHtml+=row(x);if(x.rank===3)rowsHtml+='<div class="r20cutline">— 시상 기준선 (8~10호점 상위 3) —</div>';});
+  var myExtra=(me.rank>20)?'<div class="r20cut">···</div>'+row(me):'';
+  var board='<div class="r20wrap"><div class="r20head">📊 8~10호점 경쟁 순위 (~9월 누적 인당)</div>'+header+rowsHtml+myExtra+'</div>';
+  return '<div class="incsec"><div class="incsech"><span>🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></span>'+shareBtn+'</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 1~7호점 달성 완료 · <b>8~10호점</b> 경쟁 · '+((APP.meta&&APP.meta.date)||'')+' 기준</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 8~10호점 선정권! (현재 '+me.rank+'위)':'현재 '+me.rank+'위 (8~10호점 = 상위 3개)')+'</div>'
     +'<div class="incgrid4">'
-      +'<div class="ig4"><div class="ig4l">1~5월 누적 인당</div><div class="ig4v">'+fmtD2(me.누적5)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">6월 인당</div><div class="ig4v" style="color:var(--green)">'+fmtD2(me.jun)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">상반기 누적 인당</div><div class="ig4v" style="color:var(--blue)">'+fmtD2(me.total)+'</div></div>'
-      +'<div class="ig4"><div class="ig4l">6~10호점 순위 <span style="font-size:9px;color:var(--t3)">(기선정 제외)</span></div><div class="ig4v">'+(selRank>0?selRank:'-')+'<span style="font-size:12px">위</span></div></div>'
+      +'<div class="ig4"><div class="ig4l">~8월 누적<br><span style="font-size:9px;color:var(--t3)">순증 / 인당</span></div><div class="ig4v" style="font-size:15px">'+fmt1(me.cum8_ms)+' / '+fmtD2(me.cum8_per)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">9월<br><span style="font-size:9px;color:var(--t3)">순증 / 인당</span></div><div class="ig4v" style="font-size:15px;color:var(--green)">'+fmt1(me.sep_ms)+' / '+fmtD2(me.sep_per)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">~9월 누적<br><span style="font-size:9px;color:var(--t3)">순증 / 인당</span></div><div class="ig4v" style="font-size:15px;color:var(--blue)">'+fmt1(me.cum9_ms)+' / '+fmtD2(me.cum9_per)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">현재 순위 <span style="font-size:9px;color:var(--t3)">(달성 제외)</span></div><div class="ig4v">'+me.rank+'<span style="font-size:12px">위</span></div></div>'
     +'</div>'
     +remain
-    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함 교체 · 대표님/사업센터장님 지국 방문</div>':'<div class="icguide">상반기 누적 인당순증 <b>10 이상</b> + 6~10호점 상위 5개(선착순)에 들면 선정돼요.</div>')
-    +rankTop20(open,code,function(x){return [fmtD2(x.total),'인당'];},5)
+    +(win?'<div class="icgift">🎁 현판 제막식·오찬(교사/관리자×1.5만)·신형 사물함 교체 · 대표님/사업센터장님 지국 방문</div>':'')
+    +board
     +lockedHtml
-    +'<div class="ib bl" style="margin-bottom:0">· 온공 누적 인당순증 = [월말 온공 순증 ÷ 전월말 교사수]의 누적 합<br>· 매월 마감 실적 기준 선착순 선정 (10호점 달성 시 종료)<br>· 동률 시: 조기달성 &gt; 달성률↑ &gt; 누적 퇴회율↓<br>· 신형 사물함 기보유 지국은 교사수 × 20,000원 지급(운영비)<br>· 시상 내용은 대상 지국 선정 후 개별 공지돼요.</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 온공 누적 인당순증 = [월말 온공 순증 ÷ 그 달 교사수]의 누적 합 (25.07~)<br>· 1~7호점은 달성 완료 · 8~10호점을 ~9월 누적 인당순증 상위 3개로 선정<br>· ~8월은 마감 확정, 9월은 관통자료 전일 기준으로 매일 갱신<br>· 10호점 달성 시 종료 · 선정 후 개별 공지돼요.</div></div>';
+}
+function prtClub10(){
+  if(!APP.club10||!APP.club10.data)return;
+  var D=APP.club10.data, N=APP.club10.notice||{};
+  function sepOng(cc){var o=(APP.q3cur||{})[cc];if(!o)return null;var ms=Number(o.마스타순증)||0,t=Number(o.마스타교사||o.교사수)||0;return {ms:ms,per:t?Math.floor(ms/t*100)/100:0};}
+  var arr=[];
+  Object.keys(D).forEach(function(cc){if(N[cc]&&N[cc].호점)return;var o=D[cc];var s=sepOng(cc);
+    var c8p=o.cum8_per||0, sp=(s?s.per:o.sep_per)||0;
+    arr.push({code:cc,nm:o.nm,mgr:o.mgr,cum8_ms:o.cum8_ms||0,cum8_per:c8p,sep_ms:(s?s.ms:o.sep_ms)||0,sep_per:sp,cum9_per:Math.floor((c8p+sp)*100)/100,cum9_ms:(o.cum8_ms||0)+((s?s.ms:o.sep_ms)||0)});});
+  arr.sort(function(a,b){return b.cum9_per-a.cum9_per;});
+  var me=(S.user&&S.user.소속코드)||'';
+  prtOpen({
+    title:'[상시] 온공 10 CLUB · 8~10호점 경쟁 순위',
+    sub:'1~7호점 달성 완료 · 8~10호점을 ~9월 누적 인당순증 상위 3개 선정 · 대상 '+fmt(arr.length)+'개',
+    cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mgr'},{h:'~8월순증',k:'a',num:1},{h:'~8월인당',k:'b',num:1},{h:'9월순증',k:'c',num:1},{h:'9월인당',k:'d',num:1},{h:'~9누적인당',k:'e',num:1,hi:1}],
+    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),_code:x.code,nm:x.nm,mgr:x.mgr,a:fmt1(x.cum8_ms),b:fmtD2(x.cum8_per),c:fmt1(x.sep_ms),d:fmtD2(x.sep_per),e:fmtD2(x.cum9_per)};}),
+    cut:3,cutLabel:'8~10호점 상위 3개',n:Math.min(30,arr.length)
+  });
 }
 function eliteCalc(code){
   var b=(APP.elite45||{})[code], j=(APP.elite6||{})[code];
