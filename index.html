@@ -404,6 +404,7 @@ input,button{font-family:inherit;font-size:14px}
 .r20.me .r20-nm{color:var(--blue)}
 .r20-me{font-size:9px;font-weight:800;color:#fff;background:var(--blue);border-radius:4px;padding:1px 5px;margin-left:4px}
 .r20cut{font-size:10.5px;font-weight:800;color:var(--green);text-align:center;padding:5px;background:rgba(29,158,117,.08);border-top:1px dashed var(--green);border-bottom:1px dashed var(--green)}
+.r20cutline{font-size:10px;font-weight:800;color:#E8590C;text-align:center;padding:4px;background:rgba(232,89,12,.08);border-top:2px dashed #E8590C}
 .incgrid4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .ig4{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:11px 10px;text-align:center}
 .ig4l{font-size:11px;color:var(--t3);font-weight:600;line-height:1.3}
@@ -621,7 +622,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',sejongPrev:null,frozenTeaJul:null,frozenTeaAug:null,sejongMet:null,sejongMetAsof:''};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',_imonthSet:0,jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null,jae:null};
 
@@ -788,6 +789,7 @@ async function loadClubElite(){
   try{var r6=await dfetch('cumulative/frozen_tea_jun.json?t='+Date.now());if(r6.ok)APP.frozenTea6=(await r6.json()).jun||{};}catch(e){}
   try{var r6b=await dfetch('cumulative/frozen_inc_jun.json?t='+Date.now());if(r6b.ok)APP.frozenIncJun=(await r6b.json()).inc||{};}catch(e){APP.frozenIncJun=null;}
   try{var r7=await dfetch('cumulative/frozen_tea_jul.json?t='+Date.now());if(r7.ok)APP.frozenTeaJul=(await r7.json()).jul||{};}catch(e){APP.frozenTeaJul=null;}
+  try{var r8=await dfetch('cumulative/frozen_tea_aug.json?t='+Date.now());if(r8.ok)APP.frozenTeaAug=(await r8.json()).aug||{};}catch(e){APP.frozenTeaAug=null;}
   try{var rmt=await dfetch('cumulative/mutoe8.json?t='+Date.now());if(rmt.ok){var mj=await rmt.json();APP.mutoe=mj.cnt||{};APP.mutoeAsof=mj.asof||'';}}catch(e){APP.mutoe=null;}
   try{var r7=await dfetch('cumulative/env_final.json?t='+Date.now());if(r7.ok){var ef=(await r7.json()).jiguk||{};APP.incEnv=[];APP.incEnvMap={};Object.keys(ef).forEach(function(code){var o={소속코드:code,소속명:ef[code].소속명,관리자:ef[code].관리자,인당순증:ef[code].인당순증,순증합:ef[code].순증합,교사평균:ef[code].교사평균,교사6월:ef[code].교사6월,선정:ef[code].선정};APP.incEnv.push(o);APP.incEnvMap[code]=o;});}}catch(e){}
   try{var q1=await dfetch('cumulative/q3cur.json?t='+Date.now());if(q1.ok)APP.q3cur=(await q1.json()).org||{};}catch(e){APP.q3cur={};}
@@ -1758,7 +1760,10 @@ function topTourCard(lv){
   var show=arr.slice(0,Math.max(TO+2,10));
   var extra='';
   if(me&&me.rank>show.length)extra='<div class="r20cut">···</div>'+row(me);
-  var board='<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+show.map(row).join('')+extra+'</div>';
+  // TO(시상 인원) 다음에 기준선 삽입
+  var rowsHtml='';
+  show.forEach(function(x,i){rowsHtml+=row(x);if(x.rank===TO)rowsHtml+='<div class="r20cutline">— 시상 기준선 (상위 '+TO+'명) —</div>';});
+  var board='<div class="r20wrap"><div class="r20head">📊 3분기 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+rowsHtml+extra+'</div>';
   var remain='';
   if(me&&!me.자격){
     remain='<div class="icremain">🎯 시상 조건(누적 순증 1)까지 <b>'+fmt1(1-me.순증)+'</b> 남음</div>';
@@ -1936,12 +1941,14 @@ function mutoeCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 근무기간·전월말 과목수·퇴회는 KSS &gt; 실적관리 &gt; 교사별 평가실적(일단위)에서 확인<br>· 지급월(9월) 기준 재직 중인 일반교사에 한해 지급<br>· 시상금은 8월 수수료에 포함 지급(9/15 명세서, 수수료 기타1)<br>· 대상자는 9월 초 [캠페인/인센티브/시상] 게시판 공지</div></div>';
 }
 function mastaTopJulyCard(){
-  var jul=APP.frozenTeaJul||null;   // 7월 확정 온공순증
+  var jul=APP.frozenTeaJul||null;   // 7월 마감 온공순증
+  var aug=APP.frozenTeaAug||null;   // 8월 마감 온공순증
   var arr=(APP.incList||[]).map(function(x){
-    var cur=Number(x.마스타순증)||0;
-    var j=jul?(Number(jul[x.교사번호])||0):0;
+    var cur=Number(x.마스타순증)||0;                    // 9월(현재 전일)
+    var j=jul?(Number(jul[x.교사번호])||0):0;            // 7월 마감
+    var a=aug?(Number(aug[x.교사번호])||0):0;            // 8월 마감
     var o={};for(var k in x)o[k]=x[k];
-    o.온공7=j;o.온공당월=cur;o.온공누적=Math.round((j+cur)*100)/100;
+    o.온공7=j;o.온공8=a;o.온공9=cur;o.온공누적=Math.round((j+a+cur)*100)/100;
     return o;
   }).sort(function(a,b){
     var d=b.온공누적-a.온공누적;
@@ -1953,11 +1960,12 @@ function mastaTopJulyCard(){
   var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].교사번호===tno){mi=k;break;}}
   var myRank=mi>=0?arr[mi].mtRank:null;
   var myMs=mi>=0?arr[mi].온공누적:0;
-  var my7=mi>=0?arr[mi].온공7:0, myCur=mi>=0?arr[mi].온공당월:0;
+  var m=mi>=0?arr[mi]:null;
   function row(x,im){
     return '<div class="rr'+(im?' hi':'')+'"><div class="rb '+rbC(x.mtRank)+'">'+x.mtRank+'</div><div class="rn2">'+x.교사명+(im?'<span class="me">나</span>':'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
-      +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:var(--t3)">'+fmt1(x.온공7)+'</div></div>'
-      +'<div class="rcol"><div class="rcol-v" style="font-size:12px;color:var(--t3)">'+fmt1(x.온공당월)+'</div></div>'
+      +'<div class="rcol"><div class="rcol-v" style="font-size:11.5px;color:var(--t3)">'+fmt1(x.온공7)+'</div></div>'
+      +'<div class="rcol"><div class="rcol-v" style="font-size:11.5px;color:var(--t3)">'+fmt1(x.온공8)+'</div></div>'
+      +'<div class="rcol"><div class="rcol-v" style="font-size:11.5px;color:var(--t3)">'+fmt1(x.온공9)+'</div></div>'
       +'<div class="rcol big"><div class="rcol-v" style="color:'+(x.온공누적<0?'var(--red)':'var(--green)')+'">'+fmt1(x.온공누적)+'</div></div></div>';
   }
   var top20=arr.slice(0,20);
@@ -1965,18 +1973,18 @@ function mastaTopJulyCard(){
   var myExtra='';
   if(mi>=20){myExtra='<div class="rrsep">···</div>'+row(arr[mi],true);}
   var asof=(APP.meta&&APP.meta.date)||'';
-  var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7월 + 당월 온공 순증</span></div>'
-    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10px">7월</div><div class="rhc" style="font-size:10px">당월</div><div class="rhc">누적</div></div>'+rows+myExtra+'</div>';
+  var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">7·8·9월 온공 순증</span></div>'
+    +'<div class="cl"><div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:9.5px">7월<br>마감</div><div class="rhc" style="font-size:9.5px">8월<br>마감</div><div class="rhc" style="font-size:9.5px">9월<br>전일</div><div class="rhc">누적</div></div>'+rows+myExtra+'</div>';
   var need=myMs<30?fmt1(30-myMs):0;
   return '<div class="incsec"><div class="incsech"><span>👑 [하반기] 온공 Top (전직책) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtOngTea()")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 하반기 7~12월 누적 · <span style="opacity:.8">'+asof+' 기준</span></div>'
-    +'<div class="incres '+(myRank===1&&myMs>=30?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 누적 온공 순증 '+fmt1(myMs)+' <span style="font-size:11px;opacity:.85">(7월 '+fmt1(my7)+' + 당월 '+fmt1(myCur)+')</span>':'집계 대상 데이터가 없어요')+'</div>'
+    +'<div class="incres '+(myRank===1&&myMs>=30?'win':'lose')+'">'+(myRank?'현재 전사 '+myRank+'위 · 누적 온공 순증 '+fmt1(myMs)+' <span style="font-size:11px;opacity:.85">(7월 '+fmt1(m.온공7)+' · 8월 '+fmt1(m.온공8)+' · 9월 '+fmt1(m.온공9)+')</span>':'집계 대상 데이터가 없어요')+'</div>'
     +'<div class="ictiers">누적 온공 순증 30 이상 · 1위 교사 → <b>시상금 50만원</b></div>'
     +(myRank&&myMs<30?'<div class="icremain">🎯 시상 자격(누적 30)까지 <b>'+need+'</b> 남음</div>':'')
     +(myRank&&myRank>1&&arr.length?'<div class="icnext">⬆️ 1위까지 <b>'+fmt1(arr[0].온공누적-myMs)+'</b> 남음 <span style="font-size:11px;opacity:.8">(1위 '+arr[0].교사명+' '+fmt1(arr[0].온공누적)+')</span></div>':(myRank===1?'<div class="icnext win">🥇 현재 전사 1위!</div>':''))
     +board
-    +'<div class="ib am" style="margin-bottom:0">⚠️ 7월 확정 + 당월 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 누적 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
+    +'<div class="ib am" style="margin-bottom:0">⚠️ 7·8월 마감 + 9월 전일 실적 누적 기준 잠정 순위예요. 최종 시상은 7~12월 하반기 누적으로 확정돼요.</div>'
+    +'<div class="ib bl" style="margin-bottom:0">· 7·8월은 마감 확정, 9월은 현재 전일 실적 기준<br>· 동률 시: 합산과목 순증↑ > D순증↑ > 퇴회율↓ (하반기 최종 기준 · 현재 잠정순위는 누적 온공 순증→과목순증 순으로만 정렬)<br>· 교사 시상금은 27년 1월 중 지급 · 지급월 기준 재직 교사에 한해 지급돼요.</div></div>';
 }
 // ===== 현재 실적월 판정 =====
 function curMonth(){
@@ -2192,7 +2200,7 @@ function jikAchCard9(){
   }else if(!me.grade){
     remain='<div class="icnext">⬆️ 자격은 충족했지만 T/O(총 100개) 밖이에요 · 현재 전사 '+me.rank+'위</div>';
   }
-  return '<div class="incsec"><div class="incsech">📈 [9월] 지국 달성률 <span class="rqbadge">상대평가</span></div>'
+  return '<div class="incsec"><div class="incsech"><span>📈 [9월] 지국 달성률 <span class="rqbadge">상대평가</span></span>'+prtBtn("prtIncList('jikach9')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 9월 (단월) · 지급 26년 10월</div>'
     +critBlock('달성률 <b>100%↑ & D순증 1↑</b> 중 상위 T/O 100개 (전사 Legend 10 + 총국별 90)')
     +'<div class="jtiers">'+tb+'</div>'
@@ -2441,8 +2449,7 @@ function myOrg(){
   }
   function teaRows(arr){
     return '<div class="rhead"><div class="sp"></div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc">시상점수</div></div>'
-      +arr.map(function(t){return '<div class="rr"><div class="rn2" style="flex:1">'+t.교사명+'<br><span class="rsb">'+t.소속명+'</span>'
-        +(t.순위!=null?'<br><span class="rorgrk">전사 '+fmt(t.순위)+'위 · 총국 '+fmt(t.총국순위)+'위</span>':'')+'</div>'
+      +arr.map(function(t){return '<div class="rr"><div class="rn2" style="flex:1">'+t.교사명+'<br><span class="rsb">'+t.소속명+'</span></div>'
         +'<div class="rcol"><div class="rcol-v"'+(t.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(t.과목순증)+'</div></div>'
         +'<div class="rcol"><div class="rcol-v"'+(t.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(t.디지털순증)+'</div></div>'
         +'<div class="rcol big"><div class="rcol-v" style="color:'+(t.시상계<0?'var(--red)':'var(--green)')+'">'+fmt1(t.시상계)+'</div></div></div>';}).join('');
@@ -3048,10 +3055,10 @@ function ongTopStat(lv){
     +'<div class="isr"><span class="isn">1개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtOngOrg('"+lv+"')")+'</div></div>';
 }
 function ongTopTeaStat(){
-  var jul=APP.frozenTeaJul||null;
+  var jul=APP.frozenTeaJul||null, aug=APP.frozenTeaAug||null;
   var arr=(APP.incList||[]).map(function(x){
-    var j=jul?(Number(jul[x.교사번호])||0):0;
-    return {nm:x.교사명,so:x.소속명,t:Math.round((j+(Number(x.마스타순증)||0))*100)/100};
+    var j=jul?(Number(jul[x.교사번호])||0):0, a=aug?(Number(aug[x.교사번호])||0):0;
+    return {nm:x.교사명,so:x.소속명,t:Math.round((j+a+(Number(x.마스타순증)||0))*100)/100};
   }).sort(function(a,b){return b.t-a.t;});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[하반기] 온공 Top (교사)</div><div class="isrna">실적 데이터 없음</div></div>';
   var n30=arr.filter(function(x){return x.t>=30;}).length;
@@ -3643,18 +3650,18 @@ function prtOngOrg(lv){
   });
 }
 function prtOngTea(){
-  var jul=APP.frozenTeaJul||null;
+  var jul=APP.frozenTeaJul||null, aug=APP.frozenTeaAug||null;
   var arr=(APP.incList||[]).map(function(x){
-    var cur=Number(x.마스타순증)||0, j=jul?(Number(jul[x.교사번호])||0):0;
-    return {교사번호:x.교사번호,교사명:x.교사명,소속명:x.소속명,j:j,c:cur,t:Math.round((j+cur)*100)/100,g:Number(x.과목순증)||0};
+    var cur=Number(x.마스타순증)||0, j=jul?(Number(jul[x.교사번호])||0):0, a=aug?(Number(aug[x.교사번호])||0):0;
+    return {교사번호:x.교사번호,소속코드:x.소속코드,교사명:x.교사명,소속명:x.소속명,j:j,a:a,c:cur,t:Math.round((j+a+cur)*100)/100,g:Number(x.과목순증)||0};
   }).sort(function(a,b){return (b.t-a.t)||(b.g-a.g);});
   var n30=arr.filter(function(x){return x.t>=30;}).length;
   var tno=(S.user&&S.user.교사번호)||'';
   prtOpen({
     title:'[교사] 온공 Top · 하반기 누적 순증 순위',
-    sub:'누적 30 이상 · 1위 교사 시상금 50만원 · 대상 '+fmt(arr.length)+'명',
-    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'7월',k:'a',num:1},{h:'당월',k:'b',num:1},{h:'누적',k:'cc',num:1}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===tno),_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.j),b:fmt1(x.c),cc:fmt1(x.t)};}),
+    sub:'누적 30 이상 · 1위 교사 시상금 50만원 · 7·8월 마감+9월 전일 · 대상 '+fmt(arr.length)+'명',
+    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'7월',k:'a',num:1},{h:'8월',k:'b',num:1},{h:'9월',k:'c',num:1},{h:'누적',k:'cc',num:1,hi:1}],
+    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===tno),_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.j),b:fmt1(x.a),c:fmt1(x.c),cc:fmt1(x.t)};}),
     cut:(n30||1),cutLabel:'누적 30 이상 '+fmt(n30)+'명',n:30
   });
 }
