@@ -2388,7 +2388,8 @@ function renderUser(){
     return;
   }
   var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
-                :[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}];
+                :[{id:'my',l:'내 실적'},{id:'info',l:'기준 안내'}];   // 교사는 순위 탭 숨김(코드는 유지)
+  if(!isOrg&&S.tab==='rank')S.tab='my';   // 교사가 순위 상태로 진입 시 내 실적으로
   document.getElementById('uTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.tab===t.id?' on':'')+'" onclick="S.tab=\''+t.id+'\';renderUser()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('uBody');
   if(S.tab==='my')b.innerHTML=(isOrg?myOrg():myTeacher())+histPersonalSisang();
@@ -2408,9 +2409,6 @@ function myTeacher(){
     +'<div class="sb flip"><div class="slb">과목순증</div><div class="sn'+(r.과목순증<0?' r':' g')+'">'+fmt1(r.과목순증)+'</div></div>'
     +'<div class="sb flip"><div class="slb">디지털순증</div><div class="sn'+(r.디지털순증<0?' r':' g')+'">'+fmt(r.디지털순증)+'</div></div>'
     +'<div class="sb flip"><div class="slb">시상점수</div><div class="sn'+(aw<0?' r':' g')+'">'+aw+'</div></div></div>'
-    +'<div class="sr2">'
-    +'<div class="sb flip"><div class="slb">전사 순위<br>(교사 '+(APP.meta.total||0).toLocaleString()+'명 중)</div><div class="sn y">'+r.순위+'위'+rankDeltaBr(APP.prevT,r.교사번호,r.순위)+'</div></div>'
-    +'<div class="sb flip"><div class="slb">총국 순위<br>(교사 '+(r.총국총원?r.총국총원.toLocaleString():'-')+'명 중)</div><div class="sn bl">'+(r.총국순위||'-')+'위'+rankDeltaBr(APP.prevT,r.교사번호,r.총국순위,'c')+'</div></div></div>'
     +(meetMin?'':'<div class="minwarn">⚠ 필수조건 미달 · 과목순증·디지털순증 각 1 이상 필요</div>')
     +'</div>'
     +'<div class="stl">항목별 내역</div><div class="cl">'+items.map(function(i){return '<div class="cr"><span class="cll">'+i[0]+'</span><span class="cv'+(i[1]<0?' r':'')+'">'+fmt(i[1])+'</span></div>';}).join('')
@@ -3162,13 +3160,25 @@ function adminInc7(){
   var L=APP.incList||[],n=L.length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   var body='';
+  var sep=(curMonth()>=9);   // 9월부터 새 인센티브 체계
   if(S.aincRole==='교사'){
     if(!n){body='<div class="empty">교사 데이터가 없습니다.</div>';}
+    else if(sep){
+      // 9월 교사: 월성과(순증6↑·전기그릴) + 온공순증(급간) + 온공Top
+      var wSj=L.filter(function(r){return (Number(r.과목순증)||0)>=6;}).length;
+      var o5=L.filter(function(r){return (Number(r.마스타순증)||0)>=5;}).length;
+      var o3=L.filter(function(r){return (Number(r.마스타순증)||0)>=3;}).length;
+      var oPay=o5*20000+(o3-o5)*10000;
+      body='<div class="incwrap">'
+        +'<div class="incstat"><div class="isl">[9월] 월 성과 인센티브 (전기그릴)<span class="issub">합산과목 순증 6↑ · 퀸나 3in1 전기그릴 (단가 '+fmt(38500)+'원)</span></div><div class="isr"><span class="isn">'+fmt(wSj)+'명</span><span class="isp">'+pct(wSj)+'</span><span class="isamt">예상 '+fmt(wSj*38500)+'원</span>'+isb("prtIncList('wol9')")+'</div></div>'
+        +'<div class="incstat"><div class="isl">[9월] 온공 순증 인센티브<span class="issub">순증 5↑ 2만('+fmt(o5)+'명) · 3~4 1만('+fmt(o3-o5)+'명)</span></div><div class="isr"><span class="isn">'+fmt(o3)+'명</span><span class="isp">'+pct(o3)+'</span><span class="isamt">예상 '+fmt(oPay)+'원</span>'+isb("prtIncList('ong9')")+'</div></div>'
+        +ongTopTeaStat()
+        +'</div>';
+    }
     else{
       var wSj=L.filter(function(r){return (Number(r.과목순증)||0)>=6||(Number(r.입회)||0)>=13;}).length;
       var wSjA=L.filter(function(r){return (Number(r.과목순증)||0)>=6;}).length;
       var wSjB=L.filter(function(r){return (Number(r.입회)||0)>=13;}).length;
-      // 무퇴회: 교평 퇴회 0건 교사 중 근무6↑·과목60↑
       var mtStat;
       if((APP.teachers||[]).length){
         var elig=0,pay130=0,pay60=0;
@@ -3187,9 +3197,9 @@ function adminInc7(){
         +'</div>';
     }
   }else if(S.aincRole==='지구'){
-    body='<div class="incwrap">'+jiguStat()+eliteStat()+ongTopStat('지구')+sejongToiStat('지구')+'</div>';
+    body='<div class="incwrap">'+(sep?(jaeYakStat()+jiguAchStat9()):jiguStat())+eliteStat()+ongTopStat('지구')+sejongToiStat('지구')+'</div>';
   }else if(S.aincRole==='지국'){
-    body='<div class="incwrap">'+jikAchStat()+jikToiStat()+ongTopStat('지국')+sejongToiStat('지국')+'</div>';
+    body='<div class="incwrap">'+(sep?jikAchStat9():jikAchStat())+jikToiStat()+(sep?managerStat9():'')+ongTopStat('지국')+sejongToiStat('지국')+'</div>';
   }else if(S.aincRole==='사업국'){
     body='<div class="incwrap">'+eopAchStat()+eopToiStat()+topTourStat('사업국')+ongTopStat('사업국')+'</div>';
   }else{
@@ -3305,6 +3315,51 @@ function jigukStat(){
   var jp=(sel.length/J.length*100).toFixed(1)+'%';
   var byG={Legend:0,Best:0,Great:0,Good:0};sel.forEach(function(x){byG[x.등급]++;});
   return '<div class="incstat"><div class="isl">지국 인센티브 · 온공<span class="issub">L'+byG.Legend+'·B'+byG.Best+'·G'+byG.Great+'·Gd'+byG.Good+' · 전체 '+fmt(J.length)+'개 지국</span></div><div class="isr"><span class="isn">'+fmt(sel.length)+'개</span><span class="isp">'+jp+'</span><span class="isamt">예상 '+fmt(pay)+'원</span></div></div>';
+}
+function jaeYakStat(){
+  var J=APP.jaeyak||{};
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;
+    var d=J[code];if(!d)return;
+    arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp});});
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 지구 재약정률</div><div class="isrna">재약정(약정만료 예정리스트) 데이터 없음</div></div>';
+  var pay=0,win=0;
+  arr.forEach(function(x){var u=x.rate>=100?8000:x.rate>=90?5000:x.rate>=80?3000:0;x.pay=Math.round((x.cnt||0)*u);if(x.pay>0){win++;pay+=x.pay;}});
+  arr.sort(function(a,b){return b.rate-a.rate;});
+  return '<div class="incstat"><div class="isl">[9월] 지구 재약정률<span class="issub">100% 8천·90%↑ 5천·80%↑ 3천 × 재약정건수 · 1위 '+shortName(arr[0].nm)+' '+arr[0].mg+' '+fmt1(arr[0].rate)+'%</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(arr.length?(win/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtIncList('jae9')")+'</div></div>';
+}
+function jiguAchStat9(){
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;
+    var fr=orgFresh(code);if(!fr)return;
+    var ach=Number(fr.달성률)||0, D=Number(fr.디지털순증)||0, tno=Number(fr.전월말)||0;
+    var u=ach>=500?3.0:ach>=300?2.0:ach>=200?1.5:ach>=100?1.0:0;
+    var pay=(D>=1&&u)?Math.round(tno*u*10000):0;
+    arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,pay:pay});});
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 지구 달성률</div><div class="isrna">실적 데이터 없음</div></div>';
+  arr.sort(function(a,b){return b.ach-a.ach;});
+  var win=arr.filter(function(x){return x.pay>0;}).length, tot=arr.reduce(function(s,x){return s+x.pay;},0);
+  return '<div class="incstat"><div class="isl">[9월] 지구 달성률<span class="issub">500~100% 급간 × 교사수 (D순증1↑) · 1위 '+shortName(arr[0].nm)+' '+arr[0].mg+' '+fmt1(arr[0].ach)+'%</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(arr.length?(win/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtIncList('jiguach9')")+'</div></div>';
+}
+function jikAchStat9(){
+  var arr=jikRank9();
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 지국 달성률</div><div class="isrna">실적 데이터 없음</div></div>';
+  var win=arr.filter(function(x){return x.pay>0;}).length, tot=arr.reduce(function(s,x){return s+(x.pay||0);},0);
+  var g={Legend:0,Best:0,Great:0,Good:0};arr.forEach(function(x){if(x.grade)g[x.grade]++;});
+  return '<div class="incstat"><div class="isl">[9월] 지국 달성률 (T/O)<span class="issub">Legend '+g.Legend+'·Best '+g.Best+'·Great '+g.Great+'·Good '+g.Good+' · 달성률100↑&D순증1↑ 상위 T/O100</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">T/O 100</span><span class="isamt">예상 '+fmt(tot)+'원</span>'+isb("prtIncList('jikach9')")+'</div></div>';
+}
+function managerStat9(){
+  var arr=[];
+  Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지국')return;
+    var fr=orgFresh(code);if(!fr)return;
+    arr.push({nm:o.소속명,ach:Number(fr.달성률)||0});});
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 매니저 인센티브</div><div class="isrna">실적 데이터 없음</div></div>';
+  var win=arr.filter(function(x){return x.ach>=80;}).length;
+  return '<div class="incstat"><div class="isl">[9월] 매니저 인센티브<span class="issub">지국 달성률 80%↑ · 퀸나 전기그릴 (단가 '+fmt(38500)+'원)</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(arr.length?(win/arr.length*100).toFixed(1)+'%':'-')+'</span><span class="isamt">예상 '+fmt(win*38500)+'원</span></div></div>';
 }
 function jiguStat(){
   var J=APP.incJigu||[];
@@ -3979,6 +4034,65 @@ function isb(fn){return '<button class="isbtn" onclick="'+fn+'">📤 공유</but
 function prtIncList(key){
   var L=APP.incList||[], T=APP.teachers||[];
   var tmap={};T.forEach(function(t){tmap[t.교사번호]=t;});
+  if(key==='wol9'){
+    var a=L.filter(function(x){return (Number(x.과목순증)||0)>=6;})
+      .sort(function(p,q){return (Number(q.과목순증)||0)-(Number(p.과목순증)||0);});
+    prtOpen({title:'[9월] 교사 월 성과 인센티브 대상자',
+      sub:'합산과목 순증 6↑ · 퀸나 3in1 전기그릴 · 대상 '+fmt(a.length)+'명',
+      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'과목순증',k:'a',num:1,hi:1}],
+      rows:a.map(function(x,i){return {_rank:i+1,_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.과목순증)};}),
+      n:Math.min(50,a.length)});
+    return;
+  }
+  if(key==='ong9'){
+    var a=L.filter(function(x){return (Number(x.마스타순증)||0)>=3;})
+      .sort(function(p,q){return (Number(q.마스타순증)||0)-(Number(p.마스타순증)||0);});
+    prtOpen({title:'[9월] 교사 온공 순증 인센티브 대상자',
+      sub:'순증 5↑ 2만·3~4 1만 · 대상 '+fmt(a.length)+'명',
+      cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'온공순증',k:'a',num:1,hi:1},{h:'시상금',k:'b',num:1,hi:1}],
+      rows:a.map(function(x,i){var ms=Number(x.마스타순증)||0;return {_rank:i+1,_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(ms),b:fmt(ms>=5?20000:10000)};}),
+      n:Math.min(50,a.length)});
+    return;
+  }
+  if(key==='jae9'){
+    var J=APP.jaeyak||{};var arr=[];
+    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;var d=J[code];if(!d)return;
+      var u=d.rate>=100?8000:d.rate>=90?5000:d.rate>=80?3000:0;
+      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp,pay:Math.round((d.cnt||0)*u)});});
+    arr.sort(function(a,b){return b.rate-a.rate;});
+    var win=arr.filter(function(x){return x.pay>0;}).length;
+    prtOpen({title:'[9월] 지구 재약정률 인센티브',
+      sub:'100% 8천·90%↑ 5천·80%↑ 3천 × 재약정건수 · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
+      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'만료예정',k:'e',num:1},{h:'재약정',k:'c',num:1},{h:'재약정률(%)',k:'r',num:1,hi:1},{h:'시상금',k:'p',num:1,hi:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,e:fmt(x.exp),c:fmt(x.cnt),r:fmt1(x.rate),p:x.pay?fmt(x.pay):'-'};}),
+      cut:(win||1),cutLabel:'시상 대상 '+fmt(win)+'개',n:50});
+    return;
+  }
+  if(key==='jiguach9'){
+    var arr=[];
+    Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;var fr=orgFresh(code);if(!fr)return;
+      var ach=Number(fr.달성률)||0,D=Number(fr.디지털순증)||0,tno=Number(fr.전월말)||0;
+      var u=ach>=500?3.0:ach>=300?2.0:ach>=200?1.5:ach>=100?1.0:0;
+      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,pay:(D>=1&&u)?Math.round(tno*u*10000):0});});
+    arr.sort(function(a,b){return b.ach-a.ach;});
+    var win=arr.filter(function(x){return x.pay>0;}).length;
+    prtOpen({title:'[9월] 지구 달성률 인센티브',
+      sub:'500~100% 급간 × 교사수 (D순증1↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
+      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-'};}),
+      cut:(win||1),cutLabel:'시상 대상 '+fmt(win)+'개',n:50});
+    return;
+  }
+  if(key==='jikach9'){
+    var arr=jikRank9();
+    var win=arr.filter(function(x){return x.pay>0;}).length;
+    prtOpen({title:'[9월] 지국 달성률 인센티브 (T/O)',
+      sub:'전사 Legend 10 + 총국별 Best/Great/Good 90 · 달성률100↑&D순증1↑ · 대상 '+fmt(win)+'개',
+      cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'등급',k:'g'},{h:'시상금',k:'p',num:1,hi:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
+      cut:(win||1),cutLabel:'시상 T/O 상위 '+fmt(win)+'개',n:Math.min(120,arr.length)});
+    return;
+  }
   if(key==='wol'){
     var a=L.filter(function(x){return (Number(x.과목순증)||0)>=6||(Number(x.입회)||0)>=13;})
       .sort(function(p,q){return (Number(q.과목순증)||0)-(Number(p.과목순증)||0);});
