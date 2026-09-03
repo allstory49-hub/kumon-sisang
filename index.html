@@ -2077,7 +2077,7 @@ function jaeYakCard(){
     +critBlock('스마트구몬N 재약정률 급간별 시상')
     +'<div class="jtiers">'+tb+'</div>'
     +'<div class="ib am" style="margin-bottom:0">📋 아직 재약정 실적 데이터가 업로드되지 않았어요.</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 회원수 ÷ 약정 만료 예정 회원수 × 100<br>· 확인: KSS &gt; 약정상품 &gt; 약정만료 예정리스트 &gt; 만료년월 2026.09 &gt; 스마트구몬N<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수(예상실적-약정만료예정) × 100<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 만료예정건수(예상실적-약정만료예정), 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
   var row=-1;for(var i=0;i<JIGUJAE9.length;i++){if(d.rate>=JIGUJAE9[i].min){row=i;break;}}
   var unit=(row>=0)?JIGUJAE9[row].p:0;
   var pay=Math.round((d.cnt||0)*unit); var win=pay>0;
@@ -2099,7 +2099,7 @@ function jaeYakCard(){
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 재약정 '+fmt(d.cnt)+'건 × '+fmt(unit)+'원 = '+fmt(pay)+'원':'아직 80% 미만이에요')+'</div>'
     +remain
-    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 회원수 ÷ 약정 만료 예정 회원수 × 100<br>· 확인: KSS &gt; 약정상품 &gt; 약정만료 예정리스트 &gt; 만료년월 2026.09 &gt; 스마트구몬N<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수(예상실적-약정만료예정) × 100<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 만료예정건수(예상실적-약정만료예정), 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
 }
 function jiguAchCard9(){
   var code=(S.user&&S.user.소속코드)||'';
@@ -3322,7 +3322,7 @@ function jaeYakStat(){
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;
     var d=J[code];if(!d)return;
     arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp});});
-  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 지구 재약정률</div><div class="isrna">재약정(약정만료 예정리스트) 데이터 없음</div></div>';
+  if(!arr.length)return '<div class="incstat na"><div class="isl">[9월] 지구 재약정률</div><div class="isrna">재약정 데이터 없음(③소평 업로드 필요)</div></div>';
   var pay=0,win=0;
   arr.forEach(function(x){var u=x.rate>=100?8000:x.rate>=90?5000:x.rate>=80?3000:0;x.pay=Math.round((x.cnt||0)*u);if(x.pay>0){win++;pay+=x.pay;}});
   arr.sort(function(a,b){return b.rate-a.rate;});
@@ -4462,6 +4462,17 @@ function parseMastaRaw(data,level){
   for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!==level)continue;m[cc]={마스타순증:Number(r[36])||0,마스타교사:Number(r[8])||0};}
   return m;
 }
+function buildJaeyakFromSopyeong(data){
+  // ③소평(전체)에서 지구 재약정률 산출: 재약정건수(col61) ÷ 만료예정(col68)
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var m={};
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();
+    if(classifyOrg(cc)!=='지구')continue;
+    var cnt=Number(r[61])||0, exp=Number(r[68])||0;
+    m[cc]={cnt:Math.round(cnt),exp:Math.round(exp),rate:exp?q3flr(cnt/exp*100,1):0};
+  }
+  return m;
+}
 function parseSopyeongOrg(data){
   // ③ 소평(전체) 파일: 조직별 달성률·과목순증·D순증·퇴회·과목수·목표·교사수
   // col: 소속코드0 소속명1 관리자명2 사번3 교사수4 관리과목5 디지털순증16 과목순증32 목표33 달성률35 총퇴회30
@@ -4658,7 +4669,7 @@ async function doUpload(){
     }catch(e){}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-08',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
     if(UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
-    if(UP.jae){try{var jk=parseJaeyakSafe(UP.jae.data);if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:'2026-09',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
+    if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data);if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:'2026-09',source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
     if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~8월 누적',data:sital,raw:{jul:(APP.sejongItalRaw&&APP.sejongItalRaw.jul)||null}}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
