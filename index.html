@@ -622,7 +622,7 @@ input,button{font-family:inherit;font-size:14px}
 </div>
 <script>
 var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',sejongPrev:null,frozenTeaJul:null,sejongMet:null,sejongMetAsof:''};
-var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',jtab:'월성과',i6tab:'회원순증'};
+var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',_imonthSet:0,jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null,jae:null};
 
 /* ───── GitHub 설정 ───── */
@@ -890,9 +890,11 @@ function histPersonalInc(){
 function renderIncentive(){
   var b=document.getElementById('iBody');
   var cm=curMonth(), pm=cm-1;
-  if(!S.imonth||[String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
+  // 기본은 현재월. 사용자가 확정월을 명시적으로 고른 게 아니면 항상 현재월로.
+  if(!S._imonthSet)S.imonth=String(cm);
+  if([String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
   var months=[{id:String(cm),l:cm+'월'},{id:String(pm),l:pm+'월 (확정)'}];
-  var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderIncentive()">'+m.l+'</button>';}).join('')+'</div>';
+  var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';S._imonthSet=1;renderIncentive()">'+m.l+'</button>';}).join('')+'</div>';
   var body=(S.imonth===String(cm))?incJuly():incFixedMonth(pm);
   b.innerHTML=mtab+body;
 }
@@ -1833,7 +1835,7 @@ function jSub(tabs,sel,fn){
   return '<div class="rtog jsub">'+tabs.map(function(t){return '<button class="rtb'+(sel===t?' on':'')+'" onclick="S.jtab=\''+t+'\';'+rf+'()">'+t+'</button>';}).join('')+'</div>';
 }
 function jpvHead(){return '<div class="mt">7월 인센티브 <span class="rqbadge" style="background:var(--blue)">미리보기</span></div><div class="ib am">🚧 <b>준비 중</b> · 7월 실적이 반영되면 값이 채워집니다. 현재는 규칙·골격만 표시돼요.</div>';}
-function jul7Head(){return '<div class="mt">8월 인센티브</div>';}
+function jul7Head(){return '<div class="mt">'+curMonth()+'월 인센티브</div>';}
 var TENT_SVG='<svg viewBox="0 0 120 96" width="82" height="66" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 auto">'
   +'<line x1="24" y1="52" x2="20" y2="90" stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"/>'
   +'<line x1="96" y1="52" x2="100" y2="90" stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"/>'
@@ -3031,9 +3033,10 @@ function prtAdminSisang(){
 }
 function adminInc(){
   var cm=curMonth(), pm=cm-1;
-  if(!S.imonth||[String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
+  if(!S._imonthSet)S.imonth=String(cm);
+  if([String(cm),String(pm)].indexOf(S.imonth)<0)S.imonth=String(cm);
   var months=[{id:String(cm),l:cm+'월'},{id:String(pm),l:pm+'월 (확정)'}];
-  var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
+  var mtab='<div class="montab">'+months.map(function(m){return '<button class="monb'+(S.imonth===m.id?' on':'')+'" onclick="S.imonth=\''+m.id+'\';S._imonthSet=1;renderAdmin()">'+m.l+'</button>';}).join('')+'</div>';
   return mtab+((S.imonth===String(cm))?adminInc7():adminIncFixedMonth(pm));
 }
 function ongTopStat(lv){
@@ -3155,7 +3158,7 @@ function adminInc7(){
   var roles=['교사','지구','지국','사업국','총국'];
   if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
-  var head='<div class="mt">8월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
+  var head='<div class="mt">'+curMonth()+'월 인센티브 통계</div><div class="ib gr">📅 '+(APP.meta.date||'-')+' 기준</div>'+rtab;
   var L=APP.incList||[],n=L.length;
   function pct(x){return n?(x/n*100).toFixed(1)+'%':'-';}
   var body='';
