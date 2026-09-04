@@ -2777,7 +2777,7 @@ function sejongCriteria(lv){
   var toeMin=(lv==='지구')?'4.8%↓':'4.9%↓', toeMax=(lv==='지구')?'3.5%↓':'3.7%↓';
   var metrics=[
     {no:'①',t:'합산과목 퇴회율',minB:toeMin,minP:25,maxB:toeMax,maxP:50,grades:toe1,yoyL:'전년比 퇴회 감소율 대체 인정',yoy:[['2.5%↑',35],['2.0%↑',30],['1.5%↑',25],['1.0%↑',20],['0.5%↑',15]],sub:'더 높은 점수로 대체 (분기 5.5%↑ 제외)'},
-    {no:'②',t:'회원 이탈률 (7~8월 누적)',minB:'3.9%↓',minP:5,maxB:'2.4%↓ +전년比3%↓',maxP:30,grades:[['2.4%↓',20],['2.7%↓',17],['3.0%↓',14],['3.3%↓',11],['3.6%↓',8],['3.9%↓',5]],yoyL:'전년대비 감소 가산',yoy:[['3%↓','+10'],['2%↓','+8'],['1%↓','+5']],sub:'기준점수에 가산'},
+    {no:'②',t:'회원 이탈률 (3분기 누적·9/3마감)',minB:'3.9%↓',minP:5,maxB:'2.4%↓ +전년比3%↓',maxP:30,grades:[['2.4%↓',20],['2.7%↓',17],['3.0%↓',14],['3.3%↓',11],['3.6%↓',8],['3.9%↓',5]],yoyL:'전년대비 감소 가산',yoy:[['3%↓','+10'],['2%↓','+8'],['1%↓','+5']],sub:'기준점수에 가산'},
     {no:'③',t:'주평균 교재제출장수',minB:'12장↑',minP:5,maxB:'20장↑',maxP:20,grades:[['20장↑',20],['18장↑',18],['16장↑',15],['14장↑',10],['12장↑',5]],yoy:null},
     {no:'④',t:'사이렌 회원 비율',minB:'35%미만',minP:5,maxB:'30%미만 +전년比10%↓',maxP:15,grades:[['30%미만',10],['33%미만',7],['35%미만',5]],yoyL:'전년대비 10% 감소',yoy:[['10%↓','+5']],sub:'기준점수에 가산'},
     {no:'⑤',t:'오답정정률',minB:'80%↑',minP:5,maxB:'80%↑',maxP:5,grades:[['80%↑',5]],yoy:null}
@@ -2838,11 +2838,12 @@ function italCard(code){
       +'<div class="icright"><div class="icnum">'+fmtD2(o.rate)+'<span style="font-size:12px">%</span></div></div></div>';
   }
   var yoyRow=(yb.prev!=null)?('<div class="icrow" style="background:var(--card2)"><div class="iclt"><div class="icl1">전년比 감소 가산</div><div class="icneed">전년(25.3Q) '+fmtD2(yb.prev)+'% → 올해 '+fmtD2(t.rate)+'% · '+((yb.drop||0)>=0?'▼':'▲')+fmtD2(Math.abs(yb.drop||0))+'%p</div></div><div class="icright"><div class="icnum"'+(yb.bonus>0?' style="color:var(--green)"':'')+'>'+(yb.bonus>0?'+'+yb.bonus:'+0')+'<span style="font-size:12px">점</span></div></div></div>'):'';
-  return '<div class="incsec" style="margin-top:10px"><div class="incsech">② 회원 이탈률 실적 <span class="rqbadge" style="background:var(--blue)">7~8월 누적</span></div>'
+  return '<div class="incsec" style="margin-top:10px"><div class="incsech">② 회원 이탈률 실적 <span class="rqbadge" style="background:var(--blue)">7~9월 누적</span></div>'
     +'<div class="iclist">'
       +mr('7월',t.m7)
       +mr('8월',t.m8)
-      +mr('└ 7~8월 누적',{ital:t.ital,mem:t.mem,rate:t.rate},true)
+      +mr('9월',t.m9)
+      +mr('└ 3분기(7~9월) 누적',{ital:t.ital,mem:t.mem,rate:t.rate},true)
       +yoyRow
     +'</div>'
     +'<div class="incres '+(total>0?'win':'lose')+'">누적 이탈률 '+fmtD2(t.rate)+'% → 기본 '+(t.score||0)+'점'+(yb.bonus>0?' + 가산 '+yb.bonus+'점 = <b>'+total+'점</b>':' → <b>'+total+'점</b>')+'</div>'
@@ -2902,7 +2903,7 @@ function metricsCards(code){
   }
   var out='';
   // ③ 주평균 교재제출장수
-  out+=card('③','주평균 교재제출장수','7/1~8/17 누적',
+  out+=card('③','주평균 교재제출장수','8월 마감 기준',
     r('주평균 제출장수','20장↑ 20점 · 18장↑ 18 · 16장↑ 15 · 14장↑ 10 · 12장↑ 5',fmt1(m.submit),'장',(m.s3>0?'var(--green)':'var(--t1)')),
     {p:m.s3,t:'주평균 '+fmt1(m.submit)+'장 → <b>'+m.s3+'점</b>'+(m.s3===0?' (12장 미만 · 미달)':'')});
   // ④ 사이렌 회원 비율
@@ -2912,7 +2913,7 @@ function metricsCards(code){
     r('사이렌 비율','30%미만 10점 · 33%미만 7 · 35%미만 5',fmt1(m.siren),'%',(m.s4>0?'var(--green)':'var(--t1)'))+yoyRow,
     {p:s4t,t:'사이렌 '+fmt1(m.siren)+'% → 기본 '+(m.s4||0)+'점'+(m.sirenYoy>0?' + 가산 '+m.sirenYoy+'점 = <b>'+s4t+'점</b>':' → <b>'+s4t+'점</b>')});
   // ⑤ 오답정정률
-  out+=card('⑤','오답정정률','7/1~8/17 누적',
+  out+=card('⑤','오답정정률','8월 마감 기준',
     r('오답정정률','80% 이상 → 5점',fmt1(m.correct),'%',(m.s5>0?'var(--green)':'var(--t1)')),
     {p:m.s5,t:'오답정정률 '+fmt1(m.correct)+'% → <b>'+m.s5+'점</b>'+(m.s5===0?' (80% 미만 · 미달)':'')});
   return out;
@@ -2967,7 +2968,7 @@ function sejongClub(){
   var S2=APP.sejong;
   if(!S.sjLv)S.sjLv='지국';
   var head='<div class="mt">관리자 세종클럽 <span class="rqbadge" style="background:var(--blue)">7~9월 잠정</span></div>'
-    +'<div class="ib bl">3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(3분기 누적) · ② 이탈률(7~8월 누적) · ③⑤(7/1~8/17 누적) · ④ 사이렌(7월 마감) 모두 반영 · 아래 클럽·시상금은 현재 실적 기준 잠정이에요.</div>';
+    +'<div class="ib bl">3분기(2026.07~09) 평가 · 대상: 지구·지국<br>① 퇴회율(3분기 누적)·② 이탈률(3분기 누적) <b>9/3 마감 기준</b> · ③ 교재제출·⑤ 오답정정률 <b>8월 마감 기준</b> · ④ 사이렌 비율 <b>7월 기준</b> · 아래 클럽·시상금은 현재 실적 기준 잠정이에요.</div>';
   // 등급 카드
   var grades=[{n:'세종 클럽',p:'90점',a:'20만원',c:'#7c3aed'},{n:'율곡 클럽',p:'70점',a:'15만원',c:'#2563eb'},{n:'퇴계 클럽',p:'50점',a:'10만원',c:'#0f7a4d'}];
   var gcards='<div class="stl">등급 및 시상금</div><div class="sjgrades">'+grades.map(function(g){return '<div class="sjg" style="border-color:'+g.c+'"><div class="sjgn" style="color:'+g.c+'">'+g.n+'</div><div class="sjgp">'+g.p+'<span class="sjup">↑</span></div><div class="sjga" style="color:'+g.c+'">'+g.a+'</div></div>';}).join('')+'</div><div class="ib bl">※ 시상금은 분기 합산점수에 따라 10월 운영비로 지급됩니다.</div>';
