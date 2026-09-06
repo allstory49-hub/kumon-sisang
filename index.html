@@ -3572,21 +3572,67 @@ function decT(arr){if(!arr||!arr.length)return [];if(!Array.isArray(arr[0]))retu
 
 // ===== 인쇄 엔진 =====
 var PRT={rows:null,title:'',sub:'',cols:null,cut:0,cutLabel:'',n:30};
+function chongNameOf(code){var L2C={J:'동부',K:'경서',N:'북부',R:'충청',S:'호남',T:'경상'};return (L2C[(code||'').charAt(0)]||(code||'').charAt(0))+'총국';}
 function prtOpen(cfg){
-  PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30},cfg||{});
+  PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
+  // 조직 인센티브(행에 _code 있음)면 범위(전사/총국/사업국) 선택 제공
+  var hasCode=PRT.rows.some(function(r){return r._code;});
+  var u=S.user||{}, myCode=(u.소속코드||'');
+  var myChong=myCode.charAt(0), mySaup=myCode.slice(0,2);
+  // 원본(전사) rows·cut 백업
+  if(!PRT._allRows){PRT._allRows=PRT.rows.slice();PRT._cutAll=PRT.cut;PRT._subAll=PRT.sub;PRT._titleAll=PRT.title;}
+  function applyScope(sc){
+    PRT.scope=sc;
+    var base=PRT._allRows;
+    var filtered;
+    if(sc==='chong')filtered=base.filter(function(r){return (r._code||'').charAt(0)===myChong;});
+    else if(sc==='saup')filtered=base.filter(function(r){return (r._code||'').slice(0,2)===mySaup;});
+    else filtered=base.slice();
+    // 순위 재부여(범위 내)·cut 조정
+    filtered=filtered.map(function(r,i){var o={};for(var k in r)o[k]=r[k];return o;});
+    // cut: 전사 cut이 순위 기반이면 범위 내 상위 개수로 환산 (전사에서 cut위 안에 든 것만)
+    var cutSet={};
+    if(PRT._cutAll){PRT._allRows.forEach(function(r){if((r._rank||0)<=PRT._cutAll)cutSet[r._code]=1;});}
+    filtered.forEach(function(r,i){r._rank=i+1;r._inCut=!!cutSet[r._code];});
+    PRT.rows=filtered;
+    // cut을 "이 범위에서 시상권에 든 마지막 순위"로 재계산
+    var lastCut=0;filtered.forEach(function(r){if(r._inCut)lastCut=Math.max(lastCut,r._rank);});
+    PRT.cut=PRT._cutAll?lastCut:0;
+    var saupNm='';
+    var saupOrg=(APP.org&&APP.org.사업국||[]).filter(function(o){return (o.소속코드||'').slice(0,2)===mySaup;})[0];
+    if(saupOrg)saupNm=(saupOrg.소속명||'').replace(/사업국$/,'');
+    else saupNm=(u.소속명||'').replace(/사업국$/,'');
+    var scLabel=sc==='chong'?chongNameOf(myCode):(sc==='saup'?saupNm+' 사업국':'전사');
+    PRT.sub=(PRT._subAll||'').replace(/·\s*(전사|대상[^·]*)/,'')+' · '+scLabel+' '+fmt(filtered.length)+'개';
+    PRT.title=(PRT._titleAll||'')+' ('+scLabel+')';
+  }
+  if(hasCode&&myCode)applyScope('all');
   var tot=PRT.rows.length;
   var opts=[30,50,100,tot].filter(function(v,i,a){return v<=tot&&a.indexOf(v)===i;});
   if(!opts.length||opts[opts.length-1]!==tot)opts.push(tot);
   var ov=document.createElement('div');ov.id='prtOv';
   ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(8,20,15,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+  var scopeUI=(hasCode&&myCode)?('<div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:8px">조회 범위</div>'
+    +'<div id="prtScope" style="display:flex;gap:6px;margin-bottom:16px">'
+    +'<button class="prtb on" data-sc="all">전사</button>'
+    +'<button class="prtb" data-sc="chong">총국</button>'
+    +'<button class="prtb" data-sc="saup">사업국</button>'
+    +'</div>'):'';
+  function bodyHTML(){
+    var tot2=PRT.rows.length;
+    var opts2=[30,50,100,tot2].filter(function(v,i,a){return v<=tot2&&a.indexOf(v)===i;});
+    if(!opts2.length||opts2[opts2.length-1]!==tot2)opts2.push(tot2);
+    return '<div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:8px">출력 인원</div>'
+      +'<div id="prtN" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">'
+      +opts2.map(function(v){return '<button class="prtb'+(v===Math.min(PRT.n,tot2)?' on':'')+'" data-n="'+v+'">'+(v===tot2?'전체 '+fmt(tot2):fmt(v)+'명')+'</button>';}).join('')
+      +'</div>';
+  }
   ov.innerHTML='<div style="background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:22px">'
     +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:4px">순위 공유하기</div>'
-    +'<div style="font-size:13px;color:var(--t3);margin-bottom:16px">'+PRT.title+'</div>'
-    +'<div style="font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:8px">출력 인원</div>'
-    +'<div id="prtN" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">'
-    +opts.map(function(v,i){return '<button class="prtb'+(v===Math.min(PRT.n,tot)?' on':'')+'" data-n="'+v+'">'+(v===tot?'전체 '+fmt(tot):fmt(v)+'명')+'</button>';}).join('')
-    +'</div>'
-    +(PRT.cut?'<div style="font-size:12px;color:var(--t3);margin-bottom:10px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'')
+    +'<div id="prtTitle" style="font-size:13px;color:var(--t3);margin-bottom:16px">'+PRT.title+'</div>'
+    +scopeUI
+    +'<div id="prtNwrap">'+bodyHTML()+'</div>'
+    +(PRT.cut?'<div id="prtCutNote" style="font-size:12px;color:var(--t3);margin-bottom:10px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'<div id="prtCutNote"></div>')
     +'<div id="prtHint" style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:14px"></div>'
     +'<button id="prtImg" style="width:100%;padding:14px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer">다음</button>'
     +'<button id="prtX" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
@@ -3598,10 +3644,25 @@ function prtOpen(cfg){
       ?'⚠️ '+fmt(PRT.n)+'명은 이미지가 세로로 길어져요. 카카오톡 공유는 <b>30명 이하</b>, 많은 인원은 <b>인쇄(A4 분할)</b>를 권해요.'
       :'· 다음 화면에서 <b>공유 · 저장 · 인쇄 · 엑셀</b>을 고를 수 있어요.';
   }
-  ov.querySelectorAll('.prtb').forEach(function(b){b.onclick=function(){
-    ov.querySelectorAll('.prtb').forEach(function(z){z.classList.remove('on');});
-    b.classList.add('on');PRT.n=Number(b.dataset.n);hint();};});
-  hint();
+  function bindN(){
+    ov.querySelectorAll('#prtN .prtb').forEach(function(b){b.onclick=function(){
+      ov.querySelectorAll('#prtN .prtb').forEach(function(z){z.classList.remove('on');});
+      b.classList.add('on');PRT.n=Number(b.dataset.n);hint();};});
+  }
+  bindN();hint();
+  if(hasCode&&myCode){
+    ov.querySelectorAll('#prtScope .prtb').forEach(function(b){b.onclick=function(){
+      ov.querySelectorAll('#prtScope .prtb').forEach(function(z){z.classList.remove('on');});
+      b.classList.add('on');
+      applyScope(b.dataset.sc);
+      PRT.n=Math.min(PRT.n,PRT.rows.length)||PRT.rows.length;
+      ov.querySelector('#prtTitle').textContent=PRT.title;
+      ov.querySelector('#prtNwrap').innerHTML=bodyHTML();
+      var cn=ov.querySelector('#prtCutNote');
+      if(cn)cn.innerHTML=PRT.cut?'· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.':'';
+      bindN();hint();
+    };});
+  }
   ov.querySelector('#prtX').onclick=function(){ov.remove();};
   ov.querySelector('#prtImg').onclick=function(){ov.remove();prtImage();};
 }
