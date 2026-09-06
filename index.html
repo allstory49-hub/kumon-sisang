@@ -4621,7 +4621,7 @@ function buildQ3cur(){
   var out={};
   Object.keys(so).forEach(function(code){
     var s=so[code], p=prev[code]||{};
-    out[code]={lv:s.lv,소속명:s.소속명,관리자:s.관리자,총국:p.총국||'?',
+    out[code]={lv:s.lv,소속명:s.소속명,관리자:s.관리자,사번:s.사번,총국:chongNameOf(code),
       순증:s.순증,목표:s.목표,달성률:s.달성률,퇴회:s.퇴회,과목수:s.과목수,
       D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,
       마스타순증:p.마스타순증||0,마스타교사:p.마스타교사||s.교사수};
