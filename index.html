@@ -2252,7 +2252,9 @@ function jikAchCard9(){
   var me=null;for(var i=0;i<arr.length;i++){if(arr[i].code===code){me=arr[i];break;}}
   if(!me)return '<div class="incsec"><div class="incsech">📈 [9월] 지국 달성률</div><div class="ib am">이번 명단에 없어요.</div></div>';
   var win=me.pay>0;
-  var grades=[['Legend','전사 10',2.0],['Best','총국별',1.5],['Great','총국별',1.0],['Good','총국별',0.5]];
+  var myCh=shortName(me.chong||'').replace('총국','');
+  var myQ=(typeof JIK9CHONG!=='undefined'&&JIK9CHONG[myCh])||null;
+  var grades=[['Legend','전사 10',2.0],['Best',myQ?myCh+' '+myQ.Best:'총국별',1.5],['Great',myQ?myCh+' '+myQ.Great:'총국별',1.0],['Good',myQ?myCh+' '+myQ.Good:'총국별',0.5]];
   var tb=grades.map(function(g){var on=(me.grade===g[0]);
     return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">'+g[0]+' <span style="font-size:10px;color:var(--t3)">'+g[1]+'</span></div><div class="jtr">교사수 × <b>'+fmtD(g[2])+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
   var qual=(me.ach>=100&&me.D>=1);
@@ -4222,8 +4224,8 @@ function prtIncList(key){
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지국 달성률 인센티브 (T/O)',
       sub:'전사 Legend 10 + 총국별 Best/Great/Good 90 · 달성률100↑&D순증1↑ · 대상 '+fmt(win)+'개',
-      cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'등급',k:'g'},{h:'시상금',k:'p',num:1,hi:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
+      cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'총국',k:'ch'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'등급',k:'g'},{h:'시상금',k:'p',num:1,hi:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,ch:shortName(x.chong||'').replace('총국',''),a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
       cut:(win||1),cutLabel:'시상 T/O 상위 '+fmt(win)+'개',n:Math.min(120,arr.length)});
     return;
   }
