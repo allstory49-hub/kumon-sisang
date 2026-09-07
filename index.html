@@ -622,7 +622,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',fixedPrevSun:null,sejongPrev:null,frozenTeaJul:null,frozenTeaAug:null,sejongMet:null,sejongMetAsof:''};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',fixedPrevSun:null,sejongPrev:null,frozenTeaJul:null,frozenTeaAug:null,frozenItal:null,sejongMet:null,sejongMetAsof:''};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',_imonthSet:0,jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null,jae:null};
 
@@ -758,6 +758,7 @@ async function saveToGitHub(bakedJs){
   await loadSejongItal();
   await loadJaeyak();
   await loadFixedPrevSun();
+  try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
   await loadCumEnv();
@@ -4487,25 +4488,28 @@ function parseItal(data){
   return m;
 }
 function buildSejongItal(){
-  // 이탈률 = 7월(고정) + 8월(당월 업로드) 누적. ⑥ 파일(UP.jigu)에서 8월분 파싱.
+  // 이탈률 3분기 누적 = 7월(마감 고정) + 8월(마감 고정) + 9월(당월 회원증감 업로드)
   var sej=APP.sejong;if(!sej)return null;
-  var src=UP.jigu?parseItal(UP.jigu.data):null;
-  if(!src)return null;
-  var jul=(APP.sejongItalRaw&&APP.sejongItalRaw.jul)||null;
+  var src=UP.jigu?parseItal(UP.jigu.data):null;   // 9월 회원증감(⑥) 파일
+  var fr=APP.frozenItal||null;                     // 7·8월 마감 고정값
+  if(!src&&!fr)return null;
+  var jul=fr?fr.jul:null, aug=fr?fr.aug:null;
   var targets={};(sej.지구||[]).forEach(function(o){targets[o.code]='지구';});(sej.지국||[]).forEach(function(o){targets[o.code]='지국';});
   var out={};
   Object.keys(targets).forEach(function(code){
     var lv=targets[code];
-    var j=jul&&jul[code], s=src[code];
+    var j=jul&&jul[code], a=aug&&aug[code], s=src&&src[code];
     var i7=j?(Number(j.ital)||0):0, m7=j?(Number(j.mem)||0):0;
-    var i8=s?(Number(s.ital)||0):0, m8=s?(Number(s.mem)||0):0;
-    var r7=m7?q3flr(i7/m7*100,2):0, r8=m8?q3flr(i8/m8*100,2):0;
-    var it=i7+i8, mm=m7+m8;
+    var i8=a?(Number(a.ital)||0):0, m8=a?(Number(a.mem)||0):0;
+    var i9=s?(Number(s.ital)||0):0, m9=s?(Number(s.mem)||0):0;
+    var r7=m7?q3flr(i7/m7*100,2):0, r8=m8?q3flr(i8/m8*100,2):0, r9=m9?q3flr(i9/m9*100,2):0;
+    var it=i7+i8+i9, mm=m7+m8+m9;
     var rate=mm?q3flr(it/mm*100,2):0;
     out[code]={lv:lv,rate:rate,ital:it,mem:mm,
       m7:{ital:i7,mem:m7,rate:r7,inFile:!!j},
-      m8:{ital:i8,mem:m8,rate:r8,inFile:!!s},
-      score:sejongItalScore(rate),inFile:!!(j||s)};
+      m8:{ital:i8,mem:m8,rate:r8,inFile:!!a},
+      m9:{ital:i9,mem:m9,rate:r9,inFile:!!s},
+      score:sejongItalScore(rate),inFile:!!(j||a||s)};
   });
   return out;
 }
@@ -4796,7 +4800,7 @@ async function doUpload(){
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:'2026-08',asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
     if(UP.toi9||UP.jik2){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data);if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:'2026-09',source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
-    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~8월 누적',data:sital,raw:{jul:(APP.sejongItalRaw&&APP.sejongItalRaw.jul)||null}}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
+    if(UP.jigu){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~9월 누적',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
     APP.teachers=rankTeachers(tR.records);APP.org=oR;APP._orgIdx=null;APP.meta=meta;
     APP.incList=[];APP.incMap={};var IK2=['교사번호','교사명','소속명','소속코드','과목순증','입회','유입','마스타순증','마스타시상'];incArr.forEach(function(a){var o={};IK2.forEach(function(k,i){o[k]=a[i];});APP.incList.push(o);APP.incMap[o.교사번호]=o;});
     APP.incJigu=[];APP.incJiguMap={};incJigu.forEach(function(a){var o={소속코드:a[0],소속명:a[1],관리자:a[2],회원순증:a[3]};APP.incJigu.push(o);APP.incJiguMap[o.소속코드]=o;});
