@@ -1196,7 +1196,7 @@ function club10Card(){
     var sep_ms=(s?s.ms:o.sep_ms)||0, sep_per=(s?s.per:o.sep_per)||0;
     var cum9_per=Math.floor((cum8_per+sep_per)*100)/100;
     var cum9_ms=cum8_ms+sep_ms;
-    arr.push({소속코드:cc,소속명:o.nm,관리자:o.mgr,총국:o.chong,
+    arr.push({소속코드:cc,소속명:o.nm,관리자:o.mgr,총국:o.chong,교사수9:(o.교사수9||0),
       cum8_ms:cum8_ms,cum8_per:cum8_per,sep_ms:sep_ms,sep_per:sep_per,cum9_ms:cum9_ms,cum9_per:cum9_per});
   });
   arr.sort(function(a,b){return b.cum9_per-a.cum9_per;});
@@ -1204,8 +1204,15 @@ function club10Card(){
   var me=null;for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
   if(!me)return '<div class="incsec"><div class="incsech"><span>🏅 [상시] 온공 10 CLUB <span class="rqbadge">상대평가</span></span>'+shareBtn+'</div><div class="ib am">이번 10 CLUB 기준 명단에 없어요.</div>'+lockedHtml+'</div>';
   var win=me.rank<=3;   // 8~10호점 = 상위 3
+  var need10=me.cum9_per<10?(Math.round((10-me.cum9_per)*100)/100):0;   // 인당 10까지 잔여
+  var need10cnt=need10>0?Math.ceil(need10*(me.교사수9||1)):0;   // 필요 온공 건수(9월 교사수 기준)
   var remain='';
-  if(!win){var above=arr[2];if(above)remain='<div class="icnext">⬆️ 8~10호점(상위 3개)까지 <b>'+fmtD2(above.cum9_per-me.cum9_per)+'</b> 남음 · 현재 '+me.rank+'위</div>';}
+  if(need10>0){
+    remain+='<div class="icremain">🎯 인당 10 달성까지 <b>'+fmtD2(need10)+'</b> 남음'+(need10cnt?' <span style="font-size:11px;opacity:.8">(9월 교사수 기준 온공 약 '+fmt(need10cnt)+'건)</span>':'')+'</div>';
+  }else{
+    remain+='<div class="icnext win">✅ 인당 10 달성! (현재 '+fmtD2(me.cum9_per)+')</div>';
+  }
+  if(!win){var above=arr[2];if(above)remain+='<div class="icnext">⬆️ 8~10호점(상위 3개)까지 <b>'+fmtD2(above.cum9_per-me.cum9_per)+'</b> 남음 · 현재 '+me.rank+'위</div>';}
   function row(x){var m=(x.소속코드===code);
     return '<div class="r20'+(m?' me':'')+(x.rank<=3?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
       +'<div class="r20-nm">'+shortName(x.소속명)+' '+(x.관리자||'')+(m?' <span class="r20-me">나</span>':'')+'</div>'
