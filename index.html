@@ -3587,6 +3587,7 @@ function prtOpen(cfg){
   PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
   // 조직 인센티브(행에 _code 있음)면 범위(전사/총국/사업국) 선택 제공
   var hasCode=PRT.rows.some(function(r){return r._code;});
+  PRT.hasWin=PRT.rows.some(function(r){return r._win!=null;});
   var u=S.user||{}, myCode=(u.소속코드||'');
   var myChong=myCode.charAt(0), mySaup=myCode.slice(0,2);
   // 원본(전사) rows·cut 백업
@@ -3642,7 +3643,7 @@ function prtOpen(cfg){
     +'<div id="prtTitle" style="font-size:13px;color:var(--t3);margin-bottom:16px">'+PRT.title+'</div>'
     +scopeUI
     +'<div id="prtNwrap">'+bodyHTML()+'</div>'
-    +(PRT.cut?'<div id="prtCutNote" style="font-size:12px;color:var(--t3);margin-bottom:10px">· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.</div>':'<div id="prtCutNote"></div>')
+    +((PRT.hasWin||PRT.cut)?'<div id="prtCutNote" style="font-size:12px;color:var(--t3);margin-bottom:10px">'+(PRT.hasWin?'· 시상 대상(초록)과 그 외(회색)로 구분됩니다.':'· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.')+'</div>':'<div id="prtCutNote"></div>')
     +'<div id="prtHint" style="font-size:11.5px;color:var(--t3);line-height:1.55;margin-bottom:14px"></div>'
     +'<button id="prtImg" style="width:100%;padding:14px;border:none;border-radius:11px;background:var(--green);color:#fff;font-size:15px;font-weight:800;cursor:pointer">다음</button>'
     +'<button id="prtX" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--card2);color:var(--t2);font-size:13.5px;font-weight:600;cursor:pointer">닫기</button>'
@@ -3669,7 +3670,7 @@ function prtOpen(cfg){
       ov.querySelector('#prtTitle').textContent=PRT.title;
       ov.querySelector('#prtNwrap').innerHTML=bodyHTML();
       var cn=ov.querySelector('#prtCutNote');
-      if(cn)cn.innerHTML=PRT.cut?'· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.':'';
+      if(cn)cn.innerHTML=PRT.hasWin?'· 시상 대상(초록)과 그 외(회색)로 구분됩니다.':(PRT.cut?'· 시상 대상 '+fmt(PRT.cut)+'명까지 표시되며, 그 아래는 회색으로 구분됩니다.':'');
       bindN();hint();
     };});
   }
@@ -3681,12 +3682,12 @@ function prtRender(){
   var rows=PRT.rows.slice(0,PRT.n);
   var head='<tr><th class="rk">순위</th>'+PRT.cols.map(function(cl){return '<th'+(cl.num?' class="num"':'')+'>'+prtEsc(cl.h)+'</th>';}).join('')+'</tr>';
   var firstOut=-1;
-  rows.forEach(function(r,i){var rk=r._rank||(i+1);if(PRT.cut&&rk>PRT.cut&&firstOut<0)firstOut=i;});
+  if(!PRT.hasWin)rows.forEach(function(r,i){var rk=r._rank||(i+1);if(PRT.cut&&rk>PRT.cut&&firstOut<0)firstOut=i;});
   var lastIdx=PRT.cols.length-1;
   var anyHi=PRT.cols.some(function(c){return c.hi;});
   var body=rows.map(function(r,i){
     var rk=r._rank||(i+1);
-    var out=(PRT.cut&&rk>PRT.cut);
+    var out=(PRT.hasWin)?(!r._win):(PRT.cut&&rk>PRT.cut);
     var cls=[];
     if(out)cls.push('out'); else if(rk<=3)cls.push('m'+rk);
     if(r._me)cls.push('me');
@@ -4003,8 +4004,8 @@ function prtImage(){
   var y=cy+colH, cutY=-1;
   rows.forEach(function(r,i){
     var rk=r._rank||(i+1);
-    var out=(PRT.cut&&rk>PRT.cut);
-    if(out&&cutY<0){cutY=y+cutGap/2;y+=cutGap;}
+    var out=(PRT.hasWin)?(!r._win):(PRT.cut&&rk>PRT.cut);
+    if(!PRT.hasWin&&out&&cutY<0){cutY=y+cutGap/2;y+=cutGap;}
     if(r._me)g.fillStyle=TH.soft;
     else if(out)g.fillStyle='#F5F7F6';
     else g.fillStyle=(i%2?'#FAFBFA':'#FFFFFF');
@@ -4223,10 +4224,10 @@ function prtIncList(key){
     var arr=jikRank9();
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지국 달성률 인센티브 (T/O)',
-      sub:'전사 Legend 10 + 총국별 Best/Great/Good 90 · 달성률100↑&D순증1↑ · 대상 '+fmt(win)+'개',
+      sub:'전사 Legend 10 + 총국별 Best/Great/Good 90 · 달성률100↑&D순증1↑ · 시상 '+fmt(win)+'개',
       cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'총국',k:'ch'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'등급',k:'g'},{h:'시상금',k:'p',num:1,hi:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,nm:x.nm,mg:x.mg,ch:shortName(x.chong||'').replace('총국',''),a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
-      cut:(win||1),cutLabel:'시상 T/O 상위 '+fmt(win)+'개',n:Math.min(120,arr.length)});
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,ch:shortName(x.chong||'').replace('총국',''),a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
+      cutLabel:'등급(Legend/Best/Great/Good) 받은 '+fmt(win)+'개가 시상 대상',n:Math.min(120,arr.length)});
     return;
   }
   if(key==='wol'){
