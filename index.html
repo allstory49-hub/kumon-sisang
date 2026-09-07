@@ -1170,10 +1170,10 @@ function club10Card(){
   if(!APP.club10||!APP.club10.data)return '<div class="ib am">온공 10 CLUB 데이터를 불러오는 중이거나 없습니다.</div>';
   var u=S.user, code=u.소속코드;
   var D=APP.club10.data, N=APP.club10.notice||{};
-  // 9월분은 관통(q3cur 온공)으로 매일 갱신 — 있으면 덮어씀
+  // 9월분은 관통(q3cur 온공·교사수)으로 매일 갱신 — 있으면 덮어씀
   function sepOng(cc){var o=(APP.q3cur||{})[cc];if(!o)return null;
     var ms=Number(o.마스타순증)||0, t=Number(o.마스타교사||o.교사수)||0;
-    return {ms:ms,per:t?Math.floor(ms/t*100)/100:0};}
+    return {ms:ms,tea:t,per:t?Math.floor(ms/t*100)/100:0};}
   // 1~7호점 달성 기록 (공지: 잔여 없음 = 달성 완료)
   var lockedCodes=Object.keys(N).filter(function(c){return N[c].호점;}).sort(function(a,b){return N[a].rank-N[b].rank;});
   var lockedHtml='<div class="clublocked"><div class="cllk-t">🏅 달성 완료 (1~7호점)</div>'
@@ -1196,7 +1196,7 @@ function club10Card(){
     var sep_ms=(s?s.ms:o.sep_ms)||0, sep_per=(s?s.per:o.sep_per)||0;
     var cum9_per=Math.floor((cum8_per+sep_per)*100)/100;
     var cum9_ms=cum8_ms+sep_ms;
-    arr.push({소속코드:cc,소속명:o.nm,관리자:o.mgr,총국:o.chong,교사수9:(o.교사수9||0),
+    arr.push({소속코드:cc,소속명:o.nm,관리자:o.mgr,총국:o.chong,교사수9:((s&&s.tea)||o.교사수9||0),
       cum8_ms:cum8_ms,cum8_per:cum8_per,sep_ms:sep_ms,sep_per:sep_per,cum9_ms:cum9_ms,cum9_per:cum9_per});
   });
   arr.sort(function(a,b){return b.cum9_per-a.cum9_per;});
