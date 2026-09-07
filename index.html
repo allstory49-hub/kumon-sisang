@@ -4710,7 +4710,7 @@ function parseJiguk(jikData,orgData){
   return cand.map(function(x){var g=sel[x.소속코드]||'';return [x.소속코드,x.소속명,x.관리자,x.총국,x.마스타순증,x.인당순증,x.인당입회,g,g?x.마스타순증*mult[g]:0];});
 }
 
-function parseOrg(data){
+function parseOrg(data,chongData){
   var wb=XLSX.read(data,{type:'array'});
   var ws=wb.Sheets[wb.SheetNames[0]];
   var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -4730,6 +4730,30 @@ function parseOrg(data){
       과목순증:Number(row[C.과목순증])||0,특별점수:fmt2(Number(row[C.특별점수])||0),디지털순증:Number(row[C.디지털순증])||0,
       태블릿점수:fmt2(Number(row[C.태블릿])||0),펜세트점수:fmt2(Number(row[C.펜세트])||0),스구N전환재약정:fmt2(Number(row[C.스구N전환재약정])||0),스구N재약정:fmt2(Number(row[C.스구N재약정])||0),
       시상점수:fmt2(Number(row[C.시상점수])||0),지구수:Number(row[C.지구수])||0,지구당:fmt2(Number(row[C.지구당])||0),달성률:q3flr(Number(row[C.달성률])||0,1)});
+  }
+  // 총국은 ③소평(전체) 기준으로 교체 (시상·인센티브 공통)
+  if(chongData){
+    try{
+      var wb2=XLSX.read(chongData,{type:'array'});
+      var rows2=XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]],{header:1,defval:''});
+      var h2=mergeHeader(rows2);
+      var C2={소속코드:findCol(h2,['소속코드']),소속명:findCol(h2,['소속명']),관리자명:findCol(h2,['관리자명']),사번:findCol(h2,['사번']),전월말:findCol(h2,['전월말']),전월말순증:8,전월말관리과목:5,전월말디지털:12,과목순증:findCol(h2,['과목순증']),특별점수:findCol(h2,['온공약정점수','MST약정점수','특별점수']),디지털순증:findCol(h2,['디지털순증']),태블릿:findCol(h2,['태블릿']),펜세트:findCol(h2,['펜세트']),스구N전환재약정:findCol(h2,['스구N 전환재약정','전환재약정']),스구N재약정:findCol(h2,['스구N 재약정']),시상점수:findCol(h2,['시상점수']),지구수:findCol(h2,['지구수']),지구당:findCol(h2,['지구당']),달성률:findCol(h2,['달성률'])};
+      var chong2=[];
+      for(var j=2;j<rows2.length;j++){
+        var r2=rows2[j];if(!r2)continue;
+        var cc2=String(r2[C2.소속코드]||'').trim();
+        if(classifyOrg(cc2)!=='총국')continue;
+        var mn2=String(r2[C2.관리자명]||'').trim(),sb2=String(r2[C2.사번]||'').trim().split('.')[0];
+        if(mn2==='nan')mn2='';if(sb2==='nan')sb2='';
+        chong2.push({소속코드:cc2,소속명:String(r2[C2.소속명]||'').trim().replace(/지$/,'지구'),관리자명:mn2||'(공석)',사번:sb2,
+          전월말:Number(r2[C2.전월말])||0,전월말순증:(function(v){var s=String(v==null?'':v).trim();return s===''?null:fmt2(Number(v)||0);})(r2[C2.전월말순증]),
+          전월말관리과목:Number(r2[C2.전월말관리과목])||0,전월말디지털:Number(r2[C2.전월말디지털])||0,
+          과목순증:Number(r2[C2.과목순증])||0,특별점수:fmt2(Number(r2[C2.특별점수])||0),디지털순증:Number(r2[C2.디지털순증])||0,
+          태블릿점수:fmt2(Number(r2[C2.태블릿])||0),펜세트점수:fmt2(Number(r2[C2.펜세트])||0),스구N전환재약정:fmt2(Number(r2[C2.스구N전환재약정])||0),스구N재약정:fmt2(Number(r2[C2.스구N재약정])||0),
+          시상점수:fmt2(Number(r2[C2.시상점수])||0),지구수:Number(r2[C2.지구수])||0,지구당:fmt2(Number(r2[C2.지구당])||0),달성률:q3flr(Number(r2[C2.달성률])||0,1)});
+      }
+      if(chong2.length)res.총국=chong2;
+    }catch(e){}
   }
   ['지구','지국','사업국','총국'].forEach(function(rl){
     function ocmp(a,b){return (b.지구당-a.지구당)||(b.전월말관리과목-a.전월말관리과목)||(b.전월말디지털-a.전월말디지털);}
@@ -4767,7 +4791,7 @@ async function doUpload(){
     var tR=parseTeacher(UP.teacher.data);
     msg.innerHTML='<span style="color:var(--blue)">✓ 교사 '+tR.stats.total.toLocaleString()+'명 · 조직 파일 분석 중...</span>';
     await tick();
-    var oR=parseOrg(UP.org.data);
+    var oR=parseOrg(UP.org.data, UP.jik2?UP.jik2.data:null);
     await tick();
     msg.innerHTML='<span style="color:var(--blue)">✓ 인센티브 명단 계산 중...</span>';
     var incArr=parseIncentive(UP.teacher.data,UP.member?UP.member.data:null,UP.masta?UP.masta.data:null,APP.incMap);
