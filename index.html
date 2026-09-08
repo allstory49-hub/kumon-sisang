@@ -1902,11 +1902,12 @@ function julyEop(){
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function julyChong(){
-  var tabs=['TOP TOUR','커피차'];
+  var tabs=['TOP TOUR','커피차','🏫 총국 관리'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='TOP TOUR';
   var body;
   if(S.jtab==='TOP TOUR')body=topTourCard('총국');
-  else body=coffeeCard();
+  else if(S.jtab==='커피차')body=coffeeCard();
+  else return jSub(tabs,S.jtab)+chongManage('inc');   // 총국 관리는 자체 헤더 사용
   return (S.hideJHead?'':jul7Head())+jSub(tabs,S.jtab)+body+jContact('영업기획팀 한정호 파트장 (02-397-5977)');
 }
 function jSub(tabs,sel,fn){
@@ -2481,40 +2482,45 @@ function renderUser(){
   var b=document.getElementById('uBody');
   if(S.tab==='my')b.innerHTML=(isOrg?myOrg():myTeacher())+histPersonalSisang();
   else if(S.tab==='rank')b.innerHTML=isOrg?orgRank():teacherRank();
-  else if(S.tab==='chongm')b.innerHTML=chongManage();
+  else if(S.tab==='chongm')b.innerHTML=chongManage('sisang');
   else b.innerHTML=info();
 }
 
 // ===== 총국 관리 (산하 조직 시상·인센티브) =====
-function chongManage(){
+function chongManage(mode){
+  // mode: 'sisang'(시상) | 'inc'(인센티브)
+  mode=mode||'sisang';
   var myCh=(S.user.소속코드||'').charAt(0);   // 총국 첫 글자
   var chName=(S.user.소속명||'').replace(/총국$/,'');
   if(!S._cmLv||['지구','지국','사업국'].indexOf(S._cmLv)<0)S._cmLv='지구';
   var lvs=['지구','지국','사업국'];
-  var lvtab='<div class="rtog jsub" style="margin-bottom:14px">'+lvs.map(function(l){return '<button class="rtb'+(S._cmLv===l?' on':'')+'" onclick="S._cmLv=\''+l+'\';renderUser()">'+l+'</button>';}).join('')+'</div>';
-  // 우리 총국 산하 조직만
+  var rerender=(mode==='inc')?'renderIncentive':'renderUser';
+  var lvtab='<div class="rtog jsub" style="margin-bottom:14px">'+lvs.map(function(l){return '<button class="rtb'+(S._cmLv===l?' on':'')+'" onclick="S._cmLv=\''+l+'\';'+rerender+'()">'+l+'</button>';}).join('')+'</div>';
   var orgs=(APP.org[S._cmLv]||[]).filter(function(o){return (o.소속코드||'').charAt(0)===myCh;});
-  var head='<div class="mt">🏫 '+chName+'총국 관리</div>'
+  var head='<div class="mt">🏫 '+chName+'총국 관리 · '+(mode==='inc'?'인센티브':'시상')+'</div>'
     +'<div class="ib gr">📅 '+(APP.meta.date||'')+' · 산하 '+S._cmLv+' '+fmt(orgs.length)+'개 · 우리 총국 기준으로 조회돼요</div>'
     +lvtab;
-  return head+cmSisang(orgs)+cmIncentive();
+  return head+(mode==='inc'?cmIncentive():cmSisang(orgs));
 }
 // 시상: 우리 총국 산하 순위 + 공유
 function cmSisang(orgs){
   var lv=S._cmLv;
   var arr=orgs.slice().sort(function(a,b){return (b.지구당-a.지구당)||(b.시상점수-a.시상점수);});
   arr.forEach(function(x,i){x._cmrank=i+1;});
-  var scoreLabel=(lv==='지구')?'시상점수':'지구당 점수';
+  var scoreLbl=(lv==='지구')?'시상점수':'시상점수<br>(지구당)';
   var top=arr.slice(0,10);
-  var rows=top.map(function(x){var im=false;
-    return '<div class="r20"><div class="r20-n">'+x._cmrank+'</div>'
-      +'<div class="r20-nm">'+shortName(x.소속명)+' '+(x.관리자명||'')+'</div>'
-      +'<div class="r20-col2"><div class="r20-cv">'+fmt1(x.과목순증)+'</div><div class="r20-cs">과목순증</div></div>'
-      +'<div class="r20-col2"><div class="r20-cv" style="font-weight:900;color:'+((x.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div><div class="r20-cs">'+(lv==='지구'?'시상점수':'지구당')+'</div></div></div>';}).join('');
-  var board='<div class="r20wrap"><div class="r20head">📊 '+lv+' 시상 순위 (우리 총국)</div>'
-    +'<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col2">과목<br>순증</div><div class="r20-col2">'+(lv==='지구'?'시상<br>점수':'지구당')+'</div></div>'
+  function pcol(v){return '<div class="rcol"><div class="rcol-v" style="font-size:12px;color:'+(v==null?'var(--amber)':((v||0)<0?'var(--red)':'var(--blue)'))+'">'+(v==null?'—':fmt1(v))+'</div></div>';}
+  var rows=top.map(function(x){
+    return '<div class="rr"><div class="rb '+rbC(x._cmrank)+'">'+x._cmrank+'</div>'
+      +'<div class="rn2">'+(x.관리자명||'')+'<br><span class="rsb">'+x.소속명+'</span></div>'
+      +pcol(x.전월말순증)
+      +'<div class="rcol"><div class="rcol-v"'+(x.과목순증<0?' style="color:var(--red)"':'')+'>'+fmt1(x.과목순증)+'</div></div>'
+      +'<div class="rcol"><div class="rcol-v"'+(x.디지털순증<0?' style="color:var(--red)"':'')+'>'+fmt(x.디지털순증)+'</div></div>'
+      +'<div class="rcol big w2"><div class="rcol-v" style="color:'+scoreColor(x,x.지구당)+'">'+(lv==='지구'?fmt1(x.지구당):fmtD2(x.지구당))+'</div></div></div>';}).join('');
+  var board='<div class="cl">'
+    +'<div class="rhead"><div class="sp"></div><div class="rhc" style="font-size:10.5px">전월말<br>순증</div><div class="rhc">과목순증</div><div class="rhc">디지털순증</div><div class="rhc w2">'+scoreLbl+'</div></div>'
     +rows+'</div>';
-  return '<div class="incsec"><div class="incsech"><span>🏆 '+lv+' 시상 순위</span>'+prtBtn("prtCmSisang()")+'</div>'
+  return '<div class="incsec"><div class="incsech"><span>🏆 '+lv+' 시상 순위 <span style="font-size:11px;color:var(--t3)">(우리 총국 상위 10)</span></span>'+prtBtn("prtCmSisang()")+'</div>'
     +board
     +'<div class="ib bl" style="margin-bottom:0">· 우리 총국 산하 '+lv+' 기준 순위예요. 공유 버튼에서 전사·총국·사업국 범위로 볼 수 있어요.</div></div>';
 }
