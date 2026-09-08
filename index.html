@@ -3777,16 +3777,27 @@ function prtOngOrg(lv){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
     var op=ongPerCap(code);
-    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',온공7:op.ms7,인당7:op.per7,온공8:op.ms8,인당8:op.per8,순증:op.ms,인당:op.per});});
+    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',months:op.months,byMonth:op.byMonth,순증:op.ms,인당:op.per});});
   arr.sort(function(a,b){return (b.인당-a.인당)||(b.순증-a.순증);});
   var me=(S.user&&S.user.소속코드)||'';
+  var months=(arr[0]&&arr[0].months)||[];
+  // 월별 컬럼 동적 생성 (7·8·9월 순증/인당)
+  var mcols=[];
+  months.forEach(function(mk,i){
+    var lb=(Number((mk||'').split('-')[1])||0)+'월';
+    mcols.push({h:lb+' 순증',k:'m'+i+'s',num:1});
+    mcols.push({h:lb+' 인당',k:'m'+i+'p',num:1});
+  });
   prtOpen({
     title:'['+lv+'] 온공 Top · 하반기 누적 인당순증 순위',
     sub:'1위 시상 ('+(lv==='사업국'?'50만원':'30만원')+') · 인당순증 = 월별 인당순증의 누적 합 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'7월 순증',k:'a',num:1},{h:'7월 인당',k:'b',num:1},{h:'8월 순증',k:'cc',num:1},{h:'8월 인당',k:'d',num:1},{h:'누적 인당',k:'e',num:1}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),_code:x.code,소속명:x.소속명,관리자:x.관리자,
-      a:fmt1(x.온공7),b:fmtD2(x.인당7),cc:fmt1(x.온공8),d:fmtD2(x.인당8),e:fmtD2(x.인당)};}),
-    cut:1,cutLabel:'시상 대상 1위',n:30
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'}].concat(mcols).concat([{h:'누적 인당',k:'e',num:1,hi:1}]),
+    rows:arr.map(function(x,i){
+      var row={_rank:i+1,_me:(x.code===me),_win:(i===0),_code:x.code,소속명:x.소속명,관리자:x.관리자,e:fmtD2(x.인당)};
+      months.forEach(function(mk,j){var v=x.byMonth[mk]||{ms:0,per:0};row['m'+j+'s']=fmt1(v.ms);row['m'+j+'p']=fmtD2(v.per);});
+      return row;
+    }),
+    cutLabel:'1위만 시상',n:30
   });
 }
 function prtOngTea(){
