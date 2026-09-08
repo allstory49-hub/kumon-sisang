@@ -856,6 +856,16 @@ function doLogin(){
     var o=(APP.org[roles[i]]||[]).find(function(r){return r.관리자명===id&&r.사번===pw;});
     if(o){S.user=o;S.type='org';S.pos=roles[i];S.inSisang=true;S.tab='my';goChooser(id);return;}
   }
+  // 5인 이하 등 시상용(baked)에 없는 조직 관리자 → 인센티브용(q3cur)에서 찾음(시상 순위는 제외)
+  var cur=APP.q3cur||{};
+  var ck=Object.keys(cur).find(function(c){var o=cur[c];return o.관리자===id&&String(o.사번)===pw;});
+  if(ck){
+    var o2=cur[ck];
+    S.user={소속코드:ck,소속명:o2.소속명,관리자명:o2.관리자,사번:String(o2.사번),
+      과목순증:o2.순증,디지털순증:o2.D순증,달성률:o2.달성률,교사수:o2.교사수,시상점수:0,지구당:0,지구수:0,
+      전월말:o2.교사수,전월말순증:null,특별점수:0,태블릿점수:0,스구N재약정:0};
+    S.type='org';S.pos=o2.lv;S.inSisang=false;S.tab='my';goChooser(id);return;
+  }
   document.getElementById('lerr').textContent='이름 또는 사번이 올바르지 않습니다.';
 }
 
@@ -2457,9 +2467,9 @@ function incNotice(contact){
 }
 function renderUser(){
   var isOrg=S.type==='org';
-  if(S.type==='teacher'&&S.inSisang===false){
+  if(S.inSisang===false){
     document.getElementById('uTabs').innerHTML='';
-    document.getElementById('uBody').innerHTML='<div class="ib am" style="margin-top:18px">시상 순위 대상이 아닙니다.<br>상단 <b>← 메뉴</b>에서 <b>💰 인센티브</b>를 확인해주세요.</div>';
+    document.getElementById('uBody').innerHTML='<div class="ib am" style="margin-top:18px">'+(isOrg?'5인 이하 조직 등으로 시상 순위 대상이 아니에요.':'시상 순위 대상이 아닙니다.')+'<br>상단 <b>← 메뉴</b>에서 <b>💰 인센티브</b>를 확인해주세요.</div>';
     return;
   }
   var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
