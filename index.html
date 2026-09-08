@@ -1369,7 +1369,7 @@ function q3get(code){
   f.lv=meta.lv;f.소속명=meta.소속명;f.관리자=meta.관리자;f.총국=meta.총국;
   return f;
 }
-function q3flr(x,d){var m=Math.pow(10,d);return Math.floor(x*m)/m;}
+function q3flr(x,d){var m=Math.pow(10,d);return Math.trunc(x*m+(x<0?-1e-9:1e-9))/m;}
 // ===== 엘리트 지구장 (3분기) =====
 function eliteJiguList(){
   var arr=[];Object.keys(APP.q3cur||{}).forEach(function(code){if((APP.q3cur[code].lv)!=='지구')return;var f=q3get(code);if(!f)return;
