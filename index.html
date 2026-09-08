@@ -2474,14 +2474,134 @@ function renderUser(){
   }
   var tabs=isOrg?[{id:'my',l:'내 실적'},{id:'rank',l:'순위'},{id:'info',l:'기준 안내'}]
                 :[{id:'my',l:'내 실적'},{id:'info',l:'기준 안내'}];   // 교사는 순위 탭 숨김(코드는 유지)
+  // 총국 관리자 전용: 산하 조직 시상·인센티브 관리 탭
+  if(isOrg&&S.pos==='총국')tabs.splice(2,0,{id:'chongm',l:'🏫 총국 관리'});
   if(!isOrg&&S.tab==='rank')S.tab='my';   // 교사가 순위 상태로 진입 시 내 실적으로
   document.getElementById('uTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.tab===t.id?' on':'')+'" onclick="S.tab=\''+t.id+'\';renderUser()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('uBody');
   if(S.tab==='my')b.innerHTML=(isOrg?myOrg():myTeacher())+histPersonalSisang();
   else if(S.tab==='rank')b.innerHTML=isOrg?orgRank():teacherRank();
+  else if(S.tab==='chongm')b.innerHTML=chongManage();
   else b.innerHTML=info();
 }
 
+// ===== 총국 관리 (산하 조직 시상·인센티브) =====
+function chongManage(){
+  var myCh=(S.user.소속코드||'').charAt(0);   // 총국 첫 글자
+  var chName=(S.user.소속명||'').replace(/총국$/,'');
+  if(!S._cmLv||['지구','지국','사업국'].indexOf(S._cmLv)<0)S._cmLv='지구';
+  var lvs=['지구','지국','사업국'];
+  var lvtab='<div class="rtog jsub" style="margin-bottom:14px">'+lvs.map(function(l){return '<button class="rtb'+(S._cmLv===l?' on':'')+'" onclick="S._cmLv=\''+l+'\';renderUser()">'+l+'</button>';}).join('')+'</div>';
+  // 우리 총국 산하 조직만
+  var orgs=(APP.org[S._cmLv]||[]).filter(function(o){return (o.소속코드||'').charAt(0)===myCh;});
+  var head='<div class="mt">🏫 '+chName+'총국 관리</div>'
+    +'<div class="ib gr">📅 '+(APP.meta.date||'')+' · 산하 '+S._cmLv+' '+fmt(orgs.length)+'개 · 우리 총국 기준으로 조회돼요</div>'
+    +lvtab;
+  return head+cmSisang(orgs)+cmIncentive();
+}
+// 시상: 우리 총국 산하 순위 + 공유
+function cmSisang(orgs){
+  var lv=S._cmLv;
+  var arr=orgs.slice().sort(function(a,b){return (b.지구당-a.지구당)||(b.시상점수-a.시상점수);});
+  arr.forEach(function(x,i){x._cmrank=i+1;});
+  var scoreLabel=(lv==='지구')?'시상점수':'지구당 점수';
+  var top=arr.slice(0,10);
+  var rows=top.map(function(x){var im=false;
+    return '<div class="r20"><div class="r20-n">'+x._cmrank+'</div>'
+      +'<div class="r20-nm">'+shortName(x.소속명)+' '+(x.관리자명||'')+'</div>'
+      +'<div class="r20-col2"><div class="r20-cv">'+fmt1(x.과목순증)+'</div><div class="r20-cs">과목순증</div></div>'
+      +'<div class="r20-col2"><div class="r20-cv" style="font-weight:900;color:'+((x.지구당||0)<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.지구당)+'</div><div class="r20-cs">'+(lv==='지구'?'시상점수':'지구당')+'</div></div></div>';}).join('');
+  var board='<div class="r20wrap"><div class="r20head">📊 '+lv+' 시상 순위 (우리 총국)</div>'
+    +'<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div><div class="r20-col2">과목<br>순증</div><div class="r20-col2">'+(lv==='지구'?'시상<br>점수':'지구당')+'</div></div>'
+    +rows+'</div>';
+  return '<div class="incsec"><div class="incsech"><span>🏆 '+lv+' 시상 순위</span>'+prtBtn("prtCmSisang()")+'</div>'
+    +board
+    +'<div class="ib bl" style="margin-bottom:0">· 우리 총국 산하 '+lv+' 기준 순위예요. 공유 버튼에서 전사·총국·사업국 범위로 볼 수 있어요.</div></div>';
+}
+// 인센티브: 우리 총국 산하 달성 인원 + 공유
+function cmIncentive(){
+  var lv=S._cmLv, myCh=(S.user.소속코드||'').charAt(0);
+  function inChong(code){return (code||'').charAt(0)===myCh;}
+  function cnt(codes){return codes.filter(inChong).length;}
+  var cards='';
+  var sep=(curMonth()>=9);
+  if(lv==='지구'){
+    // 재약정률 80%↑, 달성률 100%&D1↑, 엘리트, 세종클럽
+    var J=APP.jaeyak||{};
+    var jae=Object.keys(APP.q3cur||{}).filter(function(c){var o=APP.q3cur[c];return o.lv==='지구'&&inChong(c)&&J[c]&&J[c].rate>=80;});
+    var ach=Object.keys(APP.q3cur||{}).filter(function(c){var o=APP.q3cur[c];if(o.lv!=='지구'||!inChong(c))return false;var fr=orgFresh(c);return fr&&(Number(fr.달성률)||0)>=100&&(Number(fr.디지털순증)||0)>=1;});
+    var tot=Object.keys(APP.q3cur||{}).filter(function(c){return APP.q3cur[c].lv==='지구'&&inChong(c);}).length;
+    cards=cmCard('🔄 지구 재약정률','재약정률 80%↑',jae.length,tot,"prtIncList('jae9')")
+      +cmCard('📈 지구 달성률','달성률 100%↑ & D순증 1↑',ach.length,tot,"prtIncList('jiguach9')")
+      +cmCardElite()
+      +cmCardSejong('지구');
+  }else if(lv==='지국'){
+    var toi=Object.keys(APP.q3cur||{}).filter(function(c){var o=APP.q3cur[c];if(o.lv!=='지국'||!inChong(c))return false;var qt=q3Toi(c);var f=q3get(c);return qt.rate<4.7&&f&&f.순증>=0;});
+    var mgr=Object.keys(APP.q3cur||{}).filter(function(c){var o=APP.q3cur[c];if(o.lv!=='지국'||!inChong(c))return false;var fr=orgFresh(c);return fr&&(Number(fr.달성률)||0)>=80;});
+    var totk=Object.keys(APP.q3cur||{}).filter(function(c){return APP.q3cur[c].lv==='지국'&&inChong(c);}).length;
+    cards=cmCardJikAch()
+      +cmCard('📉 지국 퇴회율','3분기 누적 퇴회율 급간',toi.length,totk,"prtIncList('jiktoi')")
+      +(sep?cmCard('🎁 매니저','지국 달성률 80%↑',mgr.length,totk,"prtIncList('manager9')"):'')
+      +cmCardSejong('지국');
+  }else{
+    var ea=Object.keys(APP.q3cur||{}).filter(function(c){var o=APP.q3cur[c];return o.lv==='사업국'&&inChong(c);});
+    var tote=ea.length;
+    cards=cmCard('🎯 사업국 달성률','달성률 순위 (1~30위 시상)',tote,tote,"prtIncList('eopach')")
+      +cmCard('📉 사업국 퇴회율&온공','퇴회율 4.6%↓ 또는 온공 1.5↑',ea.filter(function(c){var qt=q3Toi(c),op=ongPerCap(c),f=q3get(c);return (qt.rate<4.7&&f.순증>=1)||op.per>=1.5;}).length,tote,"prtIncList('eoptoi')")
+      +cmCardTopTour('사업국');
+  }
+  return '<div style="margin-top:6px"><div class="stl">💰 '+lv+' 인센티브 (우리 총국 달성 현황)</div>'+cards+'</div>';
+}
+function cmCard(title,cond,win,tot,prtKey){
+  return '<div class="incstat"><div class="isl">'+title+'<span class="issub">'+cond+'</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">'+(tot?fmt(win)+'/'+fmt(tot):'-')+'</span><span class="isamt">우리 총국 달성</span>'+(prtKey?isb(prtKey):'')+'</div></div>';
+}
+function cmCardElite(){
+  var myCh=(S.user.소속코드||'').charAt(0);
+  var arr=eliteJiguRankAll();
+  var mine=arr.filter(function(x){return (x.소속코드||'').charAt(0)===myCh;});
+  var qual=mine.filter(function(x){return x.자격;}).length;
+  return '<div class="incstat"><div class="isl">🏆 [3분기] 엘리트 지구장<span class="issub">달성률 100%↑ & D순증 1↑ · 전사 상위 20명</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(qual)+'개</span><span class="isp">자격 충족</span><span class="isamt">우리 총국</span>'+isb("prtElite()")+'</div></div>';
+}
+function cmCardJikAch(){
+  var myCh=(S.user.소속코드||'').charAt(0);
+  var arr=jikRank9().filter(function(x){return (x.code||'').charAt(0)===myCh;});
+  var win=arr.filter(function(x){return x.pay>0;}).length;
+  return '<div class="incstat"><div class="isl">📈 [9월] 지국 달성률 (T/O)<span class="issub">달성률 100%↑ & D순증 1↑ · 전사 Legend+총국별 T/O</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">등급 획득</span><span class="isamt">우리 총국</span>'+isb("prtIncList('jikach9')")+'</div></div>';
+}
+function cmCardSejong(lv){
+  var myCh=(S.user.소속코드||'').charAt(0);
+  var T=APP.sejongToi||{}, sej=APP.sejong;
+  if(!sej)return '';
+  var codes=(sej[lv]||[]).map(function(o){return o.code;}).filter(function(c){return (c||'').charAt(0)===myCh;});
+  var win=0;codes.forEach(function(c){var s=toiScoreTotal(c)+italScoreTotal(c)+metScore(c).total;if(s>=50)win++;});
+  return '<div class="incstat"><div class="isl">🏅 [3분기] 세종클럽 ('+lv+')<span class="issub">5개 지표 합산 50점↑ (퇴계·율곡·세종)</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(win)+'개</span><span class="isp">클럽 선정</span><span class="isamt">우리 총국</span>'+isb("prtSejong('"+lv+"')")+'</div></div>';
+}
+function cmCardTopTour(lv){
+  var myCh=(S.user.소속코드||'').charAt(0);
+  var arr=[];Object.keys(APP.q3cur||{}).forEach(function(c){var o=APP.q3cur[c];if(o.lv!==lv||(c||'').charAt(0)!==myCh)return;var f=q3get(c);if(f)arr.push({sun:f.순증});});
+  var elig=arr.filter(function(x){return x.sun>=1;}).length;
+  return '<div class="incstat"><div class="isl">[3분기] TOP TOUR (사업국장)<span class="issub">누적 순증 1↑ · 달성률 상위 8명</span></div>'
+    +'<div class="isr"><span class="isn">'+fmt(elig)+'개</span><span class="isp">자격 충족</span><span class="isamt">우리 총국</span>'+isb("prtTopTour('사업국')")+'</div></div>';
+}
+// 총국 관리 시상 공유
+function prtCmSisang(){
+  var lv=S._cmLv, myCh=(S.user.소속코드||'').charAt(0);
+  var all=(APP.org[lv]||[]).slice().sort(function(a,b){return (b.지구당-a.지구당)||(b.시상점수-a.시상점수);});
+  var scoreLabel=(lv==='지구')?'시상점수':'지구당 점수';
+  prtOpen({
+    title:'['+lv+'] 시상 순위',
+    sub:scoreLabel+' 내림차순 · 전체 '+fmt(all.length)+'개',
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자명'},{h:'전월말순증',k:'p',num:1},{h:'과목순증',k:'a',num:1},{h:'온공약정',k:'b',num:1},{h:'디지털순증',k:'cc',num:1},{h:'태블릿',k:'d',num:1},{h:'SKN재약정',k:'e',num:1},{h:scoreLabel,k:'v',num:1,hi:1}],
+    rows:all.map(function(x,i){return {_rank:i+1,_code:x.소속코드,_no:x.사번,_prevNeg:(x.전월말순증!=null&&Number(x.전월말순증)<0),
+      소속명:x.소속명,관리자명:x.관리자명||'',p:(x.전월말순증==null?'—':fmt1(x.전월말순증)),a:fmt1(x.과목순증),b:fmt1(x.특별점수),cc:fmt(x.디지털순증),d:fmt(Math.round(x.태블릿점수)),e:fmt1(x.스구N재약정),
+      v:(lv==='지구'?fmt1(x.지구당):fmtD2(x.지구당))};}),
+    n:all.length
+  });
+}
 function myTeacher(){
   var r=S.user,aw=fmt1(r.시상계);
   var meetMin=(r.과목순증>=1&&r.디지털순증>=1);
