@@ -4322,17 +4322,18 @@ function prtExcel(){
   function cell(r,c){var a=XLSX.utils.encode_cell({r:r,c:c});if(!ws[a])ws[a]={t:'s',v:''};return ws[a];}
 
   // 제목/부제/날짜/컷노트 스타일
-  cell(0,0).s={font:{bold:true,sz:16,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
-  cell(1,0).s={font:{sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
-  cell(2,0).s={font:{sz:9.5,color:{rgb:argb('E8EEF2')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
-  if(cutNoteRow>=0)cell(cutNoteRow,0).s={font:{sz:9.5,bold:true,color:{rgb:argb('B54708')}},fill:{fgColor:{rgb:argb('FFF4E6')}},alignment:{vertical:'center'}};
+  cell(0,0).s={font:{bold:true,sz:16,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
+  cell(1,0).s={font:{sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
+  cell(2,0).s={font:{sz:9.5,color:{rgb:argb('E8EEF2')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
+  if(cutNoteRow>=0)cell(cutNoteRow,0).s={font:{sz:9.5,bold:true,color:{rgb:argb('B54708')}},fill:{fgColor:{rgb:argb('FFF4E6')}},alignment:{vertical:'center',horizontal:'center'}};
 
   // 헤더 행 스타일
+  var hbd={style:'thin',color:{rgb:argb('C9CFCB')}};
   for(var c=0;c<nCols;c++){
     var hc=cell(headRow,c);
     hc.s={font:{bold:true,sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},
-      alignment:{vertical:'center',horizontal:(c===0?'center':'center'),wrapText:true},
-      border:{bottom:{style:'thin',color:{rgb:argb(main)}}}};
+      alignment:{vertical:'center',horizontal:'center',wrapText:true},
+      border:{top:hbd,bottom:hbd,left:hbd,right:hbd}};
   }
   // 강조 열(hi) 인덱스
   var hiCols={};
@@ -4365,15 +4366,19 @@ function prtExcel(){
         fontColor=isWin?'222222':'AFAFAF';   // 시상 외 회색
         if(c2===0&&rank<=3&&isWin){fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];bold=true;} // 1~3위 메달색
         if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
+        // 총국 관리 모드: 내 총국 외 조직은 회색/밴딩 없이 검정 글씨 + 흰 배경
+        if(PRT.myChong){bg='FFFFFF';fontColor='222222';if(c2===0&&rank<=3&&isWin)fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];if(hiCols[c2]){bold=true;}}
       }
       var isNum=(typeof dc.v==='number');
       var nf;
       if(isNum){nf=(dc.v===Math.round(dc.v))?'#,##0':'#,##0.0#';}   // 정수는 점 없이, 소수는 소수점 표시
+      var bcol=argb('C9CFCB');   // 셀 테두리색(연회색)
+      var bd={style:'thin',color:{rgb:bcol}};
       dc.s={font:{sz:10.5,bold:bold,color:{rgb:argb(fontColor)}},
         fill:{fgColor:{rgb:argb(bg)}},
         numFmt:nf,
-        alignment:{vertical:'center',horizontal:(c2===0?'center':(isNum?'right':'left'))},
-        border:{bottom:{style:(isMe?'thin':(rec._myChong?'thin':'hair')),color:{rgb:argb(isMe?ME_BG:(rec._myChong?(isWin?'1D6FB8':'B8D6EE'):'E4E9E6'))}}}};
+        alignment:{vertical:'center',horizontal:'center',wrapText:false},
+        border:{top:bd,bottom:bd,left:bd,right:bd}};
     }
   }
   // 열 너비
