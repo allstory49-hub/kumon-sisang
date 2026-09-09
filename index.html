@@ -4356,9 +4356,10 @@ function prtExcel(){
         // 본인 소속: 행 전체 강조색(레드) 배경 + 흰 굵은 글씨
         bg=ME_BG; fontColor='FFFFFF'; bold=true;
       }else if(rec._myChong){
-        // 내 총국 산하 조직: 연한 레드 배경 + 진한 레드 글씨 (그룹 강조)
-        bg='FCE9E9'; fontColor=isWin?'C92A2A':'D98A8A'; bold=(!!hiCols[c2]||c2===0);
-        if(c2===0&&rank<=3&&isWin)fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];
+        // 내 총국 산하 조직: 기준 달성 시 진한 파랑+흰글씨, 미달성 시 연한 파랑
+        if(isWin){bg='1D6FB8'; fontColor='FFFFFF'; bold=true;}         // 달성 = 진한 파랑
+        else{bg='DCEBF7'; fontColor='2A6296'; bold=(!!hiCols[c2]||c2===0);}  // 미달성 = 연한 파랑
+        if(c2===0&&rank<=3&&isWin)fontColor='FFFFFF';
       }else{
         bg=(band?soft:'FFFFFF');
         fontColor=isWin?'222222':'AFAFAF';   // 시상 외 회색
@@ -4372,7 +4373,7 @@ function prtExcel(){
         fill:{fgColor:{rgb:argb(bg)}},
         numFmt:nf,
         alignment:{vertical:'center',horizontal:(c2===0?'center':(isNum?'right':'left'))},
-        border:{bottom:{style:(isMe?'thin':'hair'),color:{rgb:argb(isMe?ME_BG:(rec._myChong?'F0C5C5':'E4E9E6'))}}}};
+        border:{bottom:{style:(isMe?'thin':(rec._myChong?'thin':'hair')),color:{rgb:argb(isMe?ME_BG:(rec._myChong?(isWin?'1D6FB8':'B8D6EE'):'E4E9E6'))}}}};
     }
   }
   // 열 너비
