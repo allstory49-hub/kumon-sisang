@@ -4366,9 +4366,11 @@ function prtExcel(){
         if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
       }
       var isNum=(typeof dc.v==='number');
+      var nf;
+      if(isNum){nf=(dc.v===Math.round(dc.v))?'#,##0':'#,##0.0#';}   // 정수는 점 없이, 소수는 소수점 표시
       dc.s={font:{sz:10.5,bold:bold,color:{rgb:argb(fontColor)}},
         fill:{fgColor:{rgb:argb(bg)}},
-        numFmt:(isNum?'#,##0.###':undefined),
+        numFmt:nf,
         alignment:{vertical:'center',horizontal:(c2===0?'center':(isNum?'right':'left'))},
         border:{bottom:{style:(isMe?'thin':'hair'),color:{rgb:argb(isMe?ME_BG:(rec._myChong?'F0C5C5':'E4E9E6'))}}}};
     }
