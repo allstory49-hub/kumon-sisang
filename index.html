@@ -10,7 +10,7 @@
 <meta property="og:description" content="이름·사번으로 로그인하여 실적과 순위를 확인하세요.">
 <meta property="og:type" content="website">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="lib/xlsx-style.js"></script>
 <style>
 :root{
   --bg:#F4F5F3; --card:#FFFFFF; --card2:#F7F8F6; --pink:#DB2777;
@@ -4283,7 +4283,6 @@ function prtExcel(){
   var rows=PRT.rows.slice(0,PRT.n);
   var hasCode=rows.some(function(r){return r._code;});
   var hasNo=rows.some(function(r){return r._no;});
-  // 엑셀 전용 열 구성: [소속코드] 소속 [사번] ... 나머지
   var cols=[],firstName=true;
   (PRT.cols||[]).forEach(function(cl){
     var isOrgName=(!cl.num&&/소속|지구|지국|사업국|총국/.test(cl.h));
@@ -4301,13 +4300,76 @@ function prtExcel(){
     }));
   });
   var meta=[[PRT.title],[PRT.sub||''],[((APP.meta&&APP.meta.date)||'')+'  ·  출력 '+new Date().toLocaleDateString('ko-KR')],[]];
-  if(PRT.cut)meta.splice(3,0,['시상 대상: '+(PRT.cutLabel||(PRT.cut+'명'))+' (그 아래는 대상 외)']);
+  var cutNoteRow=-1;
+  if(PRT.cut||PRT.hasWin){meta.splice(3,0,['시상 대상: '+(PRT.cutLabel||(PRT.cut+'명'))+' (그 외는 회색)']);cutNoteRow=3;}
   var aoa=meta.concat([head]).concat(body);
   var ws=XLSX.utils.aoa_to_sheet(aoa);
+  var last=head.length-1;
+  var headRow=meta.length;              // 0-based 헤더 행
+  var nCols=head.length;
+
+  // ===== 테마 색상 (직책별) =====
+  var THEME={'지구':'2F80B5','지국':'8659B5','사업국':'D9822B','총국':'C9A227','구몬교사':'1D9E75'};
+  var pos=(S.pos||'지구');
+  var main=THEME[pos]||'1D9E75';
+  var soft='F2F6F4';   // 밴딩 연한색
+  function argb(hex){return 'FF'+hex;}
+  function cell(r,c){var a=XLSX.utils.encode_cell({r:r,c:c});if(!ws[a])ws[a]={t:'s',v:''};return ws[a];}
+
+  // 제목/부제/날짜/컷노트 스타일
+  cell(0,0).s={font:{bold:true,sz:16,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
+  cell(1,0).s={font:{sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
+  cell(2,0).s={font:{sz:9.5,color:{rgb:argb('E8EEF2')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'left'}};
+  if(cutNoteRow>=0)cell(cutNoteRow,0).s={font:{sz:9.5,bold:true,color:{rgb:argb('B54708')}},fill:{fgColor:{rgb:argb('FFF4E6')}},alignment:{vertical:'center'}};
+
+  // 헤더 행 스타일
+  for(var c=0;c<nCols;c++){
+    var hc=cell(headRow,c);
+    hc.s={font:{bold:true,sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},
+      alignment:{vertical:'center',horizontal:(c===0?'center':'center'),wrapText:true},
+      border:{bottom:{style:'thin',color:{rgb:argb(main)}}}};
+  }
+  // 강조 열(hi) 인덱스
+  var hiCols={};
+  head.forEach(function(h,ci){
+    var cl=cols[ci-1];
+    if(cl&&cl.hi)hiCols[ci]=1;
+  });
+  // 데이터 행 스타일
+  for(var i=0;i<body.length;i++){
+    var rr=headRow+1+i;
+    var rec=rows[i]||{};
+    var isWin=PRT.hasWin?(!!rec._win):(PRT.cut?((rec._rank||(i+1))<=PRT.cut):false);
+    var isMe=!!rec._me;
+    var band=(i%2===1);
+    var rank=rec._rank||(i+1);
+    for(var c2=0;c2<nCols;c2++){
+      var dc=cell(rr,c2);
+      var bg=isMe?'E6F4EF':(band?soft:'FFFFFF');
+      var fontColor='222222';
+      if(!isWin)fontColor='AFAFAF';                     // 시상 외 회색
+      var bold=false;
+      if(c2===0){ // 순위
+        if(rank<=3&&isWin){var medal=['C9A227','9AA0A6','B06A2B'][rank-1];bg=isMe?'E6F4EF':band?soft:'FFFFFF';fontColor=medal;bold=true;}
+      }
+      if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
+      dc.s={font:{sz:10.5,bold:bold,color:{rgb:argb(fontColor)}},
+        fill:{fgColor:{rgb:argb(bg)}},
+        alignment:{vertical:'center',horizontal:(c2===0?'center':(typeof dc.v==='number'?'right':'left'))},
+        border:{bottom:{style:'hair',color:{rgb:argb('E4E9E6')}}}};
+    }
+  }
+  // 열 너비
   ws['!cols']=[{wch:6}].concat(cols.map(function(c){
     return {wch:(c.k==='_code'?10:(c.k==='_no'?11:(c.num?12:16)))};}));
-  var last=head.length-1;
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:last}},{s:{r:1,c:0},e:{r:1,c:last}},{s:{r:2,c:0},e:{r:2,c:last}}];
+  // 행 높이 (제목 크게)
+  ws['!rows']=[{hpt:26},{hpt:18},{hpt:16}];
+  if(cutNoteRow>=0)ws['!rows'].push({hpt:16});
+  ws['!rows'][headRow]={hpt:30};
+  // 병합 (제목·부제·날짜·컷노트 각 행 전체)
+  var mg=[];for(var mr=0;mr<meta.length;mr++){if(meta[mr].length&&String(meta[mr][0]).length)mg.push({s:{r:mr,c:0},e:{r:mr,c:last}});}
+  ws['!merges']=mg;
+  ws['!freeze']={xSplit:0,ySplit:headRow+1};   // 헤더 고정
   var wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'순위');
   var fname=(PRT.title||'순위').replace(/[\\/:*?"<>|\[\]]/g,'').replace(/\s+/g,'_')+'.xlsx';
