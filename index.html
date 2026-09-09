@@ -4281,6 +4281,8 @@ function imgDownload(blob,fname){
 function prtExcel(){
   if(typeof XLSX==='undefined'){alert('엑셀 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');return;}
   var rows=PRT.rows.slice(0,PRT.n);
+  var meRow=PRT.rows.find(function(r){return r._me;});
+  if(meRow&&rows.indexOf(meRow)<0)rows=rows.concat([meRow]);   // 본인이 상위 N밖이면 맨 뒤에 추가
   var hasCode=rows.some(function(r){return r._code;});
   var hasNo=rows.some(function(r){return r._no;});
   var cols=[],firstName=true;
@@ -4345,18 +4347,20 @@ function prtExcel(){
     var rank=rec._rank||(i+1);
     for(var c2=0;c2<nCols;c2++){
       var dc=cell(rr,c2);
-      var bg=isMe?'E6F4EF':(band?soft:'FFFFFF');
-      var fontColor='222222';
-      if(!isWin)fontColor='AFAFAF';                     // 시상 외 회색
-      var bold=false;
-      if(c2===0){ // 순위
-        if(rank<=3&&isWin){var medal=['C9A227','9AA0A6','B06A2B'][rank-1];bg=isMe?'E6F4EF':band?soft:'FFFFFF';fontColor=medal;bold=true;}
+      var bg, fontColor, bold=false;
+      if(isMe){
+        // 본인 소속: 행 전체 테마색 진한 배경 + 흰 굵은 글씨로 강조
+        bg=main; fontColor='FFFFFF'; bold=true;
+      }else{
+        bg=(band?soft:'FFFFFF');
+        fontColor=isWin?'222222':'AFAFAF';   // 시상 외 회색
+        if(c2===0&&rank<=3&&isWin){fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];bold=true;} // 1~3위 메달색
+        if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
       }
-      if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
       dc.s={font:{sz:10.5,bold:bold,color:{rgb:argb(fontColor)}},
         fill:{fgColor:{rgb:argb(bg)}},
         alignment:{vertical:'center',horizontal:(c2===0?'center':(typeof dc.v==='number'?'right':'left'))},
-        border:{bottom:{style:'hair',color:{rgb:argb('E4E9E6')}}}};
+        border:{bottom:{style:(isMe?'thin':'hair'),color:{rgb:argb(isMe?main:'E4E9E6')}}}};
     }
   }
   // 열 너비
