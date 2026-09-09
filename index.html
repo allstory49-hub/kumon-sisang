@@ -3725,6 +3725,9 @@ function prtOpen(cfg){
   var hasCode=PRT.rows.some(function(r){return r._code;});
   PRT.hasWin=PRT.rows.some(function(r){return r._win!=null;});
   var u=S.user||{}, myCode=(u.소속코드||'');
+  // 총국 관리에서 공유 시: 내 총국 산하 조직(소속코드 첫 글자 일치)을 강조 표시
+  PRT.myChong=(S.pos==='총국'&&(S.tab==='chongm'||S.jtab==='🏫 총국 관리'))?myCode.charAt(0):null;
+  if(PRT.myChong)PRT.rows.forEach(function(r){r._myChong=((r._code||'').charAt(0)===PRT.myChong);});
   var myChong=myCode.charAt(0), mySaup=myCode.slice(0,2);
   // 원본(전사) rows·cut 백업
   if(!PRT._allRows){PRT._allRows=PRT.rows.slice();PRT._cutAll=PRT.cut;PRT._subAll=PRT.sub;PRT._titleAll=PRT.title;}
@@ -4338,6 +4341,7 @@ function prtExcel(){
     if(cl&&cl.hi)hiCols[ci]=1;
   });
   // 데이터 행 스타일
+  var ME_BG='C92A2A';   // 본인 강조색 (테마색과 구분되는 선명한 레드)
   for(var i=0;i<body.length;i++){
     var rr=headRow+1+i;
     var rec=rows[i]||{};
@@ -4349,18 +4353,24 @@ function prtExcel(){
       var dc=cell(rr,c2);
       var bg, fontColor, bold=false;
       if(isMe){
-        // 본인 소속: 행 전체 테마색 진한 배경 + 흰 굵은 글씨로 강조
-        bg=main; fontColor='FFFFFF'; bold=true;
+        // 본인 소속: 행 전체 강조색(레드) 배경 + 흰 굵은 글씨
+        bg=ME_BG; fontColor='FFFFFF'; bold=true;
+      }else if(rec._myChong){
+        // 내 총국 산하 조직: 연한 레드 배경 + 진한 레드 글씨 (그룹 강조)
+        bg='FCE9E9'; fontColor=isWin?'C92A2A':'D98A8A'; bold=(!!hiCols[c2]||c2===0);
+        if(c2===0&&rank<=3&&isWin)fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];
       }else{
         bg=(band?soft:'FFFFFF');
         fontColor=isWin?'222222':'AFAFAF';   // 시상 외 회색
         if(c2===0&&rank<=3&&isWin){fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];bold=true;} // 1~3위 메달색
         if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
       }
+      var isNum=(typeof dc.v==='number');
       dc.s={font:{sz:10.5,bold:bold,color:{rgb:argb(fontColor)}},
         fill:{fgColor:{rgb:argb(bg)}},
-        alignment:{vertical:'center',horizontal:(c2===0?'center':(typeof dc.v==='number'?'right':'left'))},
-        border:{bottom:{style:(isMe?'thin':'hair'),color:{rgb:argb(isMe?main:'E4E9E6')}}}};
+        numFmt:(isNum?'#,##0.###':undefined),
+        alignment:{vertical:'center',horizontal:(c2===0?'center':(isNum?'right':'left'))},
+        border:{bottom:{style:(isMe?'thin':'hair'),color:{rgb:argb(isMe?ME_BG:(rec._myChong?'F0C5C5':'E4E9E6'))}}}};
     }
   }
   // 열 너비
