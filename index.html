@@ -3906,11 +3906,12 @@ function prtOngOrg(lv){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
     var op=ongPerCap(code);
-    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',months:op.months,byMonth:op.byMonth,순증:op.ms,인당:op.per});});
+    var curT=Number((op.byMonth&&op.byMonth[curMonthKey()]&&op.byMonth[curMonthKey()].tea))||0;
+    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',months:op.months,byMonth:op.byMonth,순증:op.ms,인당:op.per,curT:curT});});
   arr.sort(function(a,b){return (b.인당-a.인당)||(b.순증-a.순증);});
   var me=(S.user&&S.user.소속코드)||'';
+  var top인당=(arr[0]&&arr[0].인당)||0;   // 1위 인당
   var months=(arr[0]&&arr[0].months)||[];
-  // 월별 컬럼 동적 생성 (7·8·9월 순증/인당)
   var mcols=[];
   months.forEach(function(mk,i){
     var lb=(Number((mk||'').split('-')[1])||0)+'월';
@@ -3920,10 +3921,13 @@ function prtOngOrg(lv){
   prtOpen({
     title:'['+lv+'] 온공 Top · 하반기 누적 인당순증 순위',
     sub:'1위 시상 ('+(lv==='사업국'?'50만원':'30만원')+') · 인당순증 = 월별 인당순증의 누적 합 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'}].concat(mcols).concat([{h:'누적 인당',k:'e',num:1,hi:1}]),
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'}].concat(mcols).concat([{h:'누적 인당',k:'e',num:1,hi:1},{h:'1위까지',k:'rem'}]),
     rows:arr.map(function(x,i){
       var row={_rank:i+1,_me:(x.code===me),_win:(i===0),_code:x.code,소속명:x.소속명,관리자:x.관리자,e:fmtD2(x.인당)};
       months.forEach(function(mk,j){var v=x.byMonth[mk]||{ms:0,per:0};row['m'+j+'s']=fmt1(v.ms);row['m'+j+'p']=fmtD2(v.per);});
+      // 잔여: 1위 인당과의 차이 → 당월 교사수 기준 필요 온공 건수
+      if(i===0)row.rem='🥇 1위';
+      else{var gap=top인당-x.인당;row.rem=(x.curT>0)?'온공 '+fmt(Math.ceil(gap*x.curT))+'건':fmtD2(gap);}
       return row;
     }),
     cutLabel:'1위만 시상',n:30
@@ -3937,11 +3941,17 @@ function prtOngTea(){
   }).sort(function(a,b){return (b.t-a.t)||(b.g-a.g);});
   var n30=arr.filter(function(x){return x.t>=30;}).length;
   var tno=(S.user&&S.user.교사번호)||'';
+  var top=(arr[0]&&arr[0].t)||0;   // 1위 누적
   prtOpen({
     title:'[교사] 온공 Top · 하반기 누적 순증 순위',
     sub:'누적 30 이상 · 1위 교사 시상금 50만원 · 7·8월 마감+9월 전일 · 대상 '+fmt(arr.length)+'명',
-    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'7월',k:'a',num:1},{h:'8월',k:'b',num:1},{h:'9월',k:'c',num:1},{h:'누적',k:'cc',num:1,hi:1}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.교사번호===tno),_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.j),b:fmt1(x.a),c:fmt1(x.c),cc:fmt1(x.t)};}),
+    cols:[{h:'소속',k:'소속명'},{h:'교사명',k:'교사명'},{h:'7월',k:'a',num:1},{h:'8월',k:'b',num:1},{h:'9월',k:'c',num:1},{h:'누적',k:'cc',num:1,hi:1},{h:'선정까지',k:'rem'}],
+    rows:arr.map(function(x,i){
+      var rem='-';
+      if(i===0)rem='🥇 1위';
+      else if(x.t<30)rem='누적30까지 온공 '+fmt1(30-x.t);
+      else{rem='1위까지 온공 '+fmt1(top-x.t);}
+      return {_rank:i+1,_me:(x.교사번호===tno),_win:(i===0),_code:x.소속코드,_no:x.교사번호,소속명:x.소속명,교사명:x.교사명,a:fmt1(x.j),b:fmt1(x.a),c:fmt1(x.c),cc:fmt1(x.t),rem:rem};}),
     cut:1,cutLabel:'시상 1위 (누적 30↑ 자격 '+fmt(n30)+'명)',n:30
   });
 }
@@ -3949,12 +3959,25 @@ function prtElite(){
   var arr=eliteJiguRankAll();
   var qual=arr.filter(function(x){return x.자격;}).length;
   var mySb=(S.user&&S.user.사번)||'';
+  // 시상 커트라인: 자격 충족자 중 20위의 달성률 (선정 경계)
+  var qarr=arr.filter(function(x){return x.자격;});
+  var cutRate=(qarr.length>=20)?qarr[19].달성률:null;   // 20위 자격자의 달성률
   prtOpen({
     title:'[3분기] 엘리트 지구장 · 누적 달성률 순위',
     sub:'달성률 100%↑ & D순증 1↑ · 상위 20명 시상(20만원+녹지원) · 관리자 사번 기준 집계 · 자격 충족 '+fmt(qual)+'개',
-    cols:[{h:'지구',k:'소속명'},{h:'지구장',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'D순증',k:'d',num:1,hi:1},{h:'자격',k:'e'}],
-    rows:arr.map(function(x){return {_rank:x.rank,_me:(x.사번===mySb),_code:x.소속코드,_no:x.사번,소속명:x.소속명,관리자:x.관리자||'',
-      a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt1(x.D순증),e:x.자격?'충족':'미충족'};}),
+    cols:[{h:'지구',k:'소속명'},{h:'지구장',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'D순증',k:'d',num:1,hi:1},{h:'자격',k:'e'},{h:'선정까지',k:'rem'}],
+    rows:arr.map(function(x){
+      // 잔여: 미선정자는 커트라인(20위 달성률)까지 필요 순증, 자격 미달은 그 조건
+      var rem='-';
+      var win=(x.자격&&x.rank<=20);
+      if(!win){
+        if(x.달성률<100&&x.목표>0){var need=Math.ceil(100*x.목표/100)-x.순증;rem='달성100%까지 순증 '+fmt1(Math.max(0,need));}
+        else if(x.D순증<1){rem='D순증 '+fmt1(1-x.D순증);}
+        else if(cutRate!=null&&x.목표>0){var needCut=Math.ceil(cutRate*x.목표/100)-x.순증;if(needCut>0)rem='20위까지 순증 '+fmt1(needCut);else rem='순위 경합';}
+        else rem='자격 충족(20위 밖)';
+      }
+      return {_rank:x.rank,_me:(x.사번===mySb),_win:win,_code:x.소속코드,_no:x.사번,소속명:x.소속명,관리자:x.관리자||'',
+        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt1(x.D순증),e:x.자격?'충족':'미충족',rem:rem};}),
     cut:20,cutLabel:'시상 T/O 상위 20명',n:30
   });
 }
@@ -3966,12 +3989,20 @@ function prtTopTour(lv){
     arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',달성률:f.목표?q3flr(f.순증/f.목표*100,1):0,순증:f.순증,목표:f.목표});});
   arr.sort(function(a,b){return b.달성률-a.달성률;});
   var me=(S.user&&S.user.소속코드)||'';
+  var cutRate=(arr.length>=TO)?arr[TO-1].달성률:null;   // 커트라인(TO위)의 달성률
   prtOpen({
     title:'[3분기] TOP TOUR ('+lv+') · 누적 달성률 순위',
     sub:'누적 순증 1↑ · 달성률 '+lv+'장 상위 '+TO+'명 시상 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1,hi:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'자격',k:'d'}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),_code:x.code,소속명:x.소속명,관리자:x.관리자,
-      a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(x.순증>=1?'충족':'미충족')};}),
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1,hi:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'자격',k:'d'},{h:'선정까지',k:'rem'}],
+    rows:arr.map(function(x,i){
+      var win=(i<TO&&x.순증>=1);
+      var rem='-';
+      if(!win){
+        if(x.순증<1)rem='순증 '+fmt1(1-x.순증);
+        else if(cutRate!=null&&x.목표>0){var need=Math.ceil(cutRate*x.목표/100)-x.순증;rem=(need>0)?TO+'위까지 순증 '+fmt1(need):'순위 경합';}
+      }
+      return {_rank:i+1,_me:(x.code===me),_win:win,_code:x.code,소속명:x.소속명,관리자:x.관리자,
+        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(x.순증>=1?'충족':'미충족'),rem:rem};}),
     cut:TO,cutLabel:'시상 T/O 상위 '+TO+'명',n:30
   });
 }
