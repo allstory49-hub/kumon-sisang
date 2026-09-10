@@ -4464,7 +4464,7 @@ function prtIncList(key){
       var need=null;
       if(nextT!=null&&d.exp>0){var needCnt=Math.ceil(nextT*d.exp/100)-(d.cnt||0);need=Math.max(0,needCnt);}
       arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp,pay:Math.round((d.cnt||0)*u),nextT:nextT,need:need});});
-    arr.sort(function(a,b){return b.rate-a.rate;});
+    arr.sort(function(a,b){return (b.rate-a.rate)||(b.cnt-a.cnt)||((a.code<b.code)?-1:(a.code>b.code?1:0));});
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지구 재약정률 인센티브',
       sub:'100% 8천·90%↑ 5천·80%↑ 3천 × 재약정건수 · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
@@ -4486,8 +4486,8 @@ function prtIncList(key){
       for(var ti=0;ti<tiers.length;ti++){if(ach<tiers[ti]){nextT=tiers[ti];break;}}
       var need=null;
       if(nextT!=null&&mok>0){need=Math.max(0,Math.ceil(nextT*mok/100)-sun);}
-      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,pay:(D>=1&&u)?Math.round(tno*u*10000):0,nextT:nextT,need:need,dneed:(D<1?(1-D):0)});});
-    arr.sort(function(a,b){return b.ach-a.ach;});
+      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,sun:sun,pay:(D>=1&&u)?Math.round(tno*u*10000):0,nextT:nextT,need:need,dneed:(D<1?(1-D):0)});});
+    arr.sort(function(a,b){return (b.ach-a.ach)||(b.sun-a.sun)||((a.code<b.code)?-1:(a.code>b.code?1:0));});
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지구 달성률 인센티브',
       sub:'500~100% 급간 × 교사수 (D순증1↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
@@ -4568,11 +4568,11 @@ function prtIncList(key){
       var toiNeed=(toiNext!=null&&gwa>0)?Math.max(0,toiCnt-Math.floor(toiNext*gwa/100)):null;
       var achQneed=(achQ<50&&f.목표>0)?Math.max(0,Math.ceil(50*f.목표/100)-(f.순증||0)):0;
       arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach8:ach8,sun8:sun8,tno:tno,u1:u1,pay1:Math.round(tno*u1*10000),
-        toi:toi,achQ:achQ,u2:u2,payTea:(Number(f.교사수당월)||0),
+        toi:toi,toiCnt:toiCnt,achQ:achQ,u2:u2,payTea:(Number(f.교사수당월)||0),
         pay2:Math.round((Number(f.교사수당월)||0)*u2*10000),
         achNext:achNext,achNeed:achNeed,toiNext:toiNext,toiNeed:toiNeed,achQneed:achQneed});});
     if(key==='jikach'){
-      arr.sort(function(p,q){return q.ach8-p.ach8;});
+      arr.sort(function(p,q){return (q.ach8-p.ach8)||(q.sun8-p.sun8)||((p.code<q.code)?-1:(p.code>q.code?1:0));});
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
       prtOpen({title:'['+curMonth()+'월] 지국 달성률 인센티브',
         sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(w1)+'개 / 전체 '+fmt(arr.length)+'개',
@@ -4581,7 +4581,7 @@ function prtIncList(key){
           nt:(x.achNext!=null?x.achNext+'%':'최고급간'),nd:(x.achNeed!=null?x.achNeed:'-')};}),
         cutLabel:'급간 해당 지국이 시상 대상',n:50});
     }else{
-      arr.sort(function(p,q){return p.toi-q.toi;});
+      arr.sort(function(p,q){return (p.toi-q.toi)||(p.toiCnt-q.toiCnt)||((p.code<q.code)?-1:(p.code>q.code?1:0));});
       var w2=arr.filter(function(x){return x.pay2>0;}).length;
       prtOpen({title:'[3분기] 지국 퇴회율 인센티브',
         sub:'3분기 누적 퇴회율 급간 × 교사수 (달성률 50%↑) · 대상 '+fmt(w2)+'개 / 전체 '+fmt(arr.length)+'개',
@@ -4619,7 +4619,7 @@ function prtIncList(key){
       // 온공 인당 1.5 잔여: 당월 교사수 기준 필요 온공 건수(근사)
       var ongNeed=(op.per<1.5&&curT>0)?Math.ceil((1.5-op.per)*curT):0;
       e.push({code:code,nm:o.소속명,mg:o.관리자||'',ach8:Number(fr.달성률)||0,sun8:Number(fr.과목순증)||0,
-        rate:qt.rate,sunQ:f.순증,per:op.per,
+        rate:qt.rate,toiCnt:toiCnt,sunQ:f.순증,per:op.per,
         a:(qt.rate<4.7&&f.순증>=1),b:(op.per>=1.5),
         toiNeed:toiNeed,sunNeed:sunNeed,ongNeed:ongNeed});});
     if(key==='eopach'){
@@ -4632,7 +4632,7 @@ function prtIncList(key){
         rows:e.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:x.pay?fmt(x.pay):'-'};}),
         cut:30,cutLabel:'상위 30위',n:e.length});
     }else{
-      e.sort(function(p,q){return p.rate-q.rate;});
+      e.sort(function(p,q){return (p.rate-q.rate)||(p.toiCnt-q.toiCnt)||((p.code<q.code)?-1:(p.code>q.code?1:0));});
       var w3=e.filter(function(x){return x.a||x.b;}).length;
       var t3=e.reduce(function(s,x){return s+(x.a?500000:0)+(x.b?500000:0);},0);
       prtOpen({title:'[3분기] 사업국 퇴회율 & 온공 인센티브',
