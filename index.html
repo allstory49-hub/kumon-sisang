@@ -4426,13 +4426,20 @@ function prtIncList(key){
     var J=APP.jaeyak||{};var arr=[];
     Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;var d=J[code];if(!d)return;
       var u=d.rate>=100?8000:d.rate>=90?5000:d.rate>=80?3000:0;
-      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp,pay:Math.round((d.cnt||0)*u)});});
+      // 잔여: 다음 급간(미달이면 최소 80%, 이미 받으면 윗 급간)까지 재약정 건수
+      var tiers=[80,90,100];
+      var nextT=null;
+      for(var ti=0;ti<tiers.length;ti++){if(d.rate<tiers[ti]){nextT=tiers[ti];break;}}
+      var need=null;
+      if(nextT!=null&&d.exp>0){var needCnt=Math.ceil(nextT*d.exp/100)-(d.cnt||0);need=Math.max(0,needCnt);}
+      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',rate:d.rate,cnt:d.cnt,exp:d.exp,pay:Math.round((d.cnt||0)*u),nextT:nextT,need:need});});
     arr.sort(function(a,b){return b.rate-a.rate;});
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지구 재약정률 인센티브',
       sub:'100% 8천·90%↑ 5천·80%↑ 3천 × 재약정건수 · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
-      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'만료예정',k:'e',num:1},{h:'재약정',k:'c',num:1},{h:'재약정률(%)',k:'r',num:1,hi:1},{h:'시상금',k:'p',num:1,hi:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,e:fmt(x.exp),c:fmt(x.cnt),r:fmt1(x.rate),p:x.pay?fmt(x.pay):'-'};}),
+      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'만료예정',k:'e',num:1},{h:'재약정',k:'c',num:1},{h:'재약정률(%)',k:'r',num:1,hi:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'달성 잔여(건)',k:'nd',num:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,e:fmt(x.exp),c:fmt(x.cnt),r:fmt1(x.rate),p:x.pay?fmt(x.pay):'-',
+        nt:(x.nextT!=null?x.nextT+'%':'최고급간'),nd:(x.need!=null?x.need:'-')};}),
       cutLabel:'재약정률 80%↑ 지구가 시상 대상',n:50});
     return;
   }
@@ -4440,14 +4447,22 @@ function prtIncList(key){
     var arr=[];
     Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지구')return;var fr=orgFresh(code);if(!fr)return;
       var ach=Number(fr.달성률)||0,D=Number(fr.디지털순증)||0,tno=Number(fr.전월말)||0;
+      var sun=Number(fr.과목순증)||0, mok=Number(o.목표)||0;
       var u=ach>=500?3.0:ach>=300?2.0:ach>=200?1.5:ach>=100?1.0:0;
-      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,pay:(D>=1&&u)?Math.round(tno*u*10000):0});});
+      // 잔여: 다음 급간(미달이면 100%, 이미 받으면 윗 급간)까지 순증 건수
+      var tiers=[100,200,300,500];
+      var nextT=null;
+      for(var ti=0;ti<tiers.length;ti++){if(ach<tiers[ti]){nextT=tiers[ti];break;}}
+      var need=null;
+      if(nextT!=null&&mok>0){need=Math.max(0,Math.ceil(nextT*mok/100)-sun);}
+      arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,D:D,tno:tno,u:u,pay:(D>=1&&u)?Math.round(tno*u*10000):0,nextT:nextT,need:need,dneed:(D<1?(1-D):0)});});
     arr.sort(function(a,b){return b.ach-a.ach;});
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:'[9월] 지구 달성률 인센티브',
       sub:'500~100% 급간 × 교사수 (D순증1↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
-      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-'};}),
+      cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'달성 잔여(순증)',k:'nd',num:1},{h:'D순증 잔여',k:'dn',num:1}],
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-',
+        nt:(x.nextT!=null?x.nextT+'%':'최고급간'),nd:(x.need!=null?x.need:'-'),dn:(x.dneed>0?fmt1(x.dneed):'-')};}),
       cutLabel:'달성률 100%↑ & D순증 1↑ 지구가 시상 대상',n:50});
     return;
   }
