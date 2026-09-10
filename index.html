@@ -4189,15 +4189,16 @@ function prtImage(){
     var rk=r._rank||(i+1);
     var out=(PRT.hasWin)?(!r._win):(PRT.cut&&rk>PRT.cut);
     if(!PRT.hasWin&&out&&cutY<0){cutY=y+cutGap/2;y+=cutGap;}
-    if(r._me)g.fillStyle=TH.soft;
+    if(r._me)g.fillStyle='#C92A2A';
     else if(out)g.fillStyle='#F5F7F6';
     else g.fillStyle=(i%2?'#FAFBFA':'#FFFFFF');
     g.fillRect(0,y,W,rowH);
-    if(r._me){g.fillStyle=TH.ac;g.fillRect(0,y,5,rowH);}
 
     // 순위 배지
     var bx=padX+rkW/2, by=y+rowH/2;
-    if(rk<=3&&!out){
+    if(r._me){
+      txt(rk,bx,by,16,'#FFFFFF','800','center');
+    }else if(rk<=3&&!out){
       var med=['#D4A017','#9BA7AE','#B4763C'][rk-1];
       g.beginPath();g.arc(bx,by,17,0,Math.PI*2);g.fillStyle=med;g.fill();
       txt(rk,bx,by+.5,16,'#FFFFFF','800','center');
@@ -4213,10 +4214,10 @@ function prtImage(){
     var sub=ok?String(r[ok.k]||''):'';
     if(!main){main=sub;sub='';}
     if(sub){
-      txt(clip(main,nameW-10,19,'800'),nameX,by-11,19,out?'#8C9A93':'#16241E','800');
-      txt(clip(sub,nameW-10,14),nameX,by+13,14,out?'#AAB6B0':'#7B8A83','400');
+      txt(clip(main,nameW-10,19,'800'),nameX,by-11,19,r._me?'#FFFFFF':(out?'#8C9A93':'#16241E'),'800');
+      txt(clip(sub,nameW-10,14),nameX,by+13,14,r._me?'#FFE0E0':(out?'#AAB6B0':'#7B8A83'),'400');
     }else{
-      txt(clip(main,nameW-10,19,'800'),nameX,by,19,out?'#8C9A93':'#16241E','800');
+      txt(clip(main,nameW-10,19,'800'),nameX,by,19,r._me?'#FFFFFF':(out?'#8C9A93':'#16241E'),'800');
     }
     // 수치 (hi 지정 열 강조 · 없으면 마지막 열)
     numKeys.forEach(function(c,k){
@@ -4225,7 +4226,8 @@ function prtImage(){
       var isPrev=/전월말/.test(c.h);
       var isScore=/시상점수|지구당/.test(c.h);
       var col;
-      if(out)col='#A9B5AF';
+      if(r._me)col='#FFFFFF';
+      else if(out)col='#A9B5AF';
       else if(/^-/.test(v))col='#DC2626';
       else if(isScore&&r._prevNeg)col='#16241E';
       else if(em)col=TH.ac;
@@ -4355,7 +4357,7 @@ function prtExcel(){
   function cell(r,c){var a=XLSX.utils.encode_cell({r:r,c:c});if(!ws[a])ws[a]={t:'s',v:''};return ws[a];}
 
   // 제목/부제/날짜/컷노트 스타일
-  cell(0,0).s={font:{bold:true,sz:16,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
+  cell(0,0).s={font:{bold:true,sz:20,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
   cell(1,0).s={font:{sz:10.5,color:{rgb:argb('FFFFFF')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
   cell(2,0).s={font:{sz:9.5,color:{rgb:argb('E8EEF2')}},fill:{fgColor:{rgb:argb(main)}},alignment:{vertical:'center',horizontal:'center'}};
   if(cutNoteRow>=0)cell(cutNoteRow,0).s={font:{sz:9.5,bold:true,color:{rgb:argb('B54708')}},fill:{fgColor:{rgb:argb('FFF4E6')}},alignment:{vertical:'center',horizontal:'center'}};
@@ -4386,6 +4388,8 @@ function prtExcel(){
     for(var c2=0;c2<nCols;c2++){
       var dc=cell(rr,c2);
       var bg, fontColor, bold=false;
+      var colKey=(c2>=1&&cols[c2-1])?cols[c2-1].k:null;
+      var isFail=(colKey&&rec._fail&&rec._fail.indexOf(colKey)>=0);   // 못 채운 기준 셀
       if(isMe){
         // 본인 소속: 행 전체 강조색(레드) 배경 + 흰 굵은 글씨
         bg=ME_BG; fontColor='FFFFFF'; bold=true;
@@ -4396,12 +4400,14 @@ function prtExcel(){
         if(c2===0&&rank<=3&&isWin)fontColor='FFFFFF';
       }else{
         bg=(band?soft:'FFFFFF');
-        fontColor=isWin?'222222':'AFAFAF';   // 시상 외 회색
+        fontColor='222222';   // 시상 외도 검정 글씨(회색 제거)
         if(c2===0&&rank<=3&&isWin){fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];bold=true;} // 1~3위 메달색
         if(hiCols[c2]){bold=true;if(isWin)fontColor=main;}
-        // 총국 관리 모드: 내 총국 외 조직은 회색/밴딩 없이 검정 글씨 + 흰 배경
+        // 총국 관리 모드: 내 총국 외 조직은 밴딩 없이 검정 글씨 + 흰 배경
         if(PRT.myChong){bg='FFFFFF';fontColor='222222';if(c2===0&&rank<=3&&isWin)fontColor=['C9A227','9AA0A6','B06A2B'][rank-1];if(hiCols[c2]){bold=true;}}
       }
+      // 못 채운 기준 셀: 핑크 배경 + 빨강 글씨 (본인 강조행 제외한 모든 경우 우선 적용)
+      if(isFail&&!isMe){bg='FCE4EC'; fontColor='D6336C'; bold=true;}
       var isNum=(typeof dc.v==='number');
       var nf;
       if(isNum){nf=(dc.v===Math.round(dc.v))?'#,##0':'#,##0.0#';}   // 정수는 점 없이, 소수는 소수점 표시
@@ -4418,7 +4424,7 @@ function prtExcel(){
   ws['!cols']=[{wch:6}].concat(cols.map(function(c){
     return {wch:(c.k==='_code'?10:(c.k==='_no'?11:(c.num?12:16)))};}));
   // 행 높이 (제목 크게)
-  ws['!rows']=[{hpt:26},{hpt:18},{hpt:16}];
+  ws['!rows']=[{hpt:34},{hpt:18},{hpt:16}];
   if(cutNoteRow>=0)ws['!rows'].push({hpt:16});
   ws['!rows'][headRow]={hpt:30};
   // 병합 (제목·부제·날짜·컷노트 각 행 전체)
@@ -4494,7 +4500,8 @@ function prtIncList(key){
     prtOpen({title:'[9월] 지구 달성률 인센티브',
       sub:'500~100% 급간 × 교사수 (D순증1↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
       cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'달성 잔여(순증)',k:'nd',num:1},{h:'D순증 잔여',k:'dn',num:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-',
+      rows:arr.map(function(x,i){var fail=[];if(x.ach<100)fail.push('a');if(x.D<1)fail.push('d');
+        return {_rank:i+1,_code:x.code,_win:(x.pay>0),_fail:fail,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-',
         nt:(x.nextT!=null?x.nextT+'%':'최고급간'),nd:(x.need!=null?x.need:'-'),dn:(x.dneed>0?fmt1(x.dneed):'-')};}),
       cutLabel:'달성률 100%↑ & D순증 1↑ 지구가 시상 대상',n:50});
     return;
@@ -4588,7 +4595,8 @@ function prtIncList(key){
       prtOpen({title:'[3분기] 지국 퇴회율 인센티브',
         sub:'3분기 누적 퇴회율 급간 × 교사수 (달성률 50%↑) · 대상 '+fmt(w2)+'개 / 전체 '+fmt(arr.length)+'개',
         cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}],
-        rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay2>0),nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:fmt(x.payTea),d:x.u2?fmtD(x.u2):'-',e:x.pay2?fmt(x.pay2):'-',
+        rows:arr.map(function(x,i){var fail=[];if(x.toi>4.6)fail.push('a');if(x.achQ<50)fail.push('b');
+          return {_rank:i+1,_code:x.code,_win:(x.pay2>0),_fail:fail,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:fmt(x.payTea),d:x.u2?fmtD(x.u2):'-',e:x.pay2?fmt(x.pay2):'-',
           nt:(x.toiNext!=null?x.toiNext+'%↓':'최고급간'),nd:(x.toiNeed!=null?x.toiNeed:'-'),an:(x.achQneed>0?fmt1(x.achQneed):'-')};}),
         cutLabel:'퇴회율 급간 + 달성률 50%↑ 지국이 시상 대상',n:50});
     }
@@ -4640,7 +4648,8 @@ function prtIncList(key){
       prtOpen({title:'[3분기] 사업국 퇴회율 & 온공 인센티브',
         sub:'퇴회율 4.6%↓(순증1↑) 50만 + 온공 인당 1.5↑ 50만 · 예상 '+fmt(t3)+'원 · 해당 '+fmt(w3)+'개',
         cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적순증',k:'b',num:1},{h:'온공 인당',k:'cc',num:1,hi:1},{h:'퇴회율',k:'d'},{h:'온공',k:'e'},{h:'시상금',k:'f',num:1},{h:'퇴회 잔여(건)',k:'tn',num:1},{h:'온공 잔여(건)',k:'on',num:1}],
-        rows:e.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.a||x.b),nm:x.nm,mg:x.mg,a:fmtD2(x.rate),b:fmt1(x.sunQ),cc:fmtD2(x.per),
+        rows:e.map(function(x,i){var fail=[];if(!x.a&&!x.b){fail.push('d');fail.push('e');}
+          return {_rank:i+1,_code:x.code,_win:(x.a||x.b),_fail:fail,nm:x.nm,mg:x.mg,a:fmtD2(x.rate),b:fmt1(x.sunQ),cc:fmtD2(x.per),
           d:x.a?'○':'-',e:x.b?'○':'-',f:((x.a?500000:0)+(x.b?500000:0))||'-',
           tn:x.a?'-':(x.toiNeed>0?fmt1(x.toiNeed):(x.sunNeed>0?'순증'+fmt1(x.sunNeed):'-')),
           on:x.b?'-':(x.ongNeed>0?fmt(x.ongNeed):'-')};}),
