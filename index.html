@@ -622,7 +622,7 @@ input,button{font-family:inherit;font-size:14px}
 
 </div>
 <script>
-var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',fixedPrevSun:null,sejongPrev:null,frozenTeaJul:null,frozenTeaAug:null,frozenItal:null,sejongMet:null,sejongMetAsof:''};
+var APP={teachers:[],org:{지구:[],지국:[],사업국:[],총국:[]},meta:{},prevT:{},prevO:{},incList:[],incMap:{},incJigu:[],incJiguMap:{},incJiguk:[],incJigukMap:{},incManager:[],incManagerMap:{},incEnv:[],incEnvMap:{},cumEnv:null,incCross:{},mastaTopOrg:null,mastaTopTea:null,mastaTop6:{},jjk45:null,jjk6:null,club10:null,elite45:null,elite6:null,q3cur:{},q3cum:{},q3curTea:{},q3cumTea:{},histIndex:[],histCache:{},sejong:null,frozenIncJun:null,mutoe:null,mutoeAsof:'',sejongItal:null,sejongItalAsof:'',sejongItalRaw:null,jaeyak:null,jaeyakAsof:'',jaeExpFixed:null,fixedPrevSun:null,sejongPrev:null,frozenTeaJul:null,frozenTeaAug:null,frozenItal:null,sejongMet:null,sejongMetAsof:''};
 var S={user:null,type:'teacher',pos:'',tab:'my',atab:'sisang',otab:'지구',search:null,histM:null,sjLv:'지국',imonth:'8',_imonthSet:0,jtab:'월성과',i6tab:'회원순증'};
 var UP={teacher:null,org:null,member:null,masta:null,jigu:null,jik:null,jik2:null,eop:null,jigu2:null,cross:null,toi9:null,jae:null};
 
@@ -758,6 +758,7 @@ async function saveToGitHub(bakedJs){
   await loadSejongItal();
   await loadJaeyak();
   await loadFixedPrevSun();
+  await loadJaeExpFixed();
   try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
@@ -775,6 +776,7 @@ async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Da
 async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongToi=j.data;APP.sejongToiRaw=j.raw||null;}}catch(e){APP.sejongToi=null;APP.sejongToiRaw=null;}}
 async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevsun.json?t='+Date.now());if(r.ok)APP.fixedPrevSun=(await r.json()).byMonth||{};}catch(e){APP.fixedPrevSun=null;}}
+async function loadJaeExpFixed(){try{var r=await dfetch('cumulative/jae_exp_fixed.json?t='+Date.now());if(r.ok)APP.jaeExpFixed=(await r.json()).data||{};}catch(e){APP.jaeExpFixed=null;}}
 async function loadJaeyak(){try{var r=await dfetch('cumulative/jaeyak.json?t='+Date.now());if(r.ok){var j=await r.json();APP.jaeyak=j.data;APP.jaeyakAsof=j.asof||'';}}catch(e){APP.jaeyak=null;}}
 async function loadSejongItal(){try{var r=await dfetch('sejong/ital.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongItal=j.data;APP.sejongItalAsof=j.asof||'';APP.sejongItalRaw=j.raw||null;}}catch(e){APP.sejongItal=null;APP.sejongItalRaw=null;}}
 async function loadSejongPrev(){try{var r=await dfetch('sejong/prev25.json?t='+Date.now());if(r.ok)APP.sejongPrev=(await r.json()).data;}catch(e){APP.sejongPrev=null;}}
@@ -2161,7 +2163,7 @@ function jaeYakCard(){
     +critBlock('스마트구몬N 재약정률 급간별 시상')
     +'<div class="jtiers">'+tb+'</div>'
     +'<div class="ib am" style="margin-bottom:0">📋 아직 재약정 실적 데이터가 업로드되지 않았어요.</div>'
-    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수(예상실적-약정만료예정) × 100<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 만료예정건수(예상실적-약정만료예정), 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수 × 100<br>· 만료예정 건수는 월초 확정 기준으로 고정 · 재약정 건수는 매일 갱신<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
   var row=-1;for(var i=0;i<JIGUJAE9.length;i++){if(d.rate>=JIGUJAE9[i].min){row=i;break;}}
   var unit=(row>=0)?JIGUJAE9[row].p:0;
   var pay=Math.round((d.cnt||0)*unit); var win=pay>0;
@@ -2183,7 +2185,7 @@ function jaeYakCard(){
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 재약정 '+fmt(d.cnt)+'건 × '+fmt(unit)+'원 = '+fmt(pay)+'원':'아직 80% 미만이에요')+'</div>'
     +remain
-    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수(예상실적-약정만료예정) × 100<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 만료예정건수(예상실적-약정만료예정), 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 재약정률 = 재약정 건수(스마트구몬N 재약정-계) ÷ 만료예정 건수 × 100<br>· 만료예정 건수는 월초 확정 기준으로 고정 · 재약정 건수는 매일 갱신<br>· 확인: KSS &gt; 실적관리 &gt; 소속별 평가실적 &gt; 재약정건수(스마트구몬N 재약정-계)<br>· 시상금은 10월 운영비에 포함하여 일괄 지급</div></div>';
 }
 function jiguAchCard9(){
   var code=(S.user&&S.user.소속코드)||'';
@@ -4918,12 +4920,14 @@ function parseMastaRaw(data,level){
   return m;
 }
 function buildJaeyakFromSopyeong(data){
-  // ③소평(전체)에서 지구 재약정률 산출: 재약정건수(col61) ÷ 만료예정(col68)
+  // 재약정건수는 ③소평(col61), 만료예정은 고정값(jae_exp_fixed) 사용
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var fx=APP.jaeExpFixed||{};
   var m={};
   for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();
     if(classifyOrg(cc)!=='지구')continue;
-    var cnt=Number(r[61])||0, exp=Number(r[68])||0;
+    var cnt=Number(r[61])||0;
+    var exp=(fx[cc]!=null)?fx[cc]:(Number(r[68])||0);   // 만료예정: 고정값 우선, 없으면 소평값
     m[cc]={cnt:Math.round(cnt),exp:Math.round(exp),rate:exp?q3flr(cnt/exp*100,1):0};
   }
   return m;
