@@ -4519,30 +4519,44 @@ function prtIncList(key){
       var fr=orgFresh(code), f=q3get(code);if(!fr||!f)return;
       var st=APP.sejongToi&&APP.sejongToi[code], qt=q3Toi(code);
       var toi=st?st.quarter.rate:qt.rate;
+      var toiCnt=st?st.quarter.toi:qt.toi, gwa=st?st.quarter.gwa:qt.gwa;   // 누적 퇴회건수·과목수
       var ach8=Number(fr.달성률)||0, sun8=Number(fr.과목순증)||0, tno=Number(fr.전월말)||Number(o.교사수)||0;
+      var mok8=Number(o.목표)||0;
       var achQ=(f.달성률!=null)?f.달성률:(f.목표?q3flr(f.순증/f.목표*100,1):0);
       var r1=-1;for(var i=0;i<JIKACH.length;i++){if(ach8>=JIKACH[i].min){r1=i;break;}}
       var u1=(r1>=0)?JIKACH[r1].p:(sun8>=1?0.5:0);
       var r2=-1;for(var i=0;i<JIKTOI.length;i++){if(toi<JIKTOI[i].max+0.1){r2=i;break;}}
       var u2=(achQ>=50&&r2>=0)?JIKTOI[r2].p:0;
+      // 달성률 잔여: 다음 급간(50/100/200%)까지 필요 순증
+      var achTiers=[50,100,200];
+      var achNext=null;for(var ti=0;ti<achTiers.length;ti++){if(ach8<achTiers[ti]){achNext=achTiers[ti];break;}}
+      var achNeed=(achNext!=null&&mok8>0)?Math.max(0,Math.ceil(achNext*mok8/100)-sun8):null;
+      // 퇴회율 잔여: 다음(더 낮은) 급간까지 줄여야 할 퇴회 건수. 미달(4.6 초과)이면 4.6까지, 이미 급간이면 윗급간
+      var toiTiers=[4.6,4.4,4.1,3.8];
+      var toiNext=null;for(var ti=0;ti<toiTiers.length;ti++){if(toi>toiTiers[ti]){toiNext=toiTiers[ti];break;}}
+      var toiNeed=(toiNext!=null&&gwa>0)?Math.max(0,toiCnt-Math.floor(toiNext*gwa/100)):null;
+      var achQneed=(achQ<50&&f.목표>0)?Math.max(0,Math.ceil(50*f.목표/100)-(f.순증||0)):0;
       arr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach8:ach8,sun8:sun8,tno:tno,u1:u1,pay1:Math.round(tno*u1*10000),
         toi:toi,achQ:achQ,u2:u2,payTea:(Number(f.교사수당월)||0),
-        pay2:Math.round((Number(f.교사수당월)||0)*u2*10000)});});
+        pay2:Math.round((Number(f.교사수당월)||0)*u2*10000),
+        achNext:achNext,achNeed:achNeed,toiNext:toiNext,toiNeed:toiNeed,achQneed:achQneed});});
     if(key==='jikach'){
       arr.sort(function(p,q){return q.ach8-p.ach8;});
       var w1=arr.filter(function(x){return x.pay1>0;}).length;
       prtOpen({title:'['+curMonth()+'월] 지국 달성률 인센티브',
         sub:'급간별 교사수 × 2.0~0.5만원 · 대상 '+fmt(w1)+'개 / 전체 '+fmt(arr.length)+'개',
-        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
-        rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay1>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:fmt(x.tno),d:x.u1?fmtD(x.u1):'-',e:x.pay1?fmt(x.pay1):'-'};}),
+        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'순증',k:'b',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'달성 잔여(순증)',k:'nd',num:1}],
+        rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay1>0),nm:x.nm,mg:x.mg,a:fmt1(x.ach8),b:fmt1(x.sun8),cc:fmt(x.tno),d:x.u1?fmtD(x.u1):'-',e:x.pay1?fmt(x.pay1):'-',
+          nt:(x.achNext!=null?x.achNext+'%':'최고급간'),nd:(x.achNeed!=null?x.achNeed:'-')};}),
         cutLabel:'급간 해당 지국이 시상 대상',n:50});
     }else{
       arr.sort(function(p,q){return p.toi-q.toi;});
       var w2=arr.filter(function(x){return x.pay2>0;}).length;
       prtOpen({title:'[3분기] 지국 퇴회율 인센티브',
         sub:'3분기 누적 퇴회율 급간 × 교사수 (달성률 50%↑) · 대상 '+fmt(w2)+'개 / 전체 '+fmt(arr.length)+'개',
-        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1}],
-        rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay2>0),nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:fmt(x.payTea),d:x.u2?fmtD(x.u2):'-',e:x.pay2?fmt(x.pay2):'-'};}),
+        cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1},{h:'교사수',k:'cc',num:1},{h:'단가(만원)',k:'d',num:1},{h:'시상금',k:'e',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}],
+        rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay2>0),nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.achQ),cc:fmt(x.payTea),d:x.u2?fmtD(x.u2):'-',e:x.pay2?fmt(x.pay2):'-',
+          nt:(x.toiNext!=null?x.toiNext+'%↓':'최고급간'),nd:(x.toiNeed!=null?x.toiNeed:'-'),an:(x.achQneed>0?fmt1(x.achQneed):'-')};}),
         cutLabel:'퇴회율 급간 + 달성률 50%↑ 지국이 시상 대상',n:50});
     }
     return;
