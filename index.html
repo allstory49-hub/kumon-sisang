@@ -2299,6 +2299,9 @@ function managerCard9(){
   var fr=code?orgFresh(code):null;
   var ach=fr?(Number(fr.달성률)||0):0;
   var ok=ach>=80;
+  var sun=fr?(Number(fr.과목순증)||0):0;
+  var mok=(APP.q3cur&&APP.q3cur[code]&&Number(APP.q3cur[code].목표))||0;
+  var need=(!ok&&mok>0)?Math.max(0,Math.ceil(80*mok/100)-sun):null;
   return '<div class="incsec"><div class="incsech"><span>🎁 [9월] 매니저 인센티브</span>'+prtBtn("prtIncList('manager9')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 9월 · 지급 26년 10월</div>'
     +critBlock('지국 합산과목 달성률 <b>80% 이상</b>')
@@ -2307,7 +2310,7 @@ function managerCard9(){
     +'<div class="incgrid4"><div class="ig4"><div class="ig4l">지국 달성률 <span style="font-size:9px;color:var(--t3)">(80%↑)</span></div><div class="ig4v" style="color:'+(ok?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
     +'<div class="ig4"><div class="ig4l">달성 여부</div><div class="ig4v" style="font-size:15px;color:'+(ok?'var(--green)':'var(--t2)')+'">'+(ok?'충족':'미달')+'</div></div></div>'
     +'<div class="incres '+(ok?'win':'lose')+'">'+(ok?'🎉 매니저 시상품 지급 대상입니다':'아직 80% 미만이에요')+'</div>'
-    +(ok?'':'<div class="icremain">🎯 달성률 80%까지 <b>'+fmt1(80-ach)+'%p</b> 남음</div>')
+    +(ok?'':(need!=null?'<div class="icremain">🎯 달성률 80%까지 순증 <b>'+fmt1(need)+'</b> 남음</div>':''))
     +'<div class="ib bl" style="margin-bottom:0">· 지급월(10월) 기준 재직 중인 매니저에 한해 지급<br>· 겸직 매니저는 한 지국만 달성해도 지급 (중복 없음)<br>· 시행월(9월) 기준 근무지로 배송 · A/S: 엠앤제이마케팅 031-984-6117</div></div>';
 }
 function julJigukSep(){
@@ -4606,12 +4609,15 @@ function prtIncList(key){
     var marr=[];
     Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!=='지국')return;
       var fr=orgFresh(code);if(!fr)return;
-      marr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:Number(fr.달성률)||0});});
-    marr.sort(function(a,b){return b.ach-a.ach;});
+      var ach=Number(fr.달성률)||0, sun=Number(fr.과목순증)||0, mok=Number(o.목표)||0;
+      var need=(ach<80&&mok>0)?Math.max(0,Math.ceil(80*mok/100)-sun):null;
+      marr.push({code:code,nm:o.소속명,mg:o.관리자||'',ach:ach,sun:sun,need:need});});
+    marr.sort(function(a,b){return (b.ach-a.ach)||(b.sun-a.sun)||((a.code<b.code)?-1:(a.code>b.code?1:0));});
     prtOpen({title:'[9월] 매니저 인센티브 (지국 달성률 80%↑)',
       sub:'지국 달성률 80%↑ · 퀸나 전기그릴(단가 '+fmt(38500)+'원) · 대상 '+fmt(marr.filter(function(x){return x.ach>=80;}).length)+'개',
-      cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'시상',k:'g'}],
-      rows:marr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.ach>=80),nm:x.nm,mg:x.mg,a:fmt1(x.ach),g:x.ach>=80?'전기그릴':'-'};}),
+      cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'순증',k:'s',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'시상',k:'g'},{h:'달성 잔여(순증)',k:'nd',num:1}],
+      rows:marr.map(function(x,i){var fail=(x.ach<80)?['a']:[];
+        return {_rank:i+1,_code:x.code,_win:(x.ach>=80),_fail:fail,nm:x.nm,mg:x.mg,s:fmt1(x.sun),a:fmt1(x.ach),g:x.ach>=80?'전기그릴':'-',nd:(x.need!=null?x.need:'-')};}),
       cutLabel:'달성률 80%↑ 지국이 시상 대상',n:Math.min(120,marr.length)});
     return;
   }
