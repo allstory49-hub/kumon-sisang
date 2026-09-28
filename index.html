@@ -1324,9 +1324,11 @@ function eliteCard(){
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 4~6월 합산과목 순증 합 ÷ 목표 합 × 100 (둘째자리 절사)<br>· 시상: 전사 10명(20만) + 총국별 10명(15만) · 교사수 5인 이하·최소 2개월 미만 제외<br>· 동률 시: 일반과목 순증(인당)↑ > D순증(인당)↑</div></div>';
 }
 function orgFresh(code){
-  // baked.js(최신 업로드) org 데이터에서 code 찾기 — 달성률·과목순증·디지털순증 최신값
-  if(!APP._orgIdx){APP._orgIdx={};var O=APP.org||{};['지구','지국','사업국','총국'].forEach(function(lv){(O[lv]||[]).forEach(function(o){if(o.소속코드)APP._orgIdx[o.소속코드]=o;});});}
-  return APP._orgIdx[code]||null;
+  // 인센티브는 ③소평(q3cur, 전체) 기준 — 달성률·과목순증·디지털순증·교사수를 q3cur에서 매핑
+  var o=(APP.q3cur||{})[code];
+  if(!o)return null;
+  return {소속코드:code,소속명:o.소속명,관리자명:o.관리자,사번:o.사번,
+    달성률:o.달성률,과목순증:o.순증,디지털순증:o.D순증,전월말:o.교사수,목표:o.목표};
 }
 function q3cumSum(code){
   // q3cum(프로즌 월들, byMonth)의 해당 코드 데이터를 전부 합산
