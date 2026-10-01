@@ -2094,7 +2094,7 @@ function chongOpsCard10(){
     +'<div class="ib am" style="margin-bottom:0">※ 조직규모에 따른 배정금액은 임시 금액 (지급월 조직규모 반영하여 금액 변동 예정)</div></div>';
 }
 function julyChongOct(){
-  var tabs=['TOP TOUR','커피차','지속운영','🏫 총국 관리'];
+  var tabs=['TOP TOUR','커피차','🏫 총국 관리'];   // '지속운영'은 기준 확정 전까지 숨김(chongOpsCard10 유지)
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='TOP TOUR';
   var body;
   if(S.jtab==='TOP TOUR')body=topTourCard('총국');
@@ -4014,13 +4014,15 @@ function upload(){
     +'<div class="snrow"><input id="snm" class="snin" placeholder="저장할 월 (예: 2026-07)" value="'+defaultSnapMonth()+'"><button class="actb snbtn" id="snbtn" onclick="doSnapshot()">이번 달 기록 저장</button></div>'
     +'<div id="smsg" style="margin-top:8px;font-size:12px;text-align:center;line-height:1.5"></div>';
 }
-function defaultSnapMonth(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);}
+function defaultSnapMonth(){var k=keyOfDate(APP.meta&&APP.meta.date);if(k)return k;var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);}
 function monthLabel(m){var p=String(m).split('-');return p.length===2?(p[0]+'년 '+parseInt(p[1],10)+'월'):m;}
 async function doSnapshot(){
   var btn=document.getElementById('snbtn'),msg=document.getElementById('smsg');
   var m=(document.getElementById('snm').value||'').trim();
   if(!/^\d{4}-\d{2}$/.test(m)){msg.innerHTML='<span style="color:var(--red)">월 형식은 YYYY-MM 이어야 해요 (예: 2026-07)</span>';return;}
   if(!APP.teachers.length){msg.innerHTML='<span style="color:var(--red)">먼저 데이터를 반영해주세요.</span>';return;}
+  var dk=keyOfDate(APP.meta&&APP.meta.date);
+  if(dk&&dk!==m){msg.innerHTML='<span style="color:var(--red)">⚠️ 지금 올라가 있는 데이터는 <b>'+(APP.meta.date||'')+'</b> 기준이라 '+monthLabel(m)+' 기록으로 저장할 수 없어요. ('+monthLabel(dk)+'만 저장 가능)</span>';return;}
   btn.disabled=true;btn.textContent='저장 중...';msg.innerHTML='<span style="color:var(--blue)">스냅샷 생성 중...</span>';
   try{
     var snap=buildSnapshot(m);
