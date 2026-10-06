@@ -4347,7 +4347,7 @@ function prtAssignTiers(P){
   if(ac)rows.forEach(function(r){var a=prtAmt(r[ac.k]);if(a>0&&amts.indexOf(a)<0)amts.push(a);});
   amts.sort(function(a,b){return b-a;});
   rows.forEach(function(r){
-    if(r._tier!=null)return;
+    if(r._tier!=null){r._dark=(r._tier>=0)&&(P.hasWin?!!r._win:true);return;}
     var a=ac?prtAmt(r[ac.k]):0;
     if(a>0)r._tier=Math.min(amts.indexOf(a),PRT_TIER_LIGHT.length-1);
     else if(r._win)r._tier=0;
@@ -5258,12 +5258,12 @@ function prtIncList(key){
     var win=arr.filter(function(x){return x.pay>0;}).length;
     var cols=[{h:lv,k:'nm'},{h:lv+'장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적달성률(%)',k:'b',num:1}];
     if(lv==='지국')cols.push({h:'교사수',k:'t',num:1});
-    cols=cols.concat([{h:'예상 시상금',k:'e',num:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}]);
+    cols=cols.concat([{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}]);
     prtOpen({title:'[4분기] '+lv+' 퇴회율 인센티브',
       sub:(lv==='지국'?'누적 퇴회율 3.7~4.5% 급간 × 교사수':'누적 퇴회율 3.9%↓100만·4.1%↓70만·4.3%↓50만·4.5%↓30만')+' (누적 달성률 80%↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
       cols:cols,
       rows:arr.map(function(x,i){var fail=[];if(x.row<0)fail.push('a');if(!x.elig)fail.push('b');
-        return {_rank:i+1,_code:x.code,_win:x.pay>0,_fail:fail,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.ach),t:fmt(x.tea),e:x.exp?fmt(x.exp):'-',p:x.pay?fmt(x.pay):'-',nt:x.nt,nd:(x.nd!=null?x.nd:'-'),an:(x.an>0?fmt1(x.an):'-')};}),
+        return {_rank:i+1,_code:x.code,_win:x.pay>0,_tier:(x.row>=0?x.row:-1),_fail:fail,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),b:fmt1(x.ach),t:fmt(x.tea),p:x.exp?fmt(x.exp):'-',nt:x.nt,nd:(x.nd!=null?x.nd:'-'),an:(x.an>0?fmt1(x.an):'-')};}),
       cutLabel:'퇴회율 급간 + 누적 달성률 80%↑ '+lv+'이 시상 대상',n:50});
     return;
   }
