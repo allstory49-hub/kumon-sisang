@@ -4397,6 +4397,8 @@ function prtOpen(cfg){
   var hasCode=PRT.rows.some(function(r){return r._code;});
   PRT.hasWin=PRT.rows.some(function(r){return r._win!=null;});
   prtRenameCols(PRT);prtSplitRem(PRT);
+  // 조직명 줄임: 사업국·총국·지국 접미사 제거 (네 글자 사업국은 원본이 '천안청주사업'처럼 잘려 있어 '사업'도 제거)
+  (PRT.cols||[]).forEach(function(c){if(c.h!=='조직')return;PRT.rows.forEach(function(r){if(typeof r[c.k]==='string')r[c.k]=r[c.k].replace(/(사업국|사업|총국|지국)$/,'');});});
   prtAssignTiers(PRT);
   var u=S.user||{}, myCode=(u.소속코드||'');
   // 총국 관리에서 공유 시: 내 총국 산하 조직(소속코드 첫 글자 일치)을 강조 표시
