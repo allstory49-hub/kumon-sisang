@@ -2055,11 +2055,11 @@ function eopEntCard10(){
   if(me.rank>2){var cut=me.rank<=7?2:me.rank<=15?7:me.rank<=30?15:30,t=arr[cut-1];
     if(t)remain+='<div class="icnext">⬆️ '+cut+'위('+entTierLbl(cut)+' · 캐리어 '+entQty(cut)+'개)까지 <b>입회 '+fmt(entNeed(t,me))+'건</b> 필요 <span style="font-size:11px;opacity:.8">(현재 '+me.rank+'위 · '+cut+'위 인당 '+fmtD2(t.per)+')</span></div>';}
   return hd
-    +'<div class="incgrid4">'+g4('인당입회',fmtD2(me.per),me.win?'var(--green)':'var(--t1)')+g4('입회 / 교사수',fmt1(me.입회)+' / '+fmt(me.교사수))+g4('순위',me.rank+'위')
+    +'<div class="incgrid4">'+g4('인당입회',fmtD2(me.per),me.win?'var(--green)':'var(--t1)')+g4('교사수 / 입회',fmt(me.교사수)+' / '+fmt1(me.입회))+g4('순위',me.rank+'위')
     +g4('합산과목 순증',fmt1(me.순증),me.elig?'var(--green)':'var(--red)')+'</div>'
     +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 '+entTierLbl(me.rank)+' · 캐리어 '+me.qty+'개':(me.qty?'순위상 캐리어 '+me.qty+'개 구간 · 합산과목 순증 1 이상 시 지급':'현재 '+me.rank+'위 (시상 30위까지)'))+'</div>'
     +remain
-    +rankBoardX(arr,code,[{h:'입회',f:function(x){return fmt1(x.입회);}},{h:'교사',f:function(x){return fmt(x.교사수);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],
+    +rankBoardX(arr,code,[{h:'교사',f:function(x){return fmt(x.교사수);}},{h:'입회',f:function(x){return fmt1(x.입회);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],
       function(x){return x.win;},'인당입회 순위 (전사)',30,'시상 30위')
     +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 합산과목 누적입회 ÷ 교사수 · ③소평(전체) 기준<br>· 동률 시: 절대입회 높은 순 > 퇴회율 낮은 순<br>· 캐리어 색상(옐로우·민트)은 랜덤 지급</div></div>';
 }
@@ -5331,7 +5331,7 @@ function prtIncList(key){
     var arr=eopEntRank10(),win=arr.filter(function(x){return x.win;}).length;
     prtOpen({title:'['+curMonth()+'월] 사업국 인당입회 인센티브',
       sub:'인당입회 상위 30 (합산과목 순증 1↑) · 1~2위 25개·3~7위 20개·8~15위 15개·16~30위 10개 (곰돌이 캐리어) · 동률: 절대입회>퇴회율 낮은 순 · 대상 '+fmt(win)+'개',
-      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'입회',k:'e',num:1},{h:'교사수',k:'t',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'합산순증',k:'s',num:1},{h:'캐리어',k:'q',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}],
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'교사수',k:'t',num:1},{h:'입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'합산순증',k:'s',num:1},{h:'캐리어',k:'q',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}],
       rows:arr.map(function(x){var rem='-';
         if(!x.elig)rem='순증 1까지 '+fmt1(1-x.순증);
         else if(x.rank>2){var cut=x.rank<=7?2:x.rank<=15?7:x.rank<=30?15:30,t=arr[cut-1];if(t)rem=cut+'위까지 입회 '+fmt(entNeed(t,x))+'건';}
