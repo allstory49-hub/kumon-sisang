@@ -1375,7 +1375,7 @@ function eliteCard(){
   var remain='';
   if(c.small){remain='<div class="icremain">교사수 5인 이하로 제외 대상이에요.</div>';}
   else if(c.달성률<100){remain='<div class="icremain">🎯 달성률 100%까지 <b>'+fmtD(100-c.달성률)+'%p</b> 남음</div>';}
-  else if(c.D순증<1){remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-c.D순증)+'</b> 남음</div>';}
+  else if(c.D순증<1){remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt(1-c.D순증)+'</b> 남음</div>';}
   else if(!win&&me){var above=list[me.rank-2];if(above)remain='<div class="icnext">⬆️ '+(me.rank-1)+'위까지 달성률 <b>'+fmtD(above.달성률-c.달성률)+'%p</b> 남음</div>';}
   return '<div class="incsec"><div class="incsech">🏆 2분기 Elite 지국장 <span class="rqbadge">상대평가</span></div>'
     +'<div class="ib gr" style="margin-top:0">📅 2분기 4~6월 누적 · <b style="color:var(--green)">✅ 최종 확정</b></div>'
@@ -1520,7 +1520,7 @@ function eliteCardQ(lv,q){
   var remain='';
   if(small)remain='<div class="icremain">교사수 5인 이하로 제외 대상이에요.</div>';
   else if(ach<100)remain='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(q3flr(mok-sun,1))+'</b> 남음</div>';
-  else if(D<1)remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-D)+'</b> 남음</div>';
+  else if(D<1)remain='<div class="icremain">🎯 D순증 1까지 <b>'+fmt(1-D)+'</b> 남음</div>';
   else if(!win&&meR){var above=rankAll[meR.rank-2];if(above)remain='<div class="icnext">⬆️ '+(meR.rank-1)+'위까지 달성률 <b>'+fmtD(above.달성률-ach)+'%p</b> 남음</div>';}
   return '<div class="incsec"><div class="incsech"><span>🏆 ['+QL+'] 엘리트 '+lv+'장 <span class="rqbadge">상대평가</span></span>'+prtBtn("prtEliteQ('"+lv+"','"+q+"')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 '+QL+' '+QMx+' 누적 · <b>관리자 사번 기준 집계</b>'+(meR.신규?' · <span style="color:var(--blue)">이번 '+lv+(lv==='지구'?'는':'은')+' 이번 달부터 담당</span>':'')+'</div>'
@@ -1548,7 +1548,7 @@ function rankTop20All(sorted,myCode){
       +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:var(--t3)">'+fmt(Math.round(x.목표))+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv" style="font-size:12px;color:'+((x.순증||0)<0?'var(--red)':'var(--t2)')+'">'+fmt1(x.순증)+'</div></div>'
       +'<div class="r20-col"><div class="r20-cv">'+fmt1(x.달성률)+'<span class="r20-cu">%</span></div></div>'
-      +'<div class="r20-col"><div class="r20-cv" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t2)')+'">'+fmt1(x.D순증)+'</div></div></div>';}
+      +'<div class="r20-col"><div class="r20-cv" style="color:'+((x.D순증||0)>=1?'var(--green)':'var(--t2)')+'">'+fmt(x.D순증)+'</div></div></div>';}
   var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">지구</div><div class="r20-col" style="font-size:10px">누적목표</div><div class="r20-col" style="font-size:10px">누적순증</div><div class="r20-col">달성률</div><div class="r20-col">D순증</div></div>';
   var rows=top.map(function(x){return row(x,x.rank);}).join('');
   var myExtra='';
@@ -1926,9 +1926,9 @@ function jiguDCard10(){
   if(!r)return head+'<div class="ib am" style="margin-bottom:0">이번 지구 명단에 없어요.</div></div>';
   var win=r.pay>0, remain='';
   if(r.row!==0){var tg=(r.row<0)?JIGUD10[JIGUD10.length-1]:JIGUD10[r.row-1];
-    remain='<div class="'+(r.row<0?'icremain':'icnext')+'">'+(r.row<0?'🎯':'⬆️')+' D순증 '+tg.l+'(교사수 × '+fmtD(tg.p)+'만원)까지 <b>D순증 '+fmt1(tg.min-r.D)+'</b> 더 필요해요</div>';}
+    remain='<div class="'+(r.row<0?'icremain':'icnext')+'">'+(r.row<0?'🎯':'⬆️')+' D순증 '+tg.l+'(교사수 × '+fmtD(tg.p)+'만원)까지 <b>D순증 '+fmt(tg.min-r.D)+'</b> 더 필요해요</div>';}
   return head
-    +'<div class="incgrid4">'+g4('D순증',fmt1(r.D),r.D<0?'var(--red)':(win?'var(--green)':'var(--t1)'))+g4('교사수',fmt(r.tno))+g4('단가',r.unit?fmtD(r.unit)+'만원':'-')+g4('예상 시상금',win?fmt(r.pay)+'원':'-',win?'var(--green)':'var(--t2)')+'</div>'
+    +'<div class="incgrid4">'+g4('D순증',fmt(r.D),r.D<0?'var(--red)':(win?'var(--green)':'var(--t1)'))+g4('교사수',fmt(r.tno))+g4('단가',r.unit?fmtD(r.unit)+'만원':'-')+g4('예상 시상금',win?fmt(r.pay)+'원':'-',win?'var(--green)':'var(--t2)')+'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 시상 대상 · 예상 '+fmt(r.pay)+'원':'아직 D순증 1 미만이에요')+'</div>'
     +remain
     +'<div class="ib bl" style="margin-bottom:0">· 시상금 = 급간 단가 × 교사수 · ③소평(전체) 기준</div></div>';
@@ -2677,7 +2677,7 @@ function jiguAchCard9(){
     return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">달성률 '+g.l+'</div><div class="jtr">교사수 × <b>'+fmtD(g.p)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
   var mok=Number((APP.q3cur&&APP.q3cur[code]&&APP.q3cur[code].목표))||0;
   var remain='';
-  if(!dOk)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-D)+'</b> 남음 (필수 조건)</div>';
+  if(!dOk)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt(1-D)+'</b> 남음 (필수 조건)</div>';
   if(row!==0&&mok){
     var tg=(row<0)?JIGUACH9[JIGUACH9.length-1]:JIGUACH9[row-1];
     var need=q3flr(mok*tg.min/100-(Number(fr.과목순증)||0),1);
@@ -2689,7 +2689,7 @@ function jiguAchCard9(){
     +'<div class="jtiers">'+tb+'</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">달성률</div><div class="ig4v" style="color:'+(unit?'var(--green)':'var(--t1)')+'">'+fmt1(ach)+'<span style="font-size:12px">%</span></div></div>'
-      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(dOk?'var(--green)':'var(--red)')+'">'+fmt1(D)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(dOk?'var(--green)':'var(--red)')+'">'+fmt(D)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">교사수</div><div class="ig4v">'+fmt(tno)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(pay)+'원':'-')+'</div></div>'
     +'</div>'
@@ -2748,7 +2748,7 @@ function jikAchCard9(){
   var qual=(me.ach>=100&&me.D>=1);
   var remain='';
   if(!qual){
-    if(me.D<1)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt1(1-me.D)+'</b> 남음 (필수)</div>';
+    if(me.D<1)remain+='<div class="icremain">🎯 D순증 1까지 <b>'+fmt(1-me.D)+'</b> 남음 (필수)</div>';
     var mok=Number((APP.q3cur&&APP.q3cur[code]&&APP.q3cur[code].목표))||0;
     if(me.ach<100&&mok){var need=q3flr(mok-me.sun,1);
       if(need>0)remain+='<div class="icremain">🎯 달성률 100%까지 순증 <b>'+fmt1(need)+'</b> 남음 (필수)</div>;'.replace(';','');}
@@ -2761,7 +2761,7 @@ function jikAchCard9(){
     +'<div class="jtiers">'+tb+'</div>'
     +'<div class="incgrid4">'
       +'<div class="ig4"><div class="ig4l">달성률</div><div class="ig4v" style="color:'+(me.ach>=100?'var(--green)':'var(--t1)')+'">'+fmt1(me.ach)+'<span style="font-size:12px">%</span></div></div>'
-      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(me.D>=1?'var(--green)':'var(--red)')+'">'+fmt1(me.D)+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">D순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="color:'+(me.D>=1?'var(--green)':'var(--red)')+'">'+fmt(me.D)+'</div></div>'
       +'<div class="ig4"><div class="ig4l">현재 등급</div><div class="ig4v" style="font-size:15px;color:'+(me.grade?'var(--green)':'var(--t2)')+'">'+(me.grade||'미해당')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">예상 시상금</div><div class="ig4v" style="font-size:15px;color:'+(win?'var(--green)':'var(--t2)')+'">'+(win?fmt(me.pay)+'원':'-')+'</div></div>'
     +'</div>'
@@ -3890,10 +3890,13 @@ function prtCoffee(){
   prtOpen({
     title:'[하반기] 커피차 (총국) · 누적 달성률 순위',
     sub:'하반기(7~12월) 누적 달성률 50%↑ 1위 총국 · 27년 1월 전략회의 커피차 · 자격 충족 '+fmt(elig)+'개',
-    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'d',num:1,hi:1},{h:'D순증',k:'cc',num:1}],
-    rows:arr.map(function(x,i){return {_rank:i+1,_me:(x.code===me),_code:x.code,nm:x.nm,mgr:x.mgr,
-      a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt1(x.D),d:fmt1(x.ach)};}),
-    cut:1,cutLabel:'시상 1위 총국',n:arr.length
+    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'d',num:1,hi:1},{h:'D순증',k:'cc',num:1},{h:'선정까지',k:'rem'}],
+    rows:arr.map(function(x,i){var ok=x.ach>=50, rem='-';
+      if(!ok)rem='달성50%까지 순증 '+fmt1(needSunFor(50,x.mok,x.sun));
+      else if(i>0)rem='1위까지 순증 '+fmt1(needSunFor(arr[0].ach,x.mok,x.sun));
+      return {_rank:i+1,_me:(x.code===me),_code:x.code,_win:(i===0&&ok),_fail:(ok?[]:['d']),nm:x.nm,mgr:x.mgr,
+      a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt(x.D),d:fmt1(x.ach),rem:rem};}),
+    cutLabel:'1위 총국 (누적 달성률 50%↑)',n:arr.length
   });
 }
 function adminInc10(){
@@ -4650,12 +4653,12 @@ function prtEliteQ(lv,q){
       var win=(x.자격&&x.rank<=20);
       if(!win){
         if(x.달성률<100&&x.목표>0){var need=Math.ceil(100*x.목표/100)-x.순증;rem='달성100%까지 순증 '+fmt1(Math.max(0,need));}
-        else if(x.D순증<1){rem='D순증 '+fmt1(1-x.D순증);}
+        else if(x.D순증<1){rem='D순증 '+fmt(1-x.D순증);}
         else if(cutRate!=null&&x.목표>0){var needCut=Math.ceil(cutRate*x.목표/100)-x.순증;if(needCut>0)rem='20위까지 순증 '+fmt1(needCut);else rem='순위 경합';}
         else rem='자격 충족(20위 밖)';
       }
       return {_rank:x.rank,_me:(x.사번===mySb),_win:win,_code:x.소속코드,_no:x.사번,소속명:x.소속명,관리자:x.관리자||'',
-        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt1(x.D순증),e:x.자격?'충족':'미충족',rem:rem};}),
+        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt(x.D순증),e:x.자격?'충족':'미충족',rem:rem};}),
     cut:20,cutLabel:'시상 T/O 상위 20명',n:30
   });
 }
@@ -5238,7 +5241,7 @@ function prtIncList(key){
     prtOpen({title:'['+curMonth()+'월] 지구 D순증 인센티브',
       sub:'D순증 10↑ 2만·5↑ 1만·1↑ 0.5만 × 교사수 · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
       cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'D순증',k:'d',num:1,hi:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'D순증 잔여',k:'nd',num:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:x.pay>0,_fail:(x.D<1?['d']:[]),nm:x.nm,mg:x.mg,d:fmt1(x.D),t:fmt(x.tno),u:x.unit?fmtD(x.unit):'-',p:x.pay?fmt(x.pay):'-',nt:x.nl,nd:(x.nd!=null?fmt1(x.nd):'-')};}),
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:x.pay>0,_fail:(x.D<1?['d']:[]),nm:x.nm,mg:x.mg,d:fmt(x.D),t:fmt(x.tno),u:x.unit?fmtD(x.unit):'-',p:x.pay?fmt(x.pay):'-',nt:x.nl,nd:(x.nd!=null?fmt(x.nd):'-')};}),
       cutLabel:'D순증 1↑ 지구가 시상 대상',n:50});
     return;
   }
@@ -5363,7 +5366,7 @@ function prtIncList(key){
       sub:'500~100% 급간 × 교사수 (D순증1↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
       cols:[{h:'지구',k:'nm'},{h:'지구장',k:'mg'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'단가(만원)',k:'u',num:1},{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'달성 잔여(순증)',k:'nd',num:1},{h:'D순증 잔여',k:'dn',num:1}],
       rows:arr.map(function(x,i){var fail=[];if(x.ach<100)fail.push('a');if(x.D<1)fail.push('d');
-        return {_rank:i+1,_code:x.code,_win:(x.pay>0),_fail:fail,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-',
+        return {_rank:i+1,_code:x.code,_win:(x.pay>0),_fail:fail,nm:x.nm,mg:x.mg,a:fmt1(x.ach),d:fmt(x.D),t:fmt(x.tno),u:x.u?fmtD(x.u):'-',p:x.pay?fmt(x.pay):'-',
         nt:(x.nextT!=null?x.nextT+'%':'최고급간'),nd:(x.need!=null?x.need:'-'),dn:(x.dneed>0?fmt1(x.dneed):'-')};}),
       cutLabel:'달성률 100%↑ & D순증 1↑ 지구가 시상 대상',n:50});
     return;
@@ -5374,7 +5377,7 @@ function prtIncList(key){
     prtOpen({title:'[9월] 지국 달성률 인센티브 (T/O)',
       sub:'전사 Legend 10 + 총국별 Best/Great/Good 90 · 달성률100↑&D순증1↑ · 시상 '+fmt(win)+'개',
       cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'총국',k:'ch'},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'D순증',k:'d',num:1},{h:'교사수',k:'t',num:1},{h:'등급',k:'g'},{h:'시상금',k:'p',num:1,hi:1}],
-      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,ch:shortName(x.chong||'').replace('총국',''),a:fmt1(x.ach),d:fmt1(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
+      rows:arr.map(function(x,i){return {_rank:i+1,_code:x.code,_win:(x.pay>0),nm:x.nm,mg:x.mg,ch:shortName(x.chong||'').replace('총국',''),a:fmt1(x.ach),d:fmt(x.D),t:fmt(x.tno),g:x.grade||'-',p:x.pay?fmt(x.pay):'-'};}),
       cutLabel:'등급(Legend/Best/Great/Good) 받은 '+fmt(win)+'개가 시상 대상',n:Math.min(120,arr.length)});
     return;
   }
