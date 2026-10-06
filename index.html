@@ -2207,8 +2207,9 @@ function topTourCard(lv){
   var board='<div class="r20wrap"><div class="r20head">📊 '+QN()+' 누적 달성률 순위 (전사 '+fmt(arr.length)+'개)</div>'+header+rowsHtml+extra+'</div>';
   var remain='';
   if(me&&!me.자격){
-    remain='<div class="icremain">🎯 시상 조건(누적 순증 1)까지 <b>'+fmt1(1-me.순증)+'</b> 남음</div>';
-  }else if(me&&me.rank>TO){
+    remain=(curQ()==='Q3')
+      ?'<div class="icremain">🎯 시상 조건(누적 순증 1)까지 <b>'+fmt1(1-me.순증)+'</b> 남음</div>'
+      :'<div class="icremain">🎯 시상 조건(누적 달성률 100%)까지 순증 <b>'+fmt1(Math.max(0,Math.ceil(me.목표)-me.순증))+'</b> 남음</div>';
   }else if(me&&me.rank>TO){
     var t=arr[TO-1];
     var need2=q3flr(me.목표*t.달성률/100-me.순증,1);
@@ -2222,9 +2223,9 @@ function topTourCard(lv){
       +'<div class="ig4"><div class="ig4l">누적 달성률</div><div class="ig4v" style="color:'+(me&&me.자격?'var(--green)':'var(--t1)')+'">'+(me?fmt1(me.달성률):'-')+'<span style="font-size:12px">%</span></div></div>'
       +'<div class="ig4"><div class="ig4l">현재 순위</div><div class="ig4v">'+(me?me.rank+'<span style="font-size:12px">위</span>':'-')+'</div></div>'
       +'<div class="ig4"><div class="ig4l">시상 T/O</div><div class="ig4v" style="font-size:15px">상위 '+TO+'명</div></div>'
-      +'<div class="ig4"><div class="ig4l">누적 순증 <span style="font-size:9px;color:var(--t3)">(1↑)</span></div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?fmt1(me.순증):'-')+'</div></div>'
+      +'<div class="ig4"><div class="ig4l">누적 순증'+(curQ()==='Q3'?' <span style="font-size:9px;color:var(--t3)">(1↑)</span>':'')+'</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?fmt1(me.순증):'-')+'</div></div>'
     +'</div>'
-    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':'순증 1 이상 달성 시 시상 대상이에요'):'집계 대상 명단에 없어요'))+'</div>'
+    +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':(curQ()==='Q3'?'순증 1 이상 달성 시 시상 대상이에요':'누적 달성률 100% 이상 달성 시 시상 대상이에요')):'집계 대상 명단에 없어요'))+'</div>'
     +remain
     +board
     +'<div class="ib bl" style="margin-bottom:0">· '+QN()+'('+QM()+') '+ttQualTxt()+'인 조직 중 달성률 상위 '+TO+'명 선정<br>· 달성률 = 누적 합산과목 순증 ÷ 누적 목표<br>· 동률 시: 일반과목순증(인당)↑ &gt; D순증(인당)↑<br>· 시상 일정·장소는 추후 공지돼요.</div></div>';
