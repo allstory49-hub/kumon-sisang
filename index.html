@@ -4353,11 +4353,47 @@ function prtAssignTiers(P){
     r._dark=(r._tier>=0)&&(P.hasWin?!!r._win:true);
   });
 }
+// 공유자료 열 이름 통일: 소속열 → '조직', 관리자열 → '관리자'
+function prtRenameCols(P){(P.cols||[]).forEach(function(c){if(c.num)return;
+  if(/^(지구|지국|사업국|총국|소속|조직)$/.test(c.h))c.h='조직';
+  else if(/^(지구장|지국장|사업국장|총국장|관리자)$/.test(c.h))c.h='관리자';});}
+// 잔여 열 분리: '순증 1까지 444.0' → [순증 1 잔여] 444.0 · '7위까지 입회 29건' → [윗 급간 잔여(입회)] 29
+function prtSplitRem(P){
+  var cols=P.cols||[], rows=P.rows||[], out=[];
+  cols.forEach(function(c){
+    if(c.num||!(prtIsRemCol(c)||c.h==='선정까지')){out.push(c);return;}
+    var hb=c.h.replace(/까지$/,'');
+    var parsed=rows.map(function(r){var v=String(r[c.k]==null?'':r[c.k]).trim();if(!v||v==='-')return null;
+      var m=v.match(/^(.+?)까지\s*([^\d-]*?)\s*(-?[\d,]+(?:\.\d+)?)\s*(건|점|개)?$/);
+      if(m)return {label:m[1].replace(/\s+/g,' ').trim(),unit:m[2]||'',n:m[3]};
+      m=v.match(/^(D?순증|온공)\s+(-?[\d,]+(?:\.\d+)?)\s*(건)?$/);
+      if(m)return {label:(/^\d+위$/.test(hb)?hb:(m[1]==='온공'?hb:m[1]+' 1')),unit:(/^\d+위$/.test(hb)||m[1]==='온공')?m[1]:'',n:m[2]};
+      m=v.match(/^(-?[\d,]+(?:\.\d+)?)$/);
+      if(m)return {label:hb,unit:'',n:m[1]};
+      return {text:v};});
+    if(!parsed.some(function(p){return p&&p.n!=null;})){out.push(c);return;}
+    var rankLabels={};parsed.forEach(function(p){if(p&&p.label&&/^\d+위$/.test(p.label))rankLabels[p.label]=1;});
+    var multiRank=Object.keys(rankLabels).length>1;
+    var groups=[],gmap={};
+    parsed.forEach(function(p,i){if(!p||p.n==null)return;
+      var isRank=/^\d+위$/.test(p.label);
+      var name=(isRank&&multiRank)?'윗 급간 잔여':(p.label+' 잔여');
+      if(p.unit&&name.indexOf(p.unit)<0)name+='('+p.unit+')';
+      if(!gmap[name]){gmap[name]={h:name,k:c.k+'__'+groups.length,num:1};groups.push(gmap[name]);}
+      rows[i][gmap[name].k]=p.n;});
+    groups.sort(function(a,b){return (/윗 급간|^\d+위/.test(a.h)?1:0)-(/윗 급간|^\d+위/.test(b.h)?1:0);});
+    parsed.forEach(function(p,i){if(p&&p.text&&groups[0])rows[i][groups[0].k]=p.text;});
+    rows.forEach(function(r){groups.forEach(function(gc){if(r[gc.k]==null)r[gc.k]='-';});});
+    groups.forEach(function(gc){out.push(gc);});
+  });
+  P.cols=out;
+}
 function prtOpen(cfg){
   PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
   // 조직 인센티브(행에 _code 있음)면 범위(전사/총국/사업국) 선택 제공
   var hasCode=PRT.rows.some(function(r){return r._code;});
   PRT.hasWin=PRT.rows.some(function(r){return r._win!=null;});
+  prtRenameCols(PRT);prtSplitRem(PRT);
   prtAssignTiers(PRT);
   var u=S.user||{}, myCode=(u.소속코드||'');
   // 총국 관리에서 공유 시: 내 총국 산하 조직(소속코드 첫 글자 일치)을 강조 표시
@@ -4785,13 +4821,13 @@ function prtImage(){
   var cols=PRT.cols||[];
   var mc=document.createElement('canvas').getContext('2d');
   function mw(t,size,w){mc.font=(w||'700')+' '+size+'px '+FF;return mc.measureText(String(t==null?'':t)).width;}
-  function disp(c,v){v=(v==null?'':String(v));if(!c.num&&/^(사업국|총국|지국)$/.test(c.h))v=v.replace(/(사업국|총국|지국)$/,'');return v;}
+  function disp(c,v){v=(v==null?'':String(v));if(!c.num&&/^(조직|사업국|총국|지국)$/.test(c.h))v=v.replace(/(사업국|총국|지국)$/,'');return v;}
   var FS=16, HFS=14.5, rowH=30, headH=40, titleH=62, infoH=30, footH=30, rkW=50;
   var all=rows.concat(meExtra?[meExtra]:[]);
   var cw=cols.map(function(c){
     var w=mw(c.h,HFS,'800')+18;
     all.forEach(function(r){w=Math.max(w,mw(disp(c,r[c.k]),FS,c.hi?'800':'700')+18);});
-    return Math.round(Math.min(c.num?120:(prtIsRemCol(c)?190:150),Math.max(c.num?66:72,w)));});
+    return Math.round(Math.min(prtIsRemCol(c)?190:(c.num?120:150),Math.max(c.num?66:72,w)));});
   var tableW=rkW+cw.reduce(function(a,b){return a+b;},0);
   var pad=14, W=Math.max(620,tableW+pad*2);
   if(W>tableW+pad*2){var extra=W-pad*2-tableW;var per=extra/cols.length;cw=cw.map(function(w){return w+per;});tableW=W-pad*2;}
@@ -5071,7 +5107,7 @@ function prtExcel(){
   var hasNo=rows.some(function(r){return r._no;});
   var cols=[],firstName=true;
   (PRT.cols||[]).forEach(function(cl){
-    var isOrgName=(!cl.num&&/소속|지구|지국|사업국|총국/.test(cl.h));
+    var isOrgName=(!cl.num&&/소속|조직|지구|지국|사업국|총국/.test(cl.h));
     var isPerson=(!cl.num&&/교사명|관리자|지구장|지국장|사업국장|총국장/.test(cl.h));
     if(isOrgName&&firstName&&hasCode){cols.push({h:'소속코드',k:'_code'});firstName=false;}
     cols.push(cl);
