@@ -1682,8 +1682,11 @@ function q3Toi(code,q){
     var t=Number(o&&o.퇴회)||0, g=Number(o&&o.과목수)||0, inF=!!(o&&o.퇴회);
     var ex=(APP.toiExp||{})[mk];       // 11·12월: 예상퇴회 파일(퇴회·전월말과목) 우선
     if(ex){var e=ex[code];if(e){t=Number(e.toi)||0;g=Number(e.gwa)||0;inF=true;}else{t=0;inF=false;var pm=Object.keys(monthly).pop();if(pm)g=monthly[pm].gwa;}}
-    monthly[mk]={toi:t,gwa:g,rate:g?q3flr(t/g*100,2):0,inFile:inF};
-    toi+=t; gwa+=g;
+    // 누적은 다음 달 예상퇴회까지만 포함 (그 이후 달은 월별 표시만)
+    var nx=(function(){var y=+lk.slice(0,4),m=+lk.slice(5)+1;if(m>12){m=1;y++;}return y+'-'+(m<10?'0':'')+m;})();
+    var inc=(mk<=nx);
+    monthly[mk]={toi:t,gwa:g,rate:g?q3flr(t/g*100,2):0,inFile:inF,excl:!inc};
+    if(inc){toi+=t; gwa+=g;}
   });
   var z={toi:0,gwa:0,rate:0};
   return {toi:toi,gwa:gwa,rate:gwa?q3flr(toi/gwa*100,2):0,monthly:monthly,months:Object.keys(monthly),
@@ -1959,7 +1962,7 @@ function jikToiCardQ4(){
   else if(r.row>0){var ng=JIKTOI4[r.row-1];remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 <b>퇴회 '+fmt(toiCutQ(r.qt,ng.max))+'건</b> 더 줄이면 돼요</div>';}
   if(!r.elig)remain='<div class="icremain">🎯 시상 조건(누적 달성률 80%)까지 순증 <b>'+fmt1(needSunFor(80,r.f.목표,r.f.순증))+'</b> 남음</div>'+remain;
   var tb=JIKTOI4.map(function(g,i){var on=(i===r.row);return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">누적 퇴회율 '+g.max+'% 이하</div><div class="jtr">교사수 × <b>'+fmtD(g.p)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
-  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
+  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"'+(v.excl?' style="opacity:.55"':'')+'><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회'+(v.excl?' · 누적 미포함':'')+')':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
   return '<div class="incsec"><div class="incsech"><span>📉 [4분기] 지국 퇴회율</span>'+prtBtn("prtIncList('jiktoi4')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 4분기 10~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('10~12월 누적 퇴회율 급간 (단, 누적 달성률 <b>80% 이상</b>)')
@@ -1969,7 +1972,7 @@ function jikToiCardQ4(){
     +'<div class="incres '+(r.win?'win':'lose')+'">'+(r.win?'🎉 시상 대상 · 예상 '+fmt(r.pay)+'원':(r.row<0?'아직 급간 밖이에요 (4.5% 초과)':'누적 달성률 80% 미달로 아직 대상이 아니에요'))+'</div>'
     +remain
     +'<div class="stl" style="margin-top:12px">월별 퇴회율</div>'+mrows
-    +'<div class="ib bl" style="margin-bottom:0">· 누적 퇴회율 = 10~12월 퇴회 합 ÷ 관리과목 합 · 10월=③소평 · 11·12월=예상퇴회 파일(퇴회·전월말과목) 기준 · 시상금 = 급간 단가 × 교사수</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 누적 퇴회율 = 퇴회 합 ÷ 관리과목 합 (다음 달 예상퇴회까지 포함) · 10월=③소평 · 11·12월=예상퇴회 파일 기준 · 시상금 = 급간 단가 × 교사수</div></div>';
 }
 function julJigukOct(){
   var tabs=['재약정률','엘리트지국장','퇴회율','온공10CLUB','온공Top'];
@@ -2127,7 +2130,7 @@ function eopToiCardQ4(){
   else if(r.row>0){var ng=EOPTOI4[r.row-1];remain+='<div class="icnext">⬆️ '+ng.max+'% 급간('+fmt(ng.amt/10000)+'만원)까지 <b>퇴회 '+fmt(toiCutQ(r.qt,ng.max))+'건</b> 더 줄이면 돼요</div>';}
   if(!r.elig)remain='<div class="icremain">🎯 시상 조건(누적 달성률 80%)까지 순증 <b>'+fmt1(needSunFor(80,r.f.목표,r.f.순증))+'</b> 남음</div>'+remain;
   var tb=EOPTOI4.map(function(g,i){var on=(i===r.row);return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">누적 퇴회율 '+g.max+'% 이하</div><div class="jtr"><b>'+fmt(g.amt/10000)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
-  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
+  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"'+(v.excl?' style="opacity:.55"':'')+'><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회'+(v.excl?' · 누적 미포함':'')+')':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
   return '<div class="incsec"><div class="incsech"><span>📉 [4분기] 사업국 퇴회율</span>'+prtBtn("prtIncList('eoptoi4')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 4분기 10~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('10~12월 누적 퇴회율 급간 (단, 누적 달성률 <b>80% 이상</b>)')
@@ -2137,7 +2140,7 @@ function eopToiCardQ4(){
     +'<div class="incres '+(r.win?'win':'lose')+'">'+(r.win?'🎉 시상 대상 · 예상 '+fmt(r.amt)+'원':(r.row<0?'아직 급간 밖이에요 (4.5% 초과)':'누적 달성률 80% 미달로 아직 대상이 아니에요'))+'</div>'
     +remain
     +'<div class="stl" style="margin-top:12px">월별 퇴회율</div>'+mrows
-    +'<div class="ib bl" style="margin-bottom:0">· 누적 퇴회율 = 10~12월 퇴회 합 ÷ 관리과목 합 · 10월=③소평 · 11·12월=예상퇴회 파일(퇴회·전월말과목) 기준</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 누적 퇴회율 = 퇴회 합 ÷ 관리과목 합 (다음 달 예상퇴회까지 포함) · 10월=③소평 · 11·12월=예상퇴회 파일 기준</div></div>';
 }
 function eopOpsCard10(){
   var code=(S.user&&S.user.소속코드)||'', v=EOP_OPS10[code];
@@ -3892,7 +3895,7 @@ function prtCoffee(){
   prtOpen({
     title:'[하반기] 커피차 (총국) · 누적 달성률 순위',
     sub:'하반기(7~12월) 누적 달성률 50%↑ 1위 총국 · 27년 1월 전략회의 커피차 · 자격 충족 '+fmt(elig)+'개',
-    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'}].concat(perCols('H2',{mok:'a',sun:'b',ach:'d'})).concat([{h:'D순증',k:'cc',num:1},{h:'선정까지',k:'rem'}]),
+    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'}].concat(perCols('H2',{mok:'a',sun:'b',ach:'d'})).concat([{h:'선정까지',k:'rem'}]),
     rows:arr.map(function(x,i){var ok=x.ach>=50, rem='-';
       if(!ok)rem='달성50%까지 순증 '+fmt1(needSunFor(50,x.mok,x.sun));
       else if(i>0)rem='1위까지 순증 '+fmt1(needSunFor(arr[0].ach,x.mok,x.sun));
@@ -5310,8 +5313,8 @@ function prtIncList(key){
     arr.sort(function(a,b){return (a.toi-b.toi)||(a.toiCnt-b.toiCnt)||((a.code<b.code)?-1:1);});
     var win=arr.filter(function(x){return x.pay>0;}).length;
     var Q4M=QRANGE.Q4, tcols=[];
-    Q4M.forEach(function(mk,j){var lb=mLbl(mk);tcols.push({g:lb,h:'퇴회',k:'t'+j,num:1});tcols.push({g:lb,h:'퇴회율(%)',k:'r'+j,num:1});});
-    var cols=[{h:lv,k:'nm'},{h:lv+'장',k:'mg'}].concat(tcols).concat([{g:'10~12월 누적',h:'퇴회',k:'tq',num:1},{g:'10~12월 누적',h:'퇴회율(%)',k:'a',num:1,hi:1}]).concat(perCols('Q4',{mok:'mk',sun:'sn',ach:'b'}));
+    Q4M.forEach(function(mk,j){var lb=mLbl(mk);var _nx=(function(){var lk=liveKey(),y=+lk.slice(0,4),m=+lk.slice(5)+1;if(m>12){m=1;y++;}return y+'-'+(m<10?'0':'')+m;})();if(mk>_nx)lb+=' (누적 미포함)';tcols.push({g:lb,h:'퇴회',k:'t'+j,num:1});tcols.push({g:lb,h:'퇴회율(%)',k:'r'+j,num:1});});
+    var cols=[{h:lv,k:'nm'},{h:lv+'장',k:'mg'}].concat(tcols).concat([{g:'4분기 누적',h:'퇴회',k:'tq',num:1},{g:'4분기 누적',h:'퇴회율(%)',k:'a',num:1,hi:1}]).concat(perCols('Q4',{mok:'mk',sun:'sn',ach:'b'}));
     if(lv==='지국')cols.push({h:'교사수',k:'t',num:1});
     cols=cols.concat([{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}]);
     prtOpen({title:'[4분기] '+lv+' 퇴회율 인센티브',
