@@ -2030,7 +2030,7 @@ function eopSgnCard(){
   var remain=me.elig?rankCutRemain(arr,me,'스구N 순증',function(t,m){return Math.max(0,Math.ceil(t.달성률*m.목표/100)-m.순증);})
     :'<div class="icremain">🎯 시상 조건(달성률 50%)까지 스구N 순증 <b>'+fmt1(Math.max(0,Math.ceil(me.목표*0.5)-me.순증))+'</b> 남음</div>';
   return hd
-    +(noData?'<div class="ib am">📋 스구N 순증은 10월 소평(③) 업로드부터 반영돼요.</div>':'')
+    +(noData?'<div class="ib am">📋 스구N 순증은 10월 관통_지구(④) 업로드부터 반영돼요.</div>':'')
     +'<div class="incgrid4">'+g4('4분기 목표',fmt(me.목표))+g4('누적 스구N 순증',fmt1(me.순증),me.순증<0?'var(--red)':'var(--t1)')+g4('달성률',fmt1(me.달성률)+'%',me.elig?'var(--green)':'var(--red)')
     +g4('예상 시상금',me.exp?fmt(me.exp)+'원':'-',me.pay?'var(--green)':'var(--t2)')+'</div>'
     +'<div class="incres '+(me.pay?'win':'lose')+'">'+(me.pay?'🎉 '+rankTierLbl(me.rank)+' · 시상금 '+fmt(me.pay)+'원':'현재 '+me.rank+'위'+(me.exp?' · 달성률 50% 충족 시 '+fmt(me.exp)+'원':''))+'</div>'
@@ -2038,7 +2038,7 @@ function eopSgnCard(){
     +'<div class="stl" style="margin-top:12px">월별 스구N 순증</div>'+mrows
     +rankBoardX(arr,code,[{h:'목표',f:function(x){return fmt(x.목표);}},{h:'스구N',f:function(x){return fmt1(x.순증);}},{h:'달성률',f:function(x){return fmt1(x.달성률)+'%';}}],
       function(x){return x.pay>0;},'스구N 달성률 순위 (전사)',30,'시상 30위')
-    +'<div class="ib bl" style="margin-bottom:0">· 전사 4분기 누적 순증 목표 3,000 (월 1,000) · 교사수 & 지류회원수 비례 배분<br>· 스구N 순증 = ③소평 스구N순증 · 동률 시 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 전사 4분기 누적 순증 목표 3,000 (월 1,000) · 교사수 & 지류회원수 비례 배분<br>· 스구N 순증 = ④관통_지구 N과목 순증의 사업국 합산 · 동률 시 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
 }
 function eopToiQ4Row(code){
   var f=q3get(code,'Q4');if(!f||f.lv!=='사업국')return null;
@@ -5466,6 +5466,15 @@ function buildQ3cur(){
     if(!got.지국)Object.keys(jik).forEach(function(c){if(out[c]&&out[c].lv==='지국'){out[c].마스타순증=jik[c].ms;if(!out[c].마스타교사)out[c].마스타교사=jik[c].tea;}});
     if(!got.사업국)Object.keys(eop).forEach(function(c){if(out[c]&&out[c].lv==='사업국'){out[c].마스타순증=eop[c].ms;if(!out[c].마스타교사)out[c].마스타교사=eop[c].tea;}});
   }
+  // 사업국 스구N 순증 = ④ 관통_지구 'N과목 순증'(col29)을 지구→사업국으로 합산 (③소평 값 대체)
+  if(UP.jigu2){try{
+    var wbN=XLSX.read(UP.jigu2.data,{type:'array'});var rN=XLSX.utils.sheet_to_json(wbN.Sheets[wbN.SheetNames[0]],{header:1,defval:''});
+    var eN={};
+    for(var i=2;i<rN.length;i++){var r=rN[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!=='지구')continue;
+      var jc2=JIGU_EXC[cc]||(cc.slice(0,4)+'0'), ec2=jc2.slice(0,2)+'000';
+      eN[ec2]=(eN[ec2]||0)+(Number(r[29])||0);}
+    Object.keys(eN).forEach(function(c){if(out[c]&&out[c].lv==='사업국')out[c].스구N=Math.round(eN[c]*10)/10;});
+  }catch(e){}}
   return out;
 }
 function parseElite6(orgData){
