@@ -413,6 +413,12 @@ input,button{font-family:inherit;font-size:14px}
 .r20.me .r20-nm{color:var(--blue)}
 .r20-me{font-size:9px;font-weight:800;color:#fff;background:var(--blue);border-radius:4px;padding:1px 5px;margin-left:4px}
 .r20cut{font-size:10.5px;font-weight:800;color:var(--green);text-align:center;padding:5px;background:rgba(29,158,117,.08);border-top:1px dashed var(--green);border-bottom:1px dashed var(--green)}
+.r20.o2{flex-wrap:wrap;row-gap:2px}
+.r20.o2 .r20-nm{flex:1 1 0}
+.o2cols{flex:1 0 100%;display:flex;gap:2px;padding-left:31px;box-sizing:border-box}
+.o2cols .r20-col2{flex:1 1 0;width:auto;min-width:0}
+.o2cols .o2tot{flex:1.15 1 0}
+.r20.o2h .o2cols{flex-basis:auto}
 .r20cutline{font-size:10px;font-weight:800;color:#E8590C;text-align:center;padding:4px;background:rgba(232,89,12,.08);border-top:2px dashed #E8590C}
 .incgrid4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .ig4{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:11px 10px;text-align:center}
@@ -1094,12 +1100,12 @@ function mastaTopHalf2Org(lv){
   function row(x){var im=(x.소속코드===code);
     var cols=months.map(function(mk){var v=x.byMonth[mk]||{ms:0,per:0};
       return '<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t3)">'+fmt1(v.ms)+'</div><div class="r20-cs">'+fmtD2(v.per)+'</div></div>';}).join('');
-    return '<div class="r20'+(im?' me':'')+(x.rank===1?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
+    return '<div class="r20 o2'+(im?' me':'')+(x.rank===1?' win':'')+'"><div class="r20-n">'+x.rank+'</div>'
       +'<div class="r20-nm">'+orgPerson(x)+(im?' <span class="r20-me">나</span>':'')+'</div>'
-      +cols
-      +'<div class="r20-col2"><div class="r20-cv" style="font-size:11px;color:var(--t2)">'+fmt1(x.마스타순증)+'</div><div class="r20-cs" style="font-weight:900;color:'+(x.인당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.인당)+'</div></div></div>';}
+      +'<div class="o2cols">'+cols
+      +'<div class="r20-col2 o2tot"><div class="r20-cv" style="font-size:11px;color:var(--t2)">'+fmt1(x.마스타순증)+'</div><div class="r20-cs" style="font-weight:900;color:'+(x.인당<0?'var(--red)':'var(--green)')+'">'+fmtD2(x.인당)+'</div></div></div></div>';}
   var headCols=months.map(function(mk){return '<div class="r20-col2">'+mShort(mk)+'<br><span style="font-weight:600">순증/인당</span></div>';}).join('');
-  var header='<div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">'+lv+'</div>'+headCols+'<div class="r20-col2">누적<br><span style="font-weight:600">순증/인당</span></div></div>';
+  var header='<div class="r20 r20h o2h"><div class="r20-n">#</div><div class="o2cols">'+headCols+'<div class="r20-col2 o2tot">누적<br><span style="font-weight:600">순증/인당</span></div></div></div>';
   var top20=arr.slice(0,20);var rows=top20.map(row).join('');
   var myExtra=(mi>=20)?('<div class="r20cut">···</div>'+row(arr[mi])):'';
   var board='<div class="r20wrap"><div class="r20head">📊 하반기 누적 온공 인당순증 상위 20위 (전사)</div>'+header+rows+myExtra+'</div>';
