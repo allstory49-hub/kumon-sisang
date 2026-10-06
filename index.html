@@ -1400,7 +1400,7 @@ function orgFresh(code){
 }
 // ===== 월·분기 기반: 3분기(Q3)=7~9월 · 4분기(Q4)=10~12월 · 하반기(H2)=7~12월 =====
 // 당월(liveKey) 실적은 q3cur, 지난달은 q3cum.byMonth(확정 보관분)에서 읽는다.
-var QRANGE={Q3:['2026-07','2026-08','2026-09'],Q4:['2026-10','2026-11','2026-12'],
+var QRANGE={O2:['2026-10','2026-11'],Q3:['2026-07','2026-08','2026-09'],Q4:['2026-10','2026-11','2026-12'],
   H2:['2026-07','2026-08','2026-09','2026-10','2026-11','2026-12']};
 function liveKey(){return curMonthKey();}
 function curQ(){return curMonth()<=9?'Q3':'Q4';}
@@ -2024,6 +2024,69 @@ function eopAchCard10(){
       function(x){return x.pay>0;},'달성률 순위 (전사)',30,'시상 30위')
     +'<div class="ib bl" style="margin-bottom:0">· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑ · ③소평(전체) 기준</div></div>';
 }
+// ── 10월 사업국 인당입회 (상위 30 · 곰돌이 캐리어 18인치) ──
+function entQty(r){return r<=2?25:r<=7?20:r<=15?15:r<=30?10:0;}
+function entTierLbl(r){return r<=2?'1~2위':r<=7?'3~7위':r<=15?'8~15위':r<=30?'16~30위':'31위~';}
+function eopEntRank10(){
+  var arr=Object.keys(APP.q3cur||{}).filter(function(c){return APP.q3cur[c].lv==='사업국';}).map(function(c){var o=APP.q3cur[c],t=Number(o.교사수)||0,e=Number(o.입회)||0,g=Number(o.과목수)||0,tq=Number(o.퇴회)||0;
+    return {소속코드:c,소속명:o.소속명,관리자:o.관리자,입회:e,교사수:t,raw:t?e/t:0,per:t?q3flr(e/t,2):0,순증:Number(o.순증)||0,toi:g?q3flr(tq/g*100,2):0,has:o.입회!==undefined};});
+  arr.sort(function(a,b){return (b.per-a.per)||(b.입회-a.입회)||(a.toi-b.toi)||((a.소속코드<b.소속코드)?-1:1);});   // 인당(둘째자리 절사) 동률 → 절대입회 → 퇴회율 낮은 순
+  arr.forEach(function(x,i){x.rank=i+1;x.qty=entQty(x.rank);x.elig=x.순증>=1;x.win=x.elig&&x.qty>0;});
+  return arr;
+}
+function entNeed(t,m){return Math.max(0,Math.ceil(t.raw*m.교사수-m.입회+1e-9));}
+function eopEntCard10(){
+  var code=(S.user&&S.user.소속코드)||'', M=curMonth(), arr=eopEntRank10(), me=null;
+  for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  var hd='<div class="incsec"><div class="incsech"><span>🧳 ['+M+'월] 사업국 인당입회 <span class="rqbadge">상대평가</span></span>'+prtBtn("prtIncList('eopent10')")+'</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 '+M+'월 한 달간 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
+    +critBlock('인당입회 <b>상위 30개 사업국</b> (단, 합산과목 순증 1 이상)')
+    +'<div class="giftbox"><img class="giftimg" src="carrier.jpg" alt="곰돌이 캐릭터 캐리어 18인치"><div style="font-weight:700;font-size:14px;color:var(--t1)">곰돌이 캐릭터 캐리어 18인치</div><div class="giftpr">색상(옐로우·민트) 랜덤 지급</div></div>'
+    +'<div class="jtiers">'+[[1,'1~2위',25],[3,'3~7위',20],[8,'8~15위',15],[16,'16~30위',10]].map(function(t){var on=me&&me.rank<=30&&entTierLbl(me.rank)===t[1];return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">'+t[1]+'</div><div class="jtr">캐리어 <b>'+t[2]+'개</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('')+'</div>';
+  if(!arr.some(function(x){return x.has;}))return hd+'<div class="ib am" style="margin-bottom:0">📋 인당입회는 다음 ③소평 업로드부터 반영돼요.</div></div>';
+  if(!me)return hd+'<div class="ib am" style="margin-bottom:0">이번 사업국 명단에 없어요.</div></div>';
+  var remain='';
+  if(!me.elig)remain='<div class="icremain">🎯 시상 조건(합산과목 순증 1)까지 <b>'+fmt1(1-me.순증)+'</b> 남음</div>';
+  if(me.rank>2){var cut=me.rank<=7?2:me.rank<=15?7:me.rank<=30?15:30,t=arr[cut-1];
+    if(t)remain+='<div class="icnext">⬆️ '+cut+'위('+entTierLbl(cut)+' · 캐리어 '+entQty(cut)+'개)까지 <b>입회 '+fmt(entNeed(t,me))+'건</b> 필요 <span style="font-size:11px;opacity:.8">(현재 '+me.rank+'위 · '+cut+'위 인당 '+fmtD2(t.per)+')</span></div>';}
+  return hd
+    +'<div class="incgrid4">'+g4('인당입회',fmtD2(me.per),me.win?'var(--green)':'var(--t1)')+g4('입회 / 교사수',fmt1(me.입회)+' / '+fmt(me.교사수))+g4('순위',me.rank+'위')
+    +g4('합산과목 순증',fmt1(me.순증),me.elig?'var(--green)':'var(--red)')+'</div>'
+    +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 '+entTierLbl(me.rank)+' · 캐리어 '+me.qty+'개':(me.qty?'순위상 캐리어 '+me.qty+'개 구간 · 합산과목 순증 1 이상 시 지급':'현재 '+me.rank+'위 (시상 30위까지)'))+'</div>'
+    +remain
+    +rankBoardX(arr,code,[{h:'입회',f:function(x){return fmt1(x.입회);}},{h:'교사',f:function(x){return fmt(x.교사수);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],
+      function(x){return x.win;},'인당입회 순위 (전사)',30,'시상 30위')
+    +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 합산과목 누적입회 ÷ 교사수 · ③소평(전체) 기준<br>· 동률 시: 절대입회 높은 순 > 퇴회율 낮은 순<br>· 캐리어 색상(옐로우·민트)은 랜덤 지급</div></div>';
+}
+// ── 10~11월 누적 달성률 상위 2 사업국 · 스테이우애 1박 2일 ──
+function eopStayRank(){
+  var arr=Object.keys(APP.q3cur||{}).filter(function(c){return APP.q3cur[c].lv==='사업국';}).map(function(c){var o=APP.q3cur[c],f=q3get(c,'O2')||{},tn=Number(f.교사수당월)||0,mok=Number(f.목표)||0,sun=Number(f.순증)||0;
+    return {소속코드:c,소속명:o.소속명,관리자:o.관리자,목표:mok,순증:sun,달성률:mok?q3flr(sun/mok*100,1):0,
+      ilPer:tn?q3flr((Number(f.일반순증)||0)/tn,3):0,dPer:tn?q3flr((Number(f.D순증)||0)/tn,3):0};});
+  arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.ilPer-a.ilPer)||(b.dPer-a.dPer)||((a.소속코드<b.소속코드)?-1:1);});
+  arr.forEach(function(x,i){x.rank=i+1;x.elig=x.달성률>=100;x.win=x.elig&&x.rank<=2;});
+  return arr;
+}
+function eopStayCard(){
+  var code=(S.user&&S.user.소속코드)||'', arr=eopStayRank(), me=null;
+  for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
+  var hd='<div class="incsec"><div class="incsech"><span>🏡 [10~11월] 스테이우애 <span class="rqbadge">상대평가</span></span>'+prtBtn("prtIncList('eopstay')")+'</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 10~11월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
+    +critBlock('10~11월 누적 달성률 <b>상위 2개 사업국</b> (최소기준 달성률 100% 이상)')
+    +'<div class="giftbox"><img class="giftimg" src="stayuae.jpg" alt="스테이우애" style="max-width:100%"><div style="font-weight:700;font-size:14px;color:var(--t1)">스테이우애 1박 2일 이용권</div><div class="giftpr">가평우애관 리모델링 · 전체 대관(최대 30명) · 바베큐 장소·노래방기기 포함</div></div>'
+    +'<div class="ictiers">이용 가능일 <b>12월 4일(금) · 12월 18일(금)</b> · 상위 사업국부터 날짜 선정</div>';
+  if(!me)return hd+'<div class="ib am" style="margin-bottom:0">이번 사업국 명단에 없어요.</div></div>';
+  var remain='';
+  if(!me.elig)remain='<div class="icremain">🎯 최소기준(누적 달성률 100%)까지 순증 <b>'+fmt1(needSunFor(100,me.목표,me.순증))+'</b> 남음</div>';
+  else if(me.rank>2){var t=arr[1];remain='<div class="icnext">⬆️ 2위 안에 들려면 순증 <b>'+fmt1(needSunFor(t.달성률,me.목표,me.순증))+'</b> 더 필요해요 <span style="font-size:11px;opacity:.8">(2위 '+fmt1(t.달성률)+'%)</span></div>';}
+  return hd
+    +'<div class="incgrid4">'+g4('누적 달성률',fmt1(me.달성률)+'%',me.elig?'var(--green)':'var(--red)')+g4('누적 순증 / 목표',fmt1(me.순증)+' / '+fmt(me.목표))+g4('현재 순위',me.rank+'위')+g4('시상 T/O','상위 2개')+'</div>'
+    +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 스테이우애 선정권! (현재 '+me.rank+'위)':(me.elig?'최소기준 충족 · 현재 '+me.rank+'위 (상위 2위 밖)':'누적 달성률 100% 이상 시 시상 대상이에요'))+'</div>'
+    +remain
+    +rankBoardX(arr,code,[{h:'누적목표',f:function(x){return fmt(x.목표);}},{h:'누적순증',f:function(x){return fmt1(x.순증);}},{h:'달성률',f:function(x){return fmt1(x.달성률)+'%';}}],
+      function(x){return x.win;},'10~11월 누적 달성률 순위 (전사)',2,'선정 2개')
+    +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 10~11월 누적 합산과목 순증 ÷ 누적 목표 · ③소평(전체) 기준<br>· 동률 시: 일반과목순증 인당↑ > D순증 인당↑<br>· 12월 연말 송년회를 스테이우애에서!</div></div>';
+}
 function eopSgnCard(){
   var code=(S.user&&S.user.소속코드)||'', arr=eopSgnRank(), me=null;
   for(var i=0;i<arr.length;i++){if(arr[i].소속코드===code){me=arr[i];break;}}
@@ -2086,15 +2149,16 @@ function eopOpsCard10(){
     +'<div class="ib bl" style="margin-bottom:0">· 단위: 만원 · 사업국별 지원 금액</div></div>';
 }
 function julyEopOct(){
-  var tabs=['달성률','스구N목표','퇴회율','TOP TOUR','온공Top','운영비'];
+  var tabs=['달성률','인당입회','스구N목표','퇴회율','TOP TOUR','스테이우애','온공Top'];
   if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='달성률';
   var body;
   if(S.jtab==='달성률')body=eopAchCard10();
   else if(S.jtab==='스구N목표')body=eopSgnCard();
   else if(S.jtab==='퇴회율')body=eopToiCardQ4();
   else if(S.jtab==='TOP TOUR')body=topTourCard('사업국');
-  else if(S.jtab==='온공Top')body=mastaTopHalf2Org('사업국');
-  else body=eopOpsCard10();
+  else if(S.jtab==='인당입회')body=eopEntCard10();
+  else if(S.jtab==='스테이우애')body=eopStayCard();
+  else body=mastaTopHalf2Org('사업국');
   return octHead()+jSub(tabs,S.jtab)+body+jContact(OCT_CONTACT);
 }
 
@@ -3845,7 +3909,11 @@ function adminInc10(){
       +(sg.length?st('[4분기] 스구N 목표관리','달성률 50%↑ 순위제 · 1위 '+shortName(sg[0].소속명)+' '+fmt1(sg[0].달성률)+'%',sgw.length,'개','시상 30위',sgp,"prtIncList('eopsgn')"):'')
       +(et.length?st('[4분기] 사업국 퇴회율','누적 퇴회율 4.5%↓ · 달성률 80%↑ · 100/70/50/30만',etw.length,'개',pc(etw.length,et.length),etp,"prtIncList('eoptoi4')"):'')
       +topTourStat('사업국')+ongTopStat('사업국')
-      +st('['+M+'월] 사업국 특별 운영비','교사수 & 과목수 비례 배분',Object.keys(EOP_OPS10).length,'개','전 사업국','합계 '+fmtD(Math.round(ops*10)/10)+'만원',null)
+      +(function(){var en=eopEntRank10(),ew=en.filter(function(x){return x.win;}),eq=ew.reduce(function(a,x){return a+x.qty;},0);
+        if(!en.some(function(x){return x.has;}))return na('['+M+'월] 사업국 인당입회','다음 ③소평 업로드부터 반영');
+        return st('['+M+'월] 사업국 인당입회','상위 30 · 순증 1↑ · 1위 '+shortName(en[0].소속명)+' 인당 '+fmtD2(en[0].per)+' · 곰돌이 캐리어',ew.length,'개','시상 30위','캐리어 '+fmt(eq)+'개',"prtIncList('eopent10')");})()
+      +(function(){var sa=eopStayRank(),sw=sa.filter(function(x){return x.win;});
+        return st('[10~11월] 스테이우애','누적 달성률 100%↑ 상위 2 · 1위 '+shortName(sa[0].소속명)+' '+fmt1(sa[0].달성률)+'% · 100%↑ '+fmt(sa.filter(function(x){return x.elig;}).length)+'개',sw.length,'개','T/O 2','1박 2일 이용권',"prtIncList('eopstay')");})()
       +'</div>';
   }else{
     body='<div class="incwrap">'+topTourStat('총국')+coffeeStat()+'</div>';
@@ -4976,6 +5044,30 @@ function prtIncList(key){
       cutLabel:'퇴회율 급간 + 누적 달성률 80%↑ '+lv+'이 시상 대상',n:50});
     return;
   }
+  if(key==='eopent10'){
+    var arr=eopEntRank10(),win=arr.filter(function(x){return x.win;}).length;
+    prtOpen({title:'['+curMonth()+'월] 사업국 인당입회 인센티브',
+      sub:'인당입회 상위 30 (합산과목 순증 1↑) · 1~2위 25개·3~7위 20개·8~15위 15개·16~30위 10개 (곰돌이 캐리어) · 동률: 절대입회>퇴회율 낮은 순 · 대상 '+fmt(win)+'개',
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'입회',k:'e',num:1},{h:'교사수',k:'t',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'합산순증',k:'s',num:1},{h:'캐리어',k:'q',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}],
+      rows:arr.map(function(x){var rem='-';
+        if(!x.elig)rem='순증 1까지 '+fmt1(1-x.순증);
+        else if(x.rank>2){var cut=x.rank<=7?2:x.rank<=15?7:x.rank<=30?15:30,t=arr[cut-1];if(t)rem=cut+'위까지 입회 '+fmt(entNeed(t,x))+'건';}
+        return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['s']),nm:x.소속명,mg:x.관리자||'',e:fmt1(x.입회),t:fmt(x.교사수),p:fmtD2(x.per),s:fmt1(x.순증),q:x.qty?fmt(x.qty)+'개':'-',g:x.win?'지급':(x.qty?'조건미달':'-'),rem:rem};}),
+      cutLabel:'상위 30위 (순증 1↑ 시 지급)',n:arr.length});
+    return;
+  }
+  if(key==='eopstay'){
+    var arr=eopStayRank(),win=arr.filter(function(x){return x.win;}).length;
+    prtOpen({title:'[10~11월] 스테이우애 인센티브 (사업국)',
+      sub:'10~11월 누적 달성률 상위 2개 사업국 (최소 100%) · 스테이우애 1박 2일 이용권 · 동률: 일반과목순증 인당>D순증 인당 · 선정 '+fmt(win)+'개',
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'누적목표',k:'m',num:1},{h:'누적순증',k:'s',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'선정',k:'g'},{h:'선정까지',k:'rem'}],
+      rows:arr.map(function(x){var rem='-';
+        if(!x.elig)rem='달성100%까지 순증 '+fmt1(needSunFor(100,x.목표,x.순증));
+        else if(x.rank>2){var t=arr[1];rem='2위까지 순증 '+fmt1(needSunFor(t.달성률,x.목표,x.순증));}
+        return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),g:x.win?'선정':(x.elig?'순위밖':'미달'),rem:rem};}),
+      cutLabel:'상위 2개 (달성률 100%↑)',n:arr.length});
+    return;
+  }
   if(key==='eopach10'||key==='eopsgn'){
     var isS=(key==='eopsgn'), arr=isS?eopSgnRank():eopRank10(), unit=isS?'스구N 순증':'순증';
     var win=arr.filter(function(x){return x.pay>0;}).length;
@@ -5509,7 +5601,7 @@ function parseSopyeongOrg(data){
     var sj=Number(r[32])||0;
     m[cc]={lv:lv,소속명:String(r[1]||'').trim(),관리자:String(r[2]||'').trim(),사번:String(r[3]||'').trim().split('.')[0],
       순증:sj,일반순증:sj,목표:Number(r[33])||0,달성률:q3flr(Number(r[35])||0,1),
-      D순증:Number(r[16])||0,퇴회:Number(r[30])||0,과목수:Number(r[5])||0,교사수:Number(r[4])||0,스구N:Number(r[54])||0};
+      D순증:Number(r[16])||0,퇴회:Number(r[30])||0,과목수:Number(r[5])||0,교사수:Number(r[4])||0,스구N:Number(r[54])||0,입회:Number(r[26])||0};
   }
   return m;
 }
@@ -5523,7 +5615,7 @@ function buildQ3cur(){
     var s=so[code], p=prev[code]||{};
     out[code]={lv:s.lv,소속명:s.소속명,관리자:s.관리자,사번:s.사번,총국:chongNameOf(code),
       순증:s.순증,목표:s.목표,달성률:s.달성률,퇴회:s.퇴회,과목수:s.과목수,
-      D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,스구N:s.스구N||0,
+      D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,스구N:s.스구N||0,입회:s.입회||0,
       마스타순증:p.마스타순증||0,마스타교사:p.마스타교사||s.교사수};
   });
   // 관통에서 마스타 갱신
