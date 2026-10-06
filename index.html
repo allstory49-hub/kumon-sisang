@@ -1494,7 +1494,7 @@ function eliteRank(lv,q){
     var dPer=tno?q3flr(D/tno,3):0, ilPer=tno?q3flr(ilsun/tno,3):0;
     arr.push({소속코드:code,사번:sb,소속명:b.소속명,관리자:b.관리자,총국:b.총국,
       달성률:ach,목표:mok,순증:sun,D순증:D,D순증인당:dPer,일반순증인당:ilPer,교사수:tno,
-      신규:!found,자격:(ach>=100&&D>=1&&tno>5)});
+      신규:!found,자격:(ach>=100&&D>=1&&tno>5),cm:liveIn(range)?(Number(b.목표)||0):0,cs:liveIn(range)?(Number(b.순증)||0):0});
   });
   arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.일반순증인당-a.일반순증인당)||(b.D순증인당-a.D순증인당);});
   arr.forEach(function(x,i){x.rank=i+1;});
@@ -1535,7 +1535,7 @@ function eliteCardQ(lv,q){
       +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(qual?'var(--green)':'var(--t2)')+'">'+(qual?'충족':'미충족')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 전사 T/O 선정권! 시상금 20만원 (현재 '+meR.rank+'위)':(qual?'자격 충족 · 현재 '+meR.rank+'위 (상위 20위 밖)':'아직 시상 기준 미달이에요'))+'</div>'
-    +remain
+    +remain+perHtml({pm:meR.목표-meR.cm,ps:meR.순증-meR.cs,cm:meR.cm,cs:meR.cs},q)
     +boardTop
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = '+QL+' 합산과목 순증 ÷ 목표 (둘째자리 절사) · <b>관리자 사번 기준</b>으로 재직 월만 누적<br>· 달성률 계산 시 과목입회는 당복·NKU 포함 · 인당 계산은 셋째자리 절사<br>· 교사수 5인 이하 제외 · 지구 이동·신규 선임 시에도 본인이 실제 담당한 월만 반영<br>· 동률 시: 일반과목순증(인당)↑ > D순증(인당)↑<br>· '+PAYL+'(녹지원, 일정 추후 공지)</div></div>';
 }
@@ -1678,7 +1678,7 @@ function q3Toi(code,q){
     var o;
     if(mk===lk)o=(APP.q3cur||{})[code];
     else if(mk<lk)o=byMonth[mk]&&byMonth[mk][code];
-    else return;                       // 미래월
+    else if(!(APP.toiExp||{})[mk])return;   // 미래월: 예상퇴회 파일이 있으면 미리 반영(예상퇴회 관리)
     var t=Number(o&&o.퇴회)||0, g=Number(o&&o.과목수)||0, inF=!!(o&&o.퇴회);
     var ex=(APP.toiExp||{})[mk];       // 11·12월: 예상퇴회 파일(퇴회·전월말과목) 우선
     if(ex){var e=ex[code];if(e){t=Number(e.toi)||0;g=Number(e.gwa)||0;inF=true;}else{t=0;inF=false;var pm=Object.keys(monthly).pop();if(pm)g=monthly[pm].gwa;}}
@@ -1959,7 +1959,7 @@ function jikToiCardQ4(){
   else if(r.row>0){var ng=JIKTOI4[r.row-1];remain+='<div class="icnext">⬆️ '+ng.max+'% 급간(교사수 × '+fmtD(ng.p)+'만원)까지 <b>퇴회 '+fmt(toiCutQ(r.qt,ng.max))+'건</b> 더 줄이면 돼요</div>';}
   if(!r.elig)remain='<div class="icremain">🎯 시상 조건(누적 달성률 80%)까지 순증 <b>'+fmt1(needSunFor(80,r.f.목표,r.f.순증))+'</b> 남음</div>'+remain;
   var tb=JIKTOI4.map(function(g,i){var on=(i===r.row);return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">누적 퇴회율 '+g.max+'% 이하</div><div class="jtr">교사수 × <b>'+fmtD(g.p)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
-  var mrows=r.qt.months.map(function(mk){var v=r.qt.monthly[mk];return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('');
+  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
   return '<div class="incsec"><div class="incsech"><span>📉 [4분기] 지국 퇴회율</span>'+prtBtn("prtIncList('jiktoi4')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 4분기 10~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('10~12월 누적 퇴회율 급간 (단, 누적 달성률 <b>80% 이상</b>)')
@@ -2084,7 +2084,7 @@ function eopStayCard(){
   return hd
     +'<div class="incgrid4">'+g4('누적 달성률',fmt1(me.달성률)+'%',me.elig?'var(--green)':'var(--red)')+g4('누적 순증 / 목표',fmt1(me.순증)+' / '+fmt(me.목표))+g4('현재 순위',me.rank+'위')+g4('시상 T/O','상위 2개')+'</div>'
     +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 스테이우애 선정권! (현재 '+me.rank+'위)':(me.elig?'최소기준 충족 · 현재 '+me.rank+'위 (상위 2위 밖)':'누적 달성률 100% 이상 시 시상 대상이에요'))+'</div>'
-    +remain
+    +remain+perHtml(perSplit(me.소속코드,'O2'),'O2')
     +rankBoardX(arr,code,[{h:'누적목표',f:function(x){return fmt(x.목표);}},{h:'누적순증',f:function(x){return fmt1(x.순증);}},{h:'달성률',f:function(x){return fmt1(x.달성률)+'%';}}],
       function(x){return x.win;},'10~11월 누적 달성률 순위 (전사)',2,'선정 2개')
     +'<div class="ib bl" style="margin-bottom:0">· 달성률 = 10~11월 누적 합산과목 순증 ÷ 누적 목표 · ③소평(전체) 기준<br>· 동률 시: 일반과목순증 인당↑ > D순증 인당↑<br>· 12월 연말 송년회를 스테이우애에서!</div></div>';
@@ -2127,7 +2127,7 @@ function eopToiCardQ4(){
   else if(r.row>0){var ng=EOPTOI4[r.row-1];remain+='<div class="icnext">⬆️ '+ng.max+'% 급간('+fmt(ng.amt/10000)+'만원)까지 <b>퇴회 '+fmt(toiCutQ(r.qt,ng.max))+'건</b> 더 줄이면 돼요</div>';}
   if(!r.elig)remain='<div class="icremain">🎯 시상 조건(누적 달성률 80%)까지 순증 <b>'+fmt1(needSunFor(80,r.f.목표,r.f.순증))+'</b> 남음</div>'+remain;
   var tb=EOPTOI4.map(function(g,i){var on=(i===r.row);return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">누적 퇴회율 '+g.max+'% 이하</div><div class="jtr"><b>'+fmt(g.amt/10000)+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
-  var mrows=r.qt.months.map(function(mk){var v=r.qt.monthly[mk];return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('');
+  var mrows=QRANGE.Q4.map(function(mk){var v=r.qt.monthly[mk];if(!v)return '<div class="histrow"><span>'+mLbl(mk)+'</span><b style="color:var(--t3)">예상퇴회 등록 전</b></div>';return '<div class="histrow"><span>'+mLbl(mk)+((APP.toiExp||{})[mk]?' (예상퇴회)':(mk===liveKey()?' (전일)':' (마감)'))+'</span><b>퇴회 '+fmt(v.toi)+' / 과목 '+fmt(v.gwa)+' · '+fmtD2(v.rate)+'%</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>4분기 누적</span><b>퇴회 '+fmt(r.qt.toi)+' / 과목 '+fmt(r.qt.gwa)+' · '+fmtD2(r.qt.rate)+'%</b></div>';
   return '<div class="incsec"><div class="incsech"><span>📉 [4분기] 사업국 퇴회율</span>'+prtBtn("prtIncList('eoptoi4')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 4분기 10~12월 누적 · <span style="opacity:.8">'+((APP.meta&&APP.meta.date)||'')+' 기준</span></div>'
     +critBlock('10~12월 누적 퇴회율 급간 (단, 누적 달성률 <b>80% 이상</b>)')
@@ -2265,7 +2265,7 @@ function coffeeCard(){
       +'<div class="ig4"><div class="ig4l">시상 자격</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?(me.자격?'충족':'미충족'):'-')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 커피차 지원 대상! (현재 1위)':(me?'현재 '+me.rank+'위'+(me.자격?'':' · 달성률 50% 달성 시 시상 대상'):'집계 대상 명단에 없어요'))+'</div>'
-    +remain
+    +remain+(me?perHtml(perSplit(me.소속코드,'H2'),'H2'):'')
     +'<div class="r20wrap"><div class="r20head">📊 총국 누적 달성률 순위</div>'+header+arr.map(row).join('')+'</div>'
     +'<div class="ib am" style="margin-bottom:0">⚠️ 하반기(7~12월) 누적 기준이며, 현재는 '+(curQ()==='Q3'?'3분기(7~9월)':'7월~'+curMonth()+'월')+' 실적까지 반영된 잠정 순위예요.</div>'
     +'<div class="ib bl" style="margin-bottom:0">· 시상금 대신 27년 1월 총국 전략회의에 커피차가 지원돼요.</div></div>';
@@ -2321,7 +2321,7 @@ function topTourCard(lv){
       +'<div class="ig4"><div class="ig4l">누적 순증'+(curQ()==='Q3'?' <span style="font-size:9px;color:var(--t3)">(1↑)</span>':'')+'</div><div class="ig4v" style="font-size:15px;color:'+(me&&me.자격?'var(--green)':'var(--t2)')+'">'+(me?fmt1(me.순증):'-')+'</div></div>'
     +'</div>'
     +'<div class="incres '+(win?'win':'lose')+'">'+(win?'🎉 TOP TOUR 선정권! (현재 '+me.rank+'위)':(me?(me.자격?'자격 충족 · 현재 '+me.rank+'위 (상위 '+TO+'위 밖)':(curQ()==='Q3'?'순증 1 이상 달성 시 시상 대상이에요':'누적 달성률 100% 이상 달성 시 시상 대상이에요')):'집계 대상 명단에 없어요'))+'</div>'
-    +remain
+    +remain+(me?perHtml(perSplit(me.소속코드,curQ()),curQ()):'')
     +board
     +'<div class="ib bl" style="margin-bottom:0">· '+QN()+'('+QM()+') '+ttQualTxt()+'인 조직 중 달성률 상위 '+TO+'명 선정<br>· 달성률 = 누적 합산과목 순증 ÷ 누적 목표<br>· 동률 시: 일반과목순증(인당)↑ &gt; D순증(인당)↑<br>· 시상 일정·장소는 추후 공지돼요.</div></div>';
 }
@@ -3892,12 +3892,12 @@ function prtCoffee(){
   prtOpen({
     title:'[하반기] 커피차 (총국) · 누적 달성률 순위',
     sub:'하반기(7~12월) 누적 달성률 50%↑ 1위 총국 · 27년 1월 전략회의 커피차 · 자격 충족 '+fmt(elig)+'개',
-    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'d',num:1,hi:1},{h:'D순증',k:'cc',num:1},{h:'선정까지',k:'rem'}],
+    cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mgr'}].concat(perCols('H2',{mok:'a',sun:'b',ach:'d'})).concat([{h:'D순증',k:'cc',num:1},{h:'선정까지',k:'rem'}]),
     rows:arr.map(function(x,i){var ok=x.ach>=50, rem='-';
       if(!ok)rem='달성50%까지 순증 '+fmt1(needSunFor(50,x.mok,x.sun));
       else if(i>0)rem='1위까지 순증 '+fmt1(needSunFor(arr[0].ach,x.mok,x.sun));
-      return {_rank:i+1,_me:(x.code===me),_code:x.code,_win:(i===0&&ok),_fail:(ok?[]:['d']),nm:x.nm,mgr:x.mgr,
-      a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt(x.D),d:fmt1(x.ach),rem:rem};}),
+      return perFill({_rank:i+1,_me:(x.code===me),_code:x.code,_win:(i===0&&ok),_fail:(ok?[]:['d']),nm:x.nm,mgr:x.mgr,
+      a:fmt(Math.round(x.mok)),b:fmt1(x.sun),cc:fmt(x.D),d:fmt1(x.ach),rem:rem},perSplit(x.code,'H2'));}),
     cutLabel:'1위 총국 (누적 달성률 50%↑)',n:arr.length
   });
 }
@@ -4337,6 +4337,19 @@ function decT(arr){if(!arr||!arr.length)return [];if(!Array.isArray(arr[0]))retu
 var PRT={rows:null,title:'',sub:'',cols:null,cut:0,cutLabel:'',n:30};
 function chongNameOf(code){var L2C={J:'동부',K:'경서',N:'북부',R:'충청',S:'호남',T:'경상'};return (L2C[(code||'').charAt(0)]||(code||'').charAt(0))+'총국';}
 // ===== 공유자료 급간 색상: 시상금(금액) 급간별 연한색 · 달성 시 진한색 · 잔여 수치 빨강 =====
+// ===== 누적 달성률 월별 분해: ~전월 누적 · 당월 · ~당월 누적 (범위 내 월이 1개면 당월만) =====
+function perMonths(q){var lk=liveKey();return qr(q).filter(function(mk){return mk<=lk;});}
+function perSplit(code,q){var range=qr(q);var a=q3cumSum(code,range)||{},b=liveIn(range)?((APP.q3cur||{})[code]||{}):{};
+  return {pm:Number(a.목표)||0,ps:Number(a.순증)||0,cm:Number(b.목표)||0,cs:Number(b.순증)||0};}
+function perCols(q,k){var range=qr(q),ms=perMonths(q),m=curMonth();
+  if(!liveIn(range))return [{h:'누적목표',k:k.mok,num:1},{h:'누적순증',k:k.sun,num:1},{h:'누적달성률(%)',k:k.ach,num:1,hi:1}];
+  if(ms.length>1)return [{h:'~'+(m-1)+'월 순증',k:'_ps',num:1},{h:'~'+(m-1)+'월 달성률(%)',k:'_pa',num:1},{h:m+'월 순증',k:'_cs',num:1},{h:m+'월 달성률(%)',k:'_ca',num:1},
+    {h:'~'+m+'월 누적목표',k:k.mok,num:1},{h:'~'+m+'월 누적순증',k:k.sun,num:1},{h:'~'+m+'월 누적달성률(%)',k:k.ach,num:1,hi:1}];
+  return [{h:m+'월 목표',k:k.mok,num:1},{h:m+'월 순증',k:k.sun,num:1},{h:m+'월 달성률(%)',k:k.ach,num:1,hi:1}];}
+function perFill(row,v){row._ps=fmt1(v.ps);row._pa=v.pm?fmt1(q3flr(v.ps/v.pm*100,1)):'-';row._cs=fmt1(v.cs);row._ca=v.cm?fmt1(q3flr(v.cs/v.cm*100,1)):'-';return row;}
+function perHtml(v,q){var range=qr(q),ms=perMonths(q),m=curMonth();if(!liveIn(range)||ms.length<2||!v)return '';
+  function ln(l,mk,sn){return '<div class="histrow"><span>'+l+'</span><b>'+(mk?'목표 '+fmt(Math.round(mk))+' · ':'')+'순증 '+fmt1(sn)+' · '+(mk?fmt1(q3flr(sn/mk*100,1))+'%':'-')+'</b></div>';}
+  return '<div class="stl" style="margin-top:12px">월별 실적</div>'+ln('~'+(m-1)+'월 누적',v.pm,v.ps)+ln(m+'월',v.cm,v.cs)+ln('~'+m+'월 누적',v.pm+v.cm,v.ps+v.cs);}
 var PRT_TIER_LIGHT=['D6F3FB','DDF5E3','FFF3CC','FDE6D8','ECE4F8','E6EBF2'];
 var PRT_TIER_DARK =['1E9AC7','2E9A57','C98A00','D2692E','7D5BC0','5F738C'];
 function prtAmt(v){if(v==null)return 0;var t=String(v).replace(/,/g,'');var m=t.match(/-?\d+(\.\d+)?/);if(!m)return 0;var n=parseFloat(m[0]);if(/만/.test(t))n*=10000;return n>0?n:0;}
@@ -4650,7 +4663,7 @@ function prtEliteQ(lv,q){
   prtOpen({
     title:'['+QL+'] 엘리트 '+lv+'장 · 누적 달성률 순위',
     sub:'달성률 100%↑ & D순증 1↑ · 상위 20명 시상(20만원+녹지원) · 관리자 사번 기준 집계 · 자격 충족 '+fmt(qual)+'개',
-    cols:[{h:lv,k:'소속명'},{h:lv+'장',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'D순증',k:'d',num:1,hi:1},{h:'자격',k:'e'},{h:'선정까지',k:'rem'}],
+    cols:[{h:lv,k:'소속명'},{h:lv+'장',k:'관리자'}].concat(perCols(q,{mok:'a',sun:'b',ach:'cc'})).concat([{h:'D순증',k:'d',num:1,hi:1},{h:'자격',k:'e'},{h:'선정까지',k:'rem'}]),
     rows:arr.map(function(x){
       // 잔여: 미선정자는 커트라인(20위 달성률)까지 필요 순증, 자격 미달은 그 조건
       var rem='-';
@@ -4661,8 +4674,8 @@ function prtEliteQ(lv,q){
         else if(cutRate!=null&&x.목표>0){var needCut=Math.ceil(cutRate*x.목표/100)-x.순증;if(needCut>0)rem='20위까지 순증 '+fmt1(needCut);else rem='순위 경합';}
         else rem='자격 충족(20위 밖)';
       }
-      return {_rank:x.rank,_me:(x.사번===mySb),_win:win,_code:x.소속코드,_no:x.사번,소속명:x.소속명,관리자:x.관리자||'',
-        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt(x.D순증),e:x.자격?'충족':'미충족',rem:rem};}),
+      return perFill({_rank:x.rank,_me:(x.사번===mySb),_win:win,_code:x.소속코드,_no:x.사번,소속명:x.소속명,관리자:x.관리자||'',
+        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:fmt(x.D순증),e:x.자격?'충족':'미충족',rem:rem},{pm:x.목표-x.cm,ps:x.순증-x.cs,cm:x.cm,cs:x.cs});}),
     cut:20,cutLabel:'시상 T/O 상위 20명',n:30
   });
 }
@@ -4679,7 +4692,7 @@ function prtTopTour(lv){
   prtOpen({
     title:'['+QN()+'] TOP TOUR ('+lv+') · 누적 달성률 순위',
     sub:(curQ()==='Q3'?'누적 순증 1↑':'누적 달성률 100%↑')+' · 달성률 '+lv+'장 상위 '+TO+'명 시상 · 대상 '+fmt(arr.length)+'개',
-    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'},{h:'누적목표',k:'a',num:1},{h:'누적순증',k:'b',num:1,hi:1},{h:'달성률(%)',k:'cc',num:1,hi:1},{h:'자격',k:'d'},{h:'선정까지',k:'rem'}],
+    cols:[{h:'소속',k:'소속명'},{h:'관리자',k:'관리자'}].concat(perCols(curQ(),{mok:'a',sun:'b',ach:'cc'})).concat([{h:'자격',k:'d'},{h:'선정까지',k:'rem'}]),
     rows:arr.map(function(x,i){
       var win=(i<TO&&ttQual(x));
       var rem='-';
@@ -4688,8 +4701,8 @@ function prtTopTour(lv){
         else if(curQ()!=='Q3'&&x.달성률<100&&x.목표>0)rem='달성100%까지 순증 '+fmt1(Math.max(0,Math.ceil(x.목표)-x.순증));
         else if(cutRate!=null&&x.목표>0){var need=Math.ceil(cutRate*x.목표/100)-x.순증;rem=(need>0)?TO+'위까지 순증 '+fmt1(need):'순위 경합';}
       }
-      return {_rank:i+1,_me:(x.code===me),_win:win,_code:x.code,소속명:x.소속명,관리자:x.관리자,
-        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(ttQual(x)?'충족':'미충족'),rem:rem};}),
+      return perFill({_rank:i+1,_me:(x.code===me),_win:win,_code:x.code,소속명:x.소속명,관리자:x.관리자,
+        a:fmt(Math.round(x.목표)),b:fmt1(x.순증),cc:fmt1(x.달성률),d:(ttQual(x)?'충족':'미충족'),rem:rem},perSplit(x.code,curQ()));}),
     cut:TO,cutLabel:'시상 T/O 상위 '+TO+'명',n:30
   });
 }
@@ -5254,18 +5267,22 @@ function prtIncList(key){
     Object.keys(APP.q3cur||{}).forEach(function(c){var o=APP.q3cur[c];if(o.lv!==lv)return;var r=(lv==='지국')?jikToiQ4Row(c):eopToiQ4Row(c);if(!r)return;
       var T=(lv==='지국')?JIKTOI4:EOPTOI4, nx=(r.row===0)?null:((r.row<0)?T[T.length-1]:T[r.row-1]);
       var exp=(lv==='지국')?r.pay:r.amt;
-      arr.push({code:c,nm:o.소속명,mg:o.관리자||'',toi:r.toi,toiCnt:r.qt.toi,ach:r.ach,sun:Number(r.f.순증)||0,mok:Number(r.f.목표)||0,elig:r.elig,row:r.row,exp:exp,pay:r.win?exp:0,tea:r.tea||0,
+      arr.push({code:c,nm:o.소속명,mg:o.관리자||'',toi:r.toi,toiCnt:r.qt.toi,qt:r.qt,ach:r.ach,sun:Number(r.f.순증)||0,mok:Number(r.f.목표)||0,elig:r.elig,row:r.row,exp:exp,pay:r.win?exp:0,tea:r.tea||0,
         nt:nx?(nx.max+'%↓'):'최고급간',nd:nx?toiCutQ(r.qt,nx.max):null,an:r.elig?0:needSunFor(80,r.f.목표,r.f.순증)});});
     arr.sort(function(a,b){return (a.toi-b.toi)||(a.toiCnt-b.toiCnt)||((a.code<b.code)?-1:1);});
     var win=arr.filter(function(x){return x.pay>0;}).length;
-    var cols=[{h:lv,k:'nm'},{h:lv+'장',k:'mg'},{h:'누적퇴회율(%)',k:'a',num:1,hi:1},{h:'누적목표',k:'mk',num:1},{h:'누적순증',k:'sn',num:1},{h:'누적달성률(%)',k:'b',num:1}];
+    var Q4M=QRANGE.Q4, tcols=[];
+    Q4M.forEach(function(mk,j){var lb=mLbl(mk);tcols.push({h:lb+' 퇴회',k:'t'+j,num:1});tcols.push({h:lb+' 퇴회율',k:'r'+j,num:1});});
+    var cols=[{h:lv,k:'nm'},{h:lv+'장',k:'mg'}].concat(tcols).concat([{h:'누적퇴회',k:'tq',num:1},{h:'누적퇴회율(%)',k:'a',num:1,hi:1}]).concat(perCols('Q4',{mok:'mk',sun:'sn',ach:'b'}));
     if(lv==='지국')cols.push({h:'교사수',k:'t',num:1});
     cols=cols.concat([{h:'시상금',k:'p',num:1,hi:1},{h:'다음 급간',k:'nt'},{h:'퇴회 잔여(건)',k:'nd',num:1},{h:'달성률 잔여(순증)',k:'an',num:1}]);
     prtOpen({title:'[4분기] '+lv+' 퇴회율 인센티브',
       sub:(lv==='지국'?'누적 퇴회율 3.7~4.5% 급간 × 교사수':'누적 퇴회율 3.9%↓100만·4.1%↓70만·4.3%↓50만·4.5%↓30만')+' (누적 달성률 80%↑) · 대상 '+fmt(win)+'개 / 전체 '+fmt(arr.length)+'개',
       cols:cols,
       rows:arr.map(function(x,i){var fail=[];if(x.row<0)fail.push('a');if(!x.elig)fail.push('b');
-        return {_rank:i+1,_code:x.code,_win:x.pay>0,_tier:(x.row>=0?x.row:-1),_fail:fail,nm:x.nm,mg:x.mg,a:fmtD2(x.toi),mk:fmt(Math.round(x.mok)),sn:fmt1(x.sun),b:fmt1(x.ach),t:fmt(x.tea),p:x.exp?fmt(x.exp):'-',nt:x.nt,nd:(x.nd!=null?x.nd:'-'),an:(x.an>0?fmt1(x.an):'-')};}),
+        var row={_rank:i+1,_code:x.code,_win:x.pay>0,_tier:(x.row>=0?x.row:-1),_fail:fail,nm:x.nm,mg:x.mg,tq:fmt(x.toiCnt),a:fmtD2(x.toi),mk:fmt(Math.round(x.mok)),sn:fmt1(x.sun),b:fmt1(x.ach),t:fmt(x.tea),p:x.exp?fmt(x.exp):'-',nt:x.nt,nd:(x.nd!=null?x.nd:'-'),an:(x.an>0?fmt1(x.an):'-')};
+        QRANGE.Q4.forEach(function(mk,j){var v=x.qt.monthly[mk];row['t'+j]=v?fmt(v.toi):'-';row['r'+j]=v?fmtD2(v.rate):'-';});
+        return perFill(row,perSplit(x.code,'Q4'));}),
       cutLabel:'퇴회율 급간 + 누적 달성률 80%↑ '+lv+'이 시상 대상',n:50});
     return;
   }
@@ -5285,11 +5302,11 @@ function prtIncList(key){
     var arr=eopStayRank(),win=arr.filter(function(x){return x.win;}).length;
     prtOpen({title:'[10~11월] 스테이우애 인센티브 (사업국)',
       sub:'10~11월 누적 달성률 상위 2개 사업국 (최소 100%) · 스테이우애 1박 2일 이용권 · 동률: 일반과목순증 인당>D순증 인당 · 선정 '+fmt(win)+'개',
-      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:'누적목표',k:'m',num:1},{h:'누적순증',k:'s',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'선정',k:'g'},{h:'선정까지',k:'rem'}],
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'}].concat(perCols('O2',{mok:'m',sun:'s',ach:'a'})).concat([{h:'선정',k:'g'},{h:'선정까지',k:'rem'}]),
       rows:arr.map(function(x){var rem='-';
         if(!x.elig)rem='달성100%까지 순증 '+fmt1(needSunFor(100,x.목표,x.순증));
         else if(x.rank>2){var t=arr[1];rem='2위까지 순증 '+fmt1(needSunFor(t.달성률,x.목표,x.순증));}
-        return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),g:x.win?'선정':(x.elig?'순위밖':'미달'),rem:rem};}),
+        return perFill({_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),g:x.win?'선정':(x.elig?'순위밖':'미달'),rem:rem},perSplit(x.소속코드,'O2'));}),
       cutLabel:'상위 2개 (달성률 100%↑)',n:arr.length});
     return;
   }
