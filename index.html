@@ -144,6 +144,15 @@ input,button{font-family:inherit;font-size:14px}
 .rcol{width:56px;text-align:right;flex-shrink:0;padding-right:2px;font-variant-numeric:tabular-nums}
 .rcol-v{font-size:14px;font-weight:600}
 .rcol.big .rcol-v{font-size:17px;font-weight:800;letter-spacing:-0.02em}
+.ongtop .rr{gap:4px;padding-left:10px;padding-right:10px}
+.ongtop .rcol,.ongtop .rhc{width:33px;padding-right:0}
+.ongtop .rcol.big,.ongtop .rhc:last-child{width:40px}
+.ongtop .rcol-v{font-size:11px!important}
+.ongtop .rcol.big .rcol-v{font-size:14px!important}
+.ongtop .rhc{font-size:9px!important}
+.ongtop .rn2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.ongtop .rsb{font-size:10.5px}
+@media(max-width:380px){.ongtop .rr{gap:3px;padding-left:8px;padding-right:8px}.ongtop .rcol,.ongtop .rhc{width:29px}.ongtop .rcol.big,.ongtop .rhc:last-child{width:36px}.ongtop .rcol-v{font-size:10.5px!important}.ongtop .rb{width:22px;height:22px}}
 .rhc.w2{width:66px;white-space:normal;line-height:1.15}
 .rcol.w2{width:66px}
 .m2{display:flex;gap:12px}
@@ -2435,7 +2444,7 @@ function mastaTopJulyCard(){
   var mtxt=ms.map(function(mm){return mLbl(mm.mk);}).join('·');
   var heads=ms.map(function(mm){return '<div class="rhc" style="font-size:9.5px">'+mLbl(mm.mk)+'<br>'+(mm.live?'전일':'마감')+'</div>';}).join('');
   var board='<div class="rkstl" style="border-left-color:var(--amber)">하반기 누적 순위 <span class="rkstlsub">'+mtxt+' 온공 순증</span></div>'
-    +'<div class="cl"><div class="rhead"><div class="sp"></div>'+heads+'<div class="rhc">누적</div></div>'+rowsHtml+myExtra+'</div>';
+    +'<div class="cl ongtop"><div class="rhead"><div class="sp"></div>'+heads+'<div class="rhc">누적</div></div>'+rowsHtml+myExtra+'</div>';
   var need=myMs<30?fmt1(30-myMs):0;
   var mine=m?ms.map(function(mm){return mLbl(mm.mk)+' '+fmt1(m.byM[mm.mk]);}).join(' · '):'';
   var fz=ms.filter(function(mm){return !mm.live;}).map(function(mm){return mLbl(mm.mk);}).join('·');
