@@ -3443,6 +3443,7 @@ function info(){
 /* ───── 관리자 화면 ───── */
 function renderAdmin(){
   var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  if(curMonth()>=10){tabs=tabs.filter(function(t){return t.id!=='sejong';});if(S.atab==='sejong')S.atab='sisang';}   // 세종클럽은 3분기 한정
   if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
   var b=document.getElementById('aBody');
