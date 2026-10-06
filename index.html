@@ -1087,11 +1087,11 @@ function mastaTopHalf2Org(lv){
   var reward=(lv==='사업국')?500000:300000;
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
-    var op=ongPerCap(code);   // 월별 인당 합산 (공용 헬퍼)
+    var op=ongPerCap(code,true);   // 월별 인당 원값 합산 → 최종 절사
     arr.push({소속코드:code,소속명:o.소속명,관리자:o.관리자,총국:o.총국,
-      마스타순증:op.ms,인당:op.per,교사수:op.tea8,months:op.months,byMonth:op.byMonth});
+      마스타순증:op.ms,인당:op.per,raw:op.perRaw,교사수:op.tea8,months:op.months,byMonth:op.byMonth});
   });
-  arr.sort(function(a,b){return (b.인당-a.인당)||(b.마스타순증-a.마스타순증);});
+  arr.sort(function(a,b){return (b.인당-a.인당)||(b.raw-a.raw)||(b.마스타순증-a.마스타순증);});
   arr.forEach(function(x,i){x.rank=i+1;});
   var code=(S.user&&S.user.소속코드)||'';
   var mi=-1;for(var k=0;k<arr.length;k++){if(arr[k].소속코드===code){mi=k;break;}}
@@ -1680,7 +1680,8 @@ function q3Toi(code,q){
   return {toi:toi,gwa:gwa,rate:gwa?q3flr(toi/gwa*100,2):0,monthly:monthly,months:Object.keys(monthly),
     m7:monthly[range[0]]||z, m8:monthly[range[1]]||z, m9:monthly[range[2]]||z};
 }
-function ongPerCap(code){
+function ongPerCap(code,raw){
+  // raw=true(온공 Top): 월별 인당을 소수점 원값으로 합산 → 최종 누적만 둘째자리 절사
   // 하반기(7~12월) 온공 누적 인당순증 = 월별 (온공순증 ÷ 그 달 교사수)의 합
   var range=QRANGE.H2, byMonth=(APP.q3cum&&APP.q3cum.byMonth)||{}, lk=liveKey();
   var per=0, msSum=0, byM={}, ms_=[];
@@ -1690,12 +1691,12 @@ function ongPerCap(code){
     else if(mk<lk)o=byMonth[mk]&&byMonth[mk][code];
     else return;
     var ms=Number(o&&o.마스타순증)||0, t=Number(o&&(o.마스타교사||o.교사수))||0;
-    var p=t?q3flr(ms/t,2):0;
+    var pr=t?ms/t:0, p=t?q3flr(pr,2):0;
     byM[mk]={ms:ms,tea:t,per:p}; ms_.push(mk);
-    per+=p; msSum+=ms;
+    per+=raw?pr:p; msSum+=ms;
   });
   var L=byM[lk]||{ms:0,tea:0,per:0}, F=byM[ms_[0]]||{ms:0,tea:0,per:0};
-  return {per:Math.round(per*100)/100, ms:Math.round(msSum*100)/100,
+  return {per:raw?q3flr(per,2):Math.round(per*100)/100, perRaw:per, ms:Math.round(msSum*100)/100,
     per7:F.per, ms7:F.ms, tea7:F.tea,
     per8:L.per, ms8:L.ms, tea8:L.tea,       // 호환: 당월 값
     months:ms_, byMonth:byM};
@@ -3659,9 +3660,9 @@ function adminInc(){
 function ongTopStat(lv){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
-    var op=ongPerCap(code);arr.push({nm:o.소속명,mgr:o.관리자||'',per:op.per,ms:op.ms});});
+    var op=ongPerCap(code,true);arr.push({nm:o.소속명,mgr:o.관리자||'',per:op.per,raw:op.perRaw,ms:op.ms});});
   if(!arr.length)return '<div class="incstat na"><div class="isl">[하반기] 온공 Top ('+lv+')</div><div class="isrna">실적 데이터 없음</div></div>';
-  arr.sort(function(a,b){return (b.per-a.per)||(b.ms-a.ms);});
+  arr.sort(function(a,b){return (b.per-a.per)||(b.raw-a.raw)||(b.ms-a.ms);});
   var top=arr[0], pay=(lv==='사업국')?500000:300000;
   return '<div class="incstat"><div class="isl">[하반기] 온공 Top ('+lv+')<span class="issub">1위 '+shortName(top.nm)+' '+top.mgr+' · 인당 '+fmtD2(top.per)+' (누적순증 '+fmt1(top.ms)+') · '+fmt(arr.length)+'개 중</span></div>'
     +'<div class="isr"><span class="isn">1개</span><span class="isp">T/O 1 · '+fmt(arr.length)+'개 중</span><span class="isamt">예상 '+fmt(pay)+'원</span>'+isb("prtOngOrg('"+lv+"')")+'</div></div>';
@@ -4311,10 +4312,10 @@ function prtBtn(id){id=tmWrap(id);return '<button class="prtlink" onclick="'+id+
 function prtOngOrg(lv){
   var arr=[];
   Object.keys(APP.q3cur||{}).forEach(function(code){var o=APP.q3cur[code];if(o.lv!==lv)return;
-    var op=ongPerCap(code);
+    var op=ongPerCap(code,true);
     var curT=Number((op.byMonth&&op.byMonth[curMonthKey()]&&op.byMonth[curMonthKey()].tea))||0;
-    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',months:op.months,byMonth:op.byMonth,순증:op.ms,인당:op.per,curT:curT});});
-  arr.sort(function(a,b){return (b.인당-a.인당)||(b.순증-a.순증);});
+    arr.push({code:code,소속명:o.소속명,관리자:o.관리자||'',months:op.months,byMonth:op.byMonth,순증:op.ms,인당:op.per,raw:op.perRaw,curT:curT});});
+  arr.sort(function(a,b){return (b.인당-a.인당)||(b.raw-a.raw)||(b.순증-a.순증);});
   var me=(S.user&&S.user.소속코드)||'';
   var top인당=(arr[0]&&arr[0].인당)||0;   // 1위 인당
   var months=(arr[0]&&arr[0].months)||[];
