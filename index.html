@@ -1337,7 +1337,7 @@ function prtClub10(){
     var need=hit?0:Math.max(0,Math.ceil((10-x.cum9_per)*(x.tea||0)-1e-9));
     rows.push({_rank:slot,_me:(x.code===me),_code:x.code,_win:(hit&&i<3),_tier:(i<3?0:-1),_fail:(hit?[]:['e']),nm:x.nm,mgr:x.mgr,
       a:fmt1(x.cum8_ms),b:fmtD2(x.cum8_per),t:fmt(x.tea),c:fmt1(x.sep_ms),d:fmtD2(x.sep_per),f:fmt1(x.cum9_ms),e:fmtD2(x.cum9_per),g:hit?'-':fmt(need),
-      aw:(i<3?slot+'위'+(hit?'':' (예상)'):'-')});});
+      aw:(i<3?slot+'위 (예상)':'-')});});
   prtOpen({
     title:'[상시] 지국 온공 10 CLUB · 중간현황',
     sub:'25년 7월~ 누적 인당순증 10 달성 순서대로 호점 선정 · 1~'+nL+'호점 달성 완료 · '+(nL+1)+'~10호점 경쟁 (잔여 = 인당 10까지 필요 온공 건수, 당월 교사수 기준)',
