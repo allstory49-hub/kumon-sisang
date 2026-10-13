@@ -775,6 +775,7 @@ async function saveToGitHub(bakedJs){
   await loadFixedPrevSun();
   await loadJaeExpFixed();
   await loadToiExp();
+  await loadSprint();
   try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
@@ -792,6 +793,7 @@ async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Da
 async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongToi=j.data;APP.sejongToiRaw=j.raw||null;}}catch(e){APP.sejongToi=null;APP.sejongToiRaw=null;}}
 async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevsun.json?t='+Date.now());if(r.ok)APP.fixedPrevSun=(await r.json()).byMonth||{};}catch(e){APP.fixedPrevSun=null;}}
+async function loadSprint(){try{var r=await dfetch('cumulative/chong_sprint.json?t='+Date.now());if(r.ok)APP.sprint=await r.json();}catch(e){APP.sprint=null;}}
 async function loadToiExp(){try{var r=await dfetch('cumulative/toi_exp.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.toiExp=jx.data||{};}}catch(e){APP.toiExp={};}}
 // ⑧⑨ 예상퇴회: 'M월 예상퇴회' = M월 퇴회 (전월말과목 = M-1월말). 11월→11월분, 12월→12월분 → cumulative/toi_exp.json
 async function saveToiExp(){var cur=APP.toiExp||{},ch=false;[['toi11','2026-11'],['toi12','2026-12']].forEach(function(p){if(UP[p[0]]){cur[p[1]]=parseToiFile(UP[p[0]].data);ch=true;}});
@@ -2202,11 +2204,49 @@ function chongOpsCard10(){
     +'<div class="ictiers">1위 <b>'+toiAmt[0]+'만</b> · 2위 <b>'+toiAmt[1]+'만</b> · 3위 <b>'+toiAmt[2]+'만</b> · 4~7위 <b>'+toiAmt[3]+'만</b></div>'
     +'<div class="ib am" style="margin-bottom:0">※ 조직규모에 따른 배정금액은 임시 금액 (지급월 조직규모 반영하여 금액 변동 예정)</div></div>';
 }
+// ───────── 총국 단기 특별 인센티브: 2구간 마감 입회 스퍼트 (10/13~10/18) ─────────
+var SPR_PAY_BIG=[600000,400000,300000], SPR_PAY_STD=[500000,300000,200000];   // 경서·경상 / 동부·북부·충청·호남
+function sprDay(dt){var m=/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(dt||'');return m?(m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2)):'';}
+function sprState(){var sp=APP.sprint;if(!sp)return null;var d=sprDay(APP.meta&&APP.meta.date);
+  if(d<sp.from)return {phase:'before',asof:(APP.meta&&APP.meta.date)||''};
+  if(d<=sp.to)return {phase:'live',asof:APP.meta.date,src:'cur'};
+  return sp.fin?{phase:'done',asof:sp.fin.asof,src:'fin'}:{phase:'done',asof:APP.meta.date,src:'cur'};}
+function sprRank(){
+  var sp=APP.sprint;if(!sp)return [];var st=sprState();
+  var arr=Object.keys(sp.base||{}).map(function(c){var o=(APP.q3cur||{})[c]||{},tea=Number((sp.tea||{})[c])||Number(o.교사수)||0;
+    var curV=(st.src==='fin'&&sp.fin)?Number(sp.fin.val[c]):Number(o.입회);
+    var ent=(st.phase==='before'||isNaN(curV))?0:Math.round((curV-Number(sp.base[c]||0))*10)/10;
+    var big=/^[KT]/.test(c);
+    return {소속코드:c,소속명:o.소속명||c,관리자:o.관리자||'',tea:tea,ent:ent,per:tea?q3flr(ent/tea,2):0,raw:tea?ent/tea:0,big:big};});
+  arr.sort(function(a,b){return (b.raw-a.raw)||(b.ent-a.ent);});
+  var er=0;arr.forEach(function(x,i){x.rank=i+1;x.elig=x.per>=1.2;if(x.elig){er++;x.prank=er;}else x.prank=0;
+    var P=x.big?SPR_PAY_BIG:SPR_PAY_STD;x.exp=(i<3)?P[i]:0;x.pay=(x.elig&&x.prank<=3)?P[x.prank-1]:0;x.win=x.pay>0;});
+  return arr;
+}
+function sprNeed(x,per){return Math.max(0,Math.ceil(per*x.tea-x.ent-1e-9));}
+function chongSprintCard(){
+  var sp=APP.sprint;if(!sp)return '<div class="ib am">인센티브 데이터를 불러오는 중이에요.</div>';
+  var st=sprState(),arr=sprRank(),code=(S.user&&S.user.소속코드)||'',me=null;arr.forEach(function(x){if(x.소속코드===code)me=x;});
+  var hd='<div class="incsec"><div class="incsech"><span>🏃 [단기] 2구간 마감 입회 스퍼트 (총국) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtIncList('chongspr')")+'</div>'
+    +'<div class="ib gr" style="margin-top:0">📅 10.13(화) ~ 10.18(일) · 주말무진 포함 6일간 · <span style="opacity:.8">'+(st.phase==='before'?'10월 13일 실적부터 집계':st.asof+' 기준')+'</span></div>'
+    +critBlock('인당입회 <b>1.2 이상</b> · 인당입회 순위 1~3위 (1.2 미만은 시상 제외)')
+    +'<div class="jtiers"><div class="jtier"><div class="jtl">1위</div><div class="jtr">경서·경상 <b>60만원</b> · 그 외 <b>50만원</b></div></div><div class="jtier"><div class="jtl">2위</div><div class="jtr">경서·경상 <b>40만원</b> · 그 외 <b>30만원</b></div></div><div class="jtier"><div class="jtl">3위</div><div class="jtr">경서·경상 <b>30만원</b> · 그 외 <b>20만원</b></div></div></div>';
+  if(st.phase==='before')return hd+'<div class="ib am" style="margin-bottom:0">📋 10월 13일 실적이 올라오면 집계를 시작해요. (기준: '+sp.base_asof+' 누적입회)</div></div>';
+  var remain='';
+  if(me){if(!me.elig)remain='<div class="icremain">🎯 시상 조건(인당 1.2)까지 입회 <b>'+fmt(sprNeed(me,1.2))+'건</b> 남음</div>';
+    else if(me.prank>1){var t=arr.filter(function(x){return x.elig;})[me.prank-2];if(t)remain='<div class="icnext">⬆️ '+(me.prank-1)+'위까지 입회 <b>'+fmt(sprNeed(me,t.raw))+'건</b> 필요 <span style="font-size:11px;opacity:.8">('+(me.prank-1)+'위 인당 '+fmtD2(t.per)+')</span></div>';}}
+  return hd
+    +(me?'<div class="incgrid4">'+g4('인당입회',fmtD2(me.per),me.elig?'var(--green)':'var(--red)')+g4('교사수 / 입회',fmt(me.tea)+' / '+fmt1(me.ent))+g4('순위',me.rank+'위')+g4('예상 시상금',me.pay?fmt(me.pay)+'원':'-',me.pay?'var(--green)':'var(--t2)')+'</div>'
+      +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 '+me.prank+'위 · 시상금 '+fmt(me.pay)+'원':(me.elig?'현재 '+me.rank+'위 (상위 3위 밖)':'인당입회 1.2 이상 시 시상 대상이에요'))+'</div>'+remain:'')
+    +rankBoardX(arr,code,[{h:'교사',f:function(x){return fmt(x.tea);}},{h:'입회',f:function(x){return fmt1(x.ent);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],function(x){return x.win;},'인당입회 순위 (6개 총국)',3,'시상 3위')
+    +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 기간 내 입회 수 ÷ 9월말 교사 수<br>· 기간 내 입회 = 누적입회 − 10월 12일 마감 누적입회 (③소평)<br>· 인당입회 1.2 미만 시 시상에서 제외돼요.</div></div>';
+}
 function julyChongOct(){
-  var tabs=['TOP TOUR','커피차','🏫 총국 관리'];   // '지속운영'은 기준 확정 전까지 숨김(chongOpsCard10 유지)
-  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='TOP TOUR';
+  var tabs=['입회 스퍼트','TOP TOUR','커피차','🏫 총국 관리'];   // '지속운영'은 기준 확정 전까지 숨김(chongOpsCard10 유지)
+  if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='입회 스퍼트';
   var body;
-  if(S.jtab==='TOP TOUR')body=topTourCard('총국');
+  if(S.jtab==='입회 스퍼트')body=chongSprintCard();
+  else if(S.jtab==='TOP TOUR')body=topTourCard('총국');
   else if(S.jtab==='커피차')body=coffeeCard();
   else if(S.jtab==='지속운영')body=chongOpsCard10();
   else return jSub(tabs,S.jtab)+chongManage('inc');
@@ -3988,7 +4028,8 @@ function adminInc10(){
         return st('[10~11월] 스테이우애','누적 달성률 100%↑ 상위 2 · 1위 '+shortName(sa[0].소속명)+' '+fmt1(sa[0].달성률)+'% · 100%↑ '+fmt(sa.filter(function(x){return x.elig;}).length)+'개',sw.length,'개','T/O 2','1박 2일 이용권',"prtIncList('eopstay')");})()
       +'</div>';
   }else{
-    body='<div class="incwrap">'+topTourStat('총국')+coffeeStat()+'</div>';
+    var sa=sprRank(),sw=sa.filter(function(x){return x.win;});
+    body='<div class="incwrap">'+(sa.length?st('[단기] 입회 스퍼트 (10.13~18)','인당입회 1.2↑ 1~3위 · 1위 '+shortName(sa[0].소속명)+' 인당 '+fmtD2(sa[0].per),sw.length,'개','T/O 3',sw.reduce(function(a,x){return a+x.pay;},0),"prtIncList('chongspr')"):'')+topTourStat('총국')+coffeeStat()+'</div>';
   }
   return head+body;
 }
@@ -5346,6 +5387,17 @@ function prtIncList(key){
       cutLabel:'퇴회율 급간 + 누적 달성률 80%↑ '+lv+'이 시상 대상',n:50});
     return;
   }
+  if(key==='chongspr'){
+    var arr=sprRank();
+    prtOpen({title:'[단기] 총국 2구간 마감 입회 스퍼트',
+      sub:'10.13~10.18 · 인당입회 1.2↑ 1~3위 · 1위 60/50만·2위 40/30만·3위 30/20만 (경서·경상/그 외) · 인당 = 기간 입회 ÷ 9월말 교사수',
+      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'교사수',k:'t',num:1},{h:'기간 입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'시상금',k:'pay',num:1,hi:1},{h:'인당1.2 잔여(입회)',k:'r1',num:1},{h:'윗 순위 잔여(입회)',k:'r2',num:1}],
+      rows:arr.map(function(x){var el=arr.filter(function(y){return y.elig;}),up=(x.elig&&x.prank>1)?el[x.prank-2]:null;
+        return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['p']),nm:x.소속명,mg:x.관리자,t:fmt(x.tea),e:fmt1(x.ent),p:fmtD2(x.per),pay:(x.pay||x.exp)?fmt(x.pay||x.exp):'-',
+          r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};}),
+      cutLabel:'인당 1.2↑ 1~3위',n:6});
+    return;
+  }
   if(key==='eopent10'){
     var arr=eopEntRank10(),win=arr.filter(function(x){return x.win;}).length;
     prtOpen({title:'['+curMonth()+'월] 사업국 인당입회 인센티브',
@@ -6140,7 +6192,8 @@ async function doUpload(){
         setTimeout(function(){alert(msg);},400);
       }
     }catch(e){}
-    if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:keyOfDate(meta.date),asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;}}catch(e){}}
+    if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:keyOfDate(meta.date),asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;
+      try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});_sp.fin={asof:meta.date,val:_v};await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
     try{await saveToiExp();}catch(e){}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data,keyOfDate(meta.date));if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:keyOfDate(meta.date),source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
