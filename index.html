@@ -2205,6 +2205,7 @@ function chongOpsCard10(){
     +'<div class="ib am" style="margin-bottom:0">※ 조직규모에 따른 배정금액은 임시 금액 (지급월 조직규모 반영하여 금액 변동 예정)</div></div>';
 }
 // ───────── 총국 단기 특별 인센티브: 2구간 마감 입회 스퍼트 (10/13~10/18) ─────────
+var SPR_POSTER=new Image();SPR_POSTER.src='sprint.jpg';
 var SPR_PAY_BIG=[600000,400000,300000], SPR_PAY_STD=[500000,300000,200000];   // 경서·경상 / 동부·북부·충청·호남
 function sprDay(dt){var m=/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(dt||'');return m?(m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2)):'';}
 function sprState(){var sp=APP.sprint;if(!sp)return null;var d=sprDay(APP.meta&&APP.meta.date);
@@ -2229,6 +2230,7 @@ function chongSprintCard(){
   var st=sprState(),arr=sprRank(),code=(S.user&&S.user.소속코드)||'',me=null;arr.forEach(function(x){if(x.소속코드===code)me=x;});
   var hd='<div class="incsec"><div class="incsech"><span>🏃 [단기] 2구간 마감 입회 스퍼트 (총국) <span class="rqbadge">상대평가</span></span>'+prtBtn("prtIncList('chongspr')")+'</div>'
     +'<div class="ib gr" style="margin-top:0">📅 10.13(화) ~ 10.18(일) · 주말무진 포함 6일간 · <span style="opacity:.8">'+(st.phase==='before'?'10월 13일 실적부터 집계':st.asof+' 기준')+'</span></div>'
+    +'<img src="sprint.jpg" alt="총국 단기 특별 인센티브" style="width:100%;border-radius:12px;display:block;margin:2px 0 10px">'
     +critBlock('인당입회 <b>1.2 이상</b> · 인당입회 순위 1~3위 (1.2 미만은 시상 제외)')
     +'<div class="jtiers"><div class="jtier"><div class="jtl">1위</div><div class="jtr">경서·경상 <b>60만원</b> · 그 외 <b>50만원</b></div></div><div class="jtier"><div class="jtl">2위</div><div class="jtr">경서·경상 <b>40만원</b> · 그 외 <b>30만원</b></div></div><div class="jtier"><div class="jtl">3위</div><div class="jtr">경서·경상 <b>30만원</b> · 그 외 <b>20만원</b></div></div></div>';
   if(st.phase==='before')return hd+'<div class="ib am" style="margin-bottom:0">📋 10월 13일 실적이 올라오면 집계를 시작해요. (기준: '+sp.base_asof+' 누적입회)</div></div>';
@@ -5005,6 +5007,11 @@ function prtImage(){
   if(meExtra){y+=8;txt('···',x0+tableW/2,y-4,12,'#8A939C','800');var yy=y;drawRow(meExtra,PRT.rows.indexOf(meExtra));g.strokeStyle='#2B3540';g.lineWidth=2;g.strokeRect(x0+1,yy,tableW-2,rowH);}
   // 범례
   txt('※ 색 = 시상금 급간 (진한색 달성 · 연한색 미달성) · 빨간 숫자 = 잔여'+(cutAfter>=0?' · 주황선 위 시상 대상':'')+' · 실적조정으로 순위 변동 가능',x0+2,y+footH/2+2,11.5,'#6B7680','500','left');
+  // 안내 포스터가 있으면 표 위에 붙임
+  var P=PRT.poster;
+  if(P&&P.complete&&P.naturalWidth){var ph=Math.round(W*P.naturalHeight/P.naturalWidth);
+    var cv2=document.createElement('canvas');cv2.width=W*DPR;cv2.height=(ph+H)*DPR;var g2=cv2.getContext('2d');
+    g2.fillStyle='#FFFFFF';g2.fillRect(0,0,cv2.width,cv2.height);g2.drawImage(P,0,0,W*DPR,ph*DPR);g2.drawImage(cv,0,ph*DPR);cv=cv2;}
   var fname=(PRT.title||'순위').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_')+'.png';
   var dataUrl;
   try{dataUrl=cv.toDataURL('image/png');}catch(e){alert('이미지 생성에 실패했습니다.');return;}
@@ -5395,7 +5402,7 @@ function prtIncList(key){
       rows:arr.map(function(x){var el=arr.filter(function(y){return y.elig;}),up=(x.elig&&x.prank>1)?el[x.prank-2]:null;
         return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['p']),nm:x.소속명,mg:x.관리자,t:fmt(x.tea),e:fmt1(x.ent),p:fmtD2(x.per),pay:(x.pay||x.exp)?fmt(x.pay||x.exp):'-',
           r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};}),
-      cutLabel:'인당 1.2↑ 1~3위',n:6});
+      cutLabel:'인당 1.2↑ 1~3위',n:6,poster:SPR_POSTER});
     return;
   }
   if(key==='eopent10'){
