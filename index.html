@@ -4620,15 +4620,16 @@ function prtRender(){
   if(!PRT.hasWin)rows.forEach(function(r,i){var rk=r._rank||(i+1);if(PRT.cut&&rk>PRT.cut&&firstOut<0)firstOut=i;});
   var lastIdx=PRT.cols.length-1;
   var anyHi=PRT.cols.some(function(c){return c.hi;});
+  if(PRT.foot)rows=rows.concat([PRT.foot]);
   var body=rows.map(function(r,i){
-    var rk=r._rank||(i+1);
+    var rk=r._foot?'':(r._rank||(i+1));
     var out=(PRT.hasWin)?(!r._win):(PRT.cut&&rk>PRT.cut);
     var cls=[];
     if(rk<=3&&r._dark)cls.push('m'+rk);
     if(r._me)cls.push('me');
     if(i===firstOut)cls.push('cut');
     var tdk=!r._me&&r._tier>=0&&r._dark;
-    var tb=prtTB(r);
+    var tb=r._foot?'':prtTB(r);
     var tst=(!r._me&&r._tier>=0)?(' style="background:#'+(r._dark?PRT_TIER_DARK:PRT_TIER_LIGHT)[r._tier]+(tdk?';color:#fff;font-weight:700':'')+'"'):((!r._me&&tb)?(' style="background:#'+(tb==='top'?PRT_TOP_BG:PRT_BOT_BG)+'"'):'');
     return '<tr'+(cls.length?' class="'+cls.join(' ')+'"':'')+tst+'>'
       +'<td class="rk">'+rk+'</td>'
@@ -4964,7 +4965,7 @@ function prtImage(){
   if(W>tableW+pad*2){var extra=W-pad*2-tableW;var per=extra/cols.length;cw=cw.map(function(w){return w+per;});tableW=W-pad*2;}
   var cutAfter=-1;
   if(PRT.cut&&!PRT.hasWin){for(var i=0;i<rows.length;i++){if((rows[i]._rank||i+1)<=PRT.cut)cutAfter=i;}}
-  var nRows=rows.length+(meExtra?1:0);
+  var nRows=rows.length+(meExtra?1:0)+(PRT.foot?1:0);
   var H=titleH+infoH+headH+nRows*rowH+(meExtra?8:0)+footH+pad;
   var cv=document.createElement('canvas');cv.width=W*DPR;cv.height=H*DPR;
   var g=cv.getContext('2d');g.scale(DPR,DPR);
@@ -5001,13 +5002,14 @@ function prtImage(){
     var rk=r._rank||(i+1), tier=(r._tier!=null?r._tier:-1);
     var dark=!r._me&&tier>=0&&r._dark&&!PRT.myChong;
     var bg='#FFFFFF';
-    if(r._me)bg='#C92A2A';
+    if(r._foot)bg='#FDEBD8';
+    else if(r._me)bg='#C92A2A';
     else if(PRT.myChong&&r._myChong)bg=r._win?'#1D6FB8':'#DCEBF7';
     else if(tier>=0&&!PRT.myChong)bg='#'+(r._dark?PRT_TIER_DARK:PRT_TIER_LIGHT)[tier];
     else if(!PRT.myChong&&prtTB(r))bg='#'+(prtTB(r)==='top'?PRT_TOP_BG:PRT_BOT_BG);
     var onDark=r._me||dark||(PRT.myChong&&r._myChong&&r._win);
     g.fillStyle=bg;g.fillRect(x0,y,tableW,rowH);
-    txt(rk,x0+rkW/2,y+rowH/2,FS,onDark?'#FFFFFF':'#1A1A1A','800');
+    if(!r._foot)txt(rk,x0+rkW/2,y+rowH/2,FS,onDark?'#FFFFFF':'#1A1A1A','800');
     if(r._span)spanRows.push({y:y,bg:bg,t:r._span,col:onDark?'#FFFFFF':'#1A1A1A'});
     cols.forEach(function(c,k){
       if(r._span&&c.g)return;
@@ -5030,6 +5032,7 @@ function prtImage(){
     y+=rowH;
   }
   var bodyTop=y, spanRows=[];
+  if(PRT.foot){var _fr=PRT.foot;rows=rows.concat([_fr]);}
   rows.forEach(function(r,i){drawRow(r,i);if(i===cutAfter&&i<rows.length-1){g.strokeStyle='#E8590C';g.lineWidth=3;g.beginPath();g.moveTo(x0,y-1.5);g.lineTo(x0+tableW,y-1.5);g.stroke();}});
   var bodyBot=y;
   // 세로 격자 + 외곽
@@ -5252,7 +5255,8 @@ function prtExcel(){
   if(typeof XLSX==='undefined'){alert('엑셀 모듈을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');return;}
   var rows=PRT.rows.slice(0,PRT.n);
   var meRow=PRT.rows.find(function(r){return r._me;});
-  if(meRow&&rows.indexOf(meRow)<0)rows=rows.concat([meRow]);   // 본인이 상위 N밖이면 맨 뒤에 추가
+  if(meRow&&rows.indexOf(meRow)<0)rows=rows.concat([meRow]);
+  if(PRT.foot)rows=rows.concat([PRT.foot]);   // 본인이 상위 N밖이면 맨 뒤에 추가
   var hasCode=rows.some(function(r){return r._code;});
   var hasNo=rows.some(function(r){return r._no;});
   var cols=[],firstName=true;
@@ -5266,8 +5270,8 @@ function prtExcel(){
   var head=['순위'].concat(cols.map(function(c){return c.h;}));
   var gS=-1,gE=-1;cols.forEach(function(c,ci){if(c.g){if(gS<0)gS=ci;gE=ci;}});
   var body=rows.map(function(r,i){
-    if(r._span&&gS>=0)return [r._rank||(i+1)].concat(cols.map(function(c,ci){if(ci===gS)return r._span;if(ci>gS&&ci<=gE)return '';var v=r[c.k];return v==null?'':v;}));
-    return [r._rank||(i+1)].concat(cols.map(function(c){
+    if(r._span&&gS>=0)return [r._foot?'':(r._rank||(i+1))].concat(cols.map(function(c,ci){if(ci===gS)return r._span;if(ci>gS&&ci<=gE)return '';var v=r[c.k];return v==null?'':v;}));
+    return [r._foot?'':(r._rank||(i+1))].concat(cols.map(function(c){
       var v=r[c.k];
       if(c.num){var s=String(v==null?'':v).replace(/,/g,'');var n=parseFloat(s);return isNaN(n)?v:n;}
       return v==null?'':v;
@@ -5327,7 +5331,8 @@ function prtExcel(){
       var bg, fontColor, bold=false;
       var colKey=(c2>=1&&cols[c2-1])?cols[c2-1].k:null;
       var isFail=(colKey&&rec._fail&&rec._fail.indexOf(colKey)>=0);   // 못 채운 기준 셀
-      if(isMe){
+      if(rec._foot){bg='FDEBD8';fontColor='222222';bold=true;}
+      else if(isMe){
         // 본인 소속: 행 전체 강조색(레드) 배경 + 흰 굵은 글씨
         bg=ME_BG; fontColor='FFFFFF'; bold=true;
       }else if(rec._myChong){
@@ -5440,7 +5445,10 @@ function prtIncList(key){
           r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};
         DK.forEach(function(dk,j){var v=sprDayVal(x.소속코드,dk);row['dy'+j]=(v==null?'-':fmt1(v));});
         return row;}),
-      cutLabel:'인당 1.2↑ 1~3위',n:6,banner:sprBanner});
+      cutLabel:'인당 1.2↑ 1~3위',n:6,banner:sprBanner,
+      foot:(function(){var DK=sprDays(),T=arr.reduce(function(a,x){return a+x.tea;},0),E=arr.reduce(function(a,x){return a+x.ent;},0);
+        var f={_foot:true,_rank:'',_tier:-1,nm:'전사',mg:'',t:fmt(T),e:fmt1(Math.round(E*10)/10),p:T?fmtD2(q3flr(E/T,2)):'-',pay:'',r1:'',r2:''};
+        DK.forEach(function(dk,j){var v=0,ok=false;arr.forEach(function(x){var d=sprDayVal(x.소속코드,dk);if(d!=null){v+=d;ok=true;}});f['dy'+j]=ok?fmt1(Math.round(v*10)/10):'-';});return f;})()});
     return;
   }
   if(key==='eopent10'){
