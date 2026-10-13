@@ -2224,6 +2224,18 @@ function sprRank(){
     var P=x.big?SPR_PAY_BIG:SPR_PAY_STD;x.exp=(i<3)?P[i]:0;x.pay=(x.elig&&x.prank<=3)?P[x.prank-1]:0;x.win=x.pay>0;});
   return arr;
 }
+// 일자별 입회: 업로드된 날짜별 누적입회 차이 (빠진 날은 다음 업로드 날짜에 합산 · 'a~b' 표기)
+function sprDays(){var sp=APP.sprint||{},D=sp.days||{},st=sprState()||{};var cur=sprDay(APP.meta&&APP.meta.date);
+  var days=Object.keys(D).filter(function(d){return d>=sp.from&&d<=sp.to;});
+  if(st.phase==='live'&&cur&&days.indexOf(cur)<0)days.push(cur);   // 아직 저장 전인 당일 업로드분
+  days.sort();
+  var WK=['일','월','화','수','목','금','토'],prev=null;
+  return days.map(function(d){var from=prev?(function(){var t=new Date(prev+'T00:00:00Z');t.setUTCDate(t.getUTCDate()+1);return t.toISOString().slice(0,10);})():sp.from;
+    var dd=new Date(d+'T00:00:00Z'),lb=(from===d)?(+d.slice(8))+'('+WK[dd.getUTCDay()]+')':(+from.slice(8))+'~'+(+d.slice(8))+'일';
+    var o={key:d,prev:prev,label:lb};prev=d;return o;});}
+function sprDayVal(code,dk){var sp=APP.sprint||{},D=sp.days||{},cur=sprDay(APP.meta&&APP.meta.date);
+  function cum(d){if(!d)return Number((sp.base||{})[code])||0;if(D[d]&&D[d][code]!=null)return Number(D[d][code]);if(d===cur)return Number(((APP.q3cur||{})[code]||{}).입회)||0;return NaN;}
+  var v=cum(dk.key)-cum(dk.prev);return isNaN(v)?null:Math.round(v*10)/10;}
 function sprNeed(x,per){return Math.max(0,Math.ceil(per*x.tea-x.ent-1e-9));}
 function chongSprintCard(){
   var sp=APP.sprint;if(!sp)return '<div class="ib am">인센티브 데이터를 불러오는 중이에요.</div>';
@@ -2240,6 +2252,7 @@ function chongSprintCard(){
   return hd
     +(me?'<div class="incgrid4">'+g4('인당입회',fmtD2(me.per),me.elig?'var(--green)':'var(--red)')+g4('교사수 / 입회',fmt(me.tea)+' / '+fmt1(me.ent))+g4('순위',me.rank+'위')+g4('예상 시상금',me.pay?fmt(me.pay)+'원':'-',me.pay?'var(--green)':'var(--t2)')+'</div>'
       +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 '+me.prank+'위 · 시상금 '+fmt(me.pay)+'원':(me.elig?'현재 '+me.rank+'위 (상위 3위 밖)':'인당입회 1.2 이상 시 시상 대상이에요'))+'</div>'+remain:'')
+    +(me&&sprDays().length?'<div class="stl" style="margin-top:12px">일자별 입회</div>'+sprDays().map(function(dk){var v=sprDayVal(me.소속코드,dk);return '<div class="histrow"><span>'+dk.label+'</span><b>'+(v==null?'-':fmt1(v)+'건')+'</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>기간 합계</span><b>'+fmt1(me.ent)+'건</b></div>':'')
     +rankBoardX(arr,code,[{h:'교사',f:function(x){return fmt(x.tea);}},{h:'입회',f:function(x){return fmt1(x.ent);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],function(x){return x.win;},'인당입회 순위 (6개 총국)',3,'시상 3위')
     +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 기간 내 입회 수 ÷ 9월말 교사 수<br>· 기간 내 입회 = 누적입회 − 10월 12일 마감 누적입회 (③소평)<br>· 인당입회 1.2 미만 시 시상에서 제외돼요.</div></div>';
 }
@@ -5398,10 +5411,12 @@ function prtIncList(key){
     var arr=sprRank();
     prtOpen({title:'[단기] 총국 2구간 마감 입회 스퍼트',
       sub:'10.13~10.18 · 인당입회 1.2↑ 1~3위 · 1위 60/50만·2위 40/30만·3위 30/20만 (경서·경상/그 외) · 인당 = 기간 입회 ÷ 9월말 교사수',
-      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'교사수',k:'t',num:1},{h:'기간 입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'시상금',k:'pay',num:1,hi:1},{h:'인당1.2 잔여(입회)',k:'r1',num:1},{h:'윗 순위 잔여(입회)',k:'r2',num:1}],
-      rows:arr.map(function(x){var el=arr.filter(function(y){return y.elig;}),up=(x.elig&&x.prank>1)?el[x.prank-2]:null;
-        return {_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['p']),nm:x.소속명,mg:x.관리자,t:fmt(x.tea),e:fmt1(x.ent),p:fmtD2(x.per),pay:(x.pay||x.exp)?fmt(x.pay||x.exp):'-',
-          r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};}),
+      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'교사수',k:'t',num:1}].concat(sprDays().map(function(dk,j){return {g:'일자별 입회',h:dk.label,k:'dy'+j,num:1};})).concat([{h:'기간 입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'시상금',k:'pay',num:1,hi:1},{h:'인당1.2 잔여(입회)',k:'r1',num:1},{h:'윗 순위 잔여(입회)',k:'r2',num:1}]),
+      rows:arr.map(function(x){var DK=sprDays();var el=arr.filter(function(y){return y.elig;}),up=(x.elig&&x.prank>1)?el[x.prank-2]:null;
+        var row={_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['p']),nm:x.소속명,mg:x.관리자,t:fmt(x.tea),e:fmt1(x.ent),p:fmtD2(x.per),pay:(x.pay||x.exp)?fmt(x.pay||x.exp):'-',
+          r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};
+        DK.forEach(function(dk,j){var v=sprDayVal(x.소속코드,dk);row['dy'+j]=(v==null?'-':fmt1(v));});
+        return row;}),
       cutLabel:'인당 1.2↑ 1~3위',n:6,poster:SPR_POSTER});
     return;
   }
@@ -6200,7 +6215,7 @@ async function doUpload(){
       }
     }catch(e){}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:keyOfDate(meta.date),asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;
-      try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});_sp.fin={asof:meta.date,val:_v};await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
+      try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
     try{await saveToiExp();}catch(e){}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data,keyOfDate(meta.date));if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:keyOfDate(meta.date),source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
