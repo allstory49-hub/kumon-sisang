@@ -258,6 +258,7 @@ input,button{font-family:inherit;font-size:14px}
 .icgift{margin-top:12px;text-align:center;font-size:15px;font-weight:800;color:#b45309;background:rgba(245,158,11,.13);border-radius:12px;padding:13px}
 .icguide{margin-top:12px;text-align:center;font-size:13px;color:var(--t2)}
 .giftbox{text-align:center;padding:6px}
+.anatb{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}.anatb th{background:var(--card2);color:var(--t2);font-weight:800;padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}.anatb td{padding:6px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}.anatb td.num{text-align:right;font-variant-numeric:tabular-nums}
 .giftimg{width:100%;max-width:280px;border-radius:12px;display:block;margin:0 auto 10px}
 .giftnm{font-size:14px;font-weight:700;color:var(--t1)}
 .giftpr{font-size:12px;color:var(--t2);margin-top:2px}
@@ -3528,8 +3529,88 @@ function info(){
 }
 
 /* ───── 관리자 화면 ───── */
+// ───────── 관리자 분석 탭: 일자별 추이 · 전월 같은 날 비교 · 월말 예상 ─────────
+var ANA_M=[{k:'순증',l:'합산과목 순증'},{k:'달성률',l:'달성률(%)'},{k:'입회',l:'입회'},{k:'퇴회',l:'퇴회'},{k:'D순증',l:'D순증'},{k:'마스타순증',l:'온공 순증'}];
+async function loadDaily(){try{var r=await dfetch('cumulative/daily.json?t='+Date.now());if(r.ok)APP.daily=await r.json();}catch(e){APP.daily=null;}}
+function anaDays(){   // {YYYY-MM-DD: org} (저장분 + 오늘 올라간 q3cur)
+  var D={};var src=(APP.daily&&APP.daily.days)||{};Object.keys(src).forEach(function(k){D[k]=src[k].org;});
+  var cur=sprDay(APP.meta&&APP.meta.date);if(cur&&APP.q3cur)D[cur]=APP.q3cur;return D;}
+function anaOrgVal(org,code,m){if(!org)return null;
+  function one(o){if(!o)return null;if(m==='달성률')return null;var v=o[m];return v==null?null:Number(v)||0;}
+  if(m==='달성률'){var s=anaOrgVal(org,code,'순증'),t=anaOrgVal(org,code,'목표');return (s==null||!t)?null:q3flr(s/t*100,1);}
+  if(code==='ALL'){var sum=0,ok=false;Object.keys(org).forEach(function(c){var o=org[c];if(o&&(o.lv==='총국'||(!o.lv&&classifyOrg(c)==='총국'))){var v=one(o);if(v!=null){sum+=v;ok=true;}}});return ok?Math.round(sum*10)/10:null;}
+  return one(org[code]);}
+function anaMonthSeries(code,m,mk){var D=anaDays(),out=[];Object.keys(D).sort().forEach(function(k){if(k.slice(0,7)!==mk)return;var v=anaOrgVal(D[k],code,m);if(v!=null)out.push({d:+k.slice(8),k:k,v:v});});return out;}
+function anaFinal(code,m,mk){var bm=((APP.q3cum||{}).byMonth||{})[mk];if(!bm)return null;
+  if(code==='ALL'){var o2={};Object.keys(bm).forEach(function(c){if(bm[c].lv==='총국')o2[c]=bm[c];});return anaOrgVal(o2,'ALL',m);}return anaOrgVal(bm,code,m);}
+function anaPrevMk(mk){var y=+mk.slice(0,4),mo=+mk.slice(5)-1;if(mo<1){mo=12;y--;}return y+'-'+(mo<10?'0':'')+mo;}
+function anaDim(mk){return new Date(+mk.slice(0,4),+mk.slice(5),0).getDate();}
+function anaAt(series,day){var r=null;series.forEach(function(p){if(p.d<=day)r=p;});return r;}
+function anaProject(code,m){   // 월말 예상: 현재 누적 + (지난달 월말 − 지난달 같은 날) · 없으면 일수 비례
+  var mk=liveKey(),cur=anaMonthSeries(code,m==='달성률'?'순증':m,mk);if(!cur.length)return null;var last=cur[cur.length-1];
+  var pm=anaPrevMk(mk),ps=anaMonthSeries(code,m==='달성률'?'순증':m,pm),pf=anaFinal(code,m==='달성률'?'순증':m,pm),pa=anaAt(ps,last.d);
+  var proj,how;
+  if(pf!=null&&pa){proj=last.v+(pf-pa.v);how='지난달 '+pa.d+'일→월말 흐름 적용';}
+  else{proj=last.v/last.d*anaDim(mk);how='일수 비례';}
+  proj=Math.round(proj*10)/10;
+  if(m==='달성률'){var D=anaDays(),t=anaOrgVal(D[last.k],code,'목표');return {v:t?q3flr(proj/t*100,1):null,how:how,sun:proj};}
+  return {v:proj,how:how};}
+function anaSvg(cur,prev,pfinal,proj,dim,fmtF){
+  var W=680,H=260,L=56,R=14,T=16,B=30,pts=cur.concat(prev);if(pfinal!=null)pts.push({d:dim,v:pfinal});if(proj!=null)pts.push({d:dim,v:proj});
+  if(!pts.length)return '<div class="ib am">표시할 데이터가 없어요.</div>';
+  var mn=Math.min.apply(null,pts.map(function(p){return p.v;})),mx=Math.max.apply(null,pts.map(function(p){return p.v;}));if(mn>0)mn=0;if(mx<0)mx=0;if(mx===mn)mx=mn+1;
+  var pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
+  function X(d){return L+(d-1)/(dim-1)*(W-L-R);}function Y(v){return T+(mx-v)/(mx-mn)*(H-T-B);}
+  var g='';for(var i=0;i<=4;i++){var v=mn+(mx-mn)*i/4,y=Y(v);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="var(--bd)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="var(--t3)">'+fmtF(Math.round(v))+'</text>';}
+  g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="var(--t3)" stroke-width="1" stroke-dasharray="3 3"/>';
+  [1,5,10,15,20,25,dim].forEach(function(d){g+='<text x="'+X(d)+'" y="'+(H-10)+'" text-anchor="middle" font-size="11" fill="var(--t3)">'+d+'일</text>';});
+  function line(s,col,w,dash){if(!s.length)return '';var p=s.map(function(q){return X(q.d)+','+Y(q.v);}).join(' ');return '<polyline points="'+p+'" fill="none" stroke="'+col+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'+s.map(function(q){return '<circle cx="'+X(q.d)+'" cy="'+Y(q.v)+'" r="3" fill="'+col+'"/>';}).join('');}
+  var pv=prev.slice();if(pfinal!=null&&(!pv.length||pv[pv.length-1].d<dim))pv.push({d:dim,v:pfinal});
+  var pj='';if(proj!=null&&cur.length){var lc=cur[cur.length-1];pj=line([lc,{d:dim,v:proj}],'#E8590C',2,'6 5');}
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+g+line(pv,'#9AA5B1',2)+line(cur,'#1E6FD9',3)+pj+'</svg>'
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin:4px 0 10px"><span><b style="color:#1E6FD9">━</b> 이번 달</span><span><b style="color:#9AA5B1">━</b> 지난달</span><span><b style="color:#E8590C">┅</b> 월말 예상</span></div>';}
+function adminAnalysis(){
+  if(!APP.daily){loadDaily().then(function(){if(S.atab==='ana')renderAdmin();});return '<div class="ib bl">분석 데이터를 불러오는 중…</div>';}
+  S.anaCode=S.anaCode||'ALL';S.anaM=S.anaM||'순증';
+  var q=APP.q3cur||{},ch=Object.keys(q).filter(function(c){return q[c].lv==='총국';}).sort(),ep=Object.keys(q).filter(function(c){return q[c].lv==='사업국';}).sort(function(a,b){return (q[a].소속명<q[b].소속명)?-1:1;});
+  var sel='<select onchange="S.anaCode=this.value;renderAdmin()" style="padding:8px 10px;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-size:14px;font-weight:700">'
+    +'<option value="ALL"'+(S.anaCode==='ALL'?' selected':'')+'>전사 (6개 총국 합계)</option><optgroup label="총국">'+ch.map(function(c){return '<option value="'+c+'"'+(S.anaCode===c?' selected':'')+'>'+q[c].소속명+'</option>';}).join('')+'</optgroup>'
+    +'<optgroup label="사업국">'+ep.map(function(c){return '<option value="'+c+'"'+(S.anaCode===c?' selected':'')+'>'+q[c].소속명+'</option>';}).join('')+'</optgroup></select>';
+  var mb='<div class="rtog jsub" style="margin:10px 0">'+ANA_M.map(function(o){return '<button class="rtb'+(S.anaM===o.k?' on':'')+'" onclick="S.anaM=\''+o.k+'\';renderAdmin()">'+o.l.replace('합산과목 ','')+'</button>';}).join('')+'</div>';
+  var code=S.anaCode,m=S.anaM,mk=liveKey(),pm=anaPrevMk(mk),dim=anaDim(mk);
+  var isR=(m==='달성률'),fF=isR?function(v){return fmt1(v)+'%';}:fmt1;
+  var cur=anaMonthSeries(code,m,mk),prev=anaMonthSeries(code,m,pm),pf=anaFinal(code,m,pm),pj=anaProject(code,m);
+  var nm=code==='ALL'?'전사':((q[code]||{}).소속명||code);
+  var last=cur[cur.length-1],pa=last?anaAt(prev,last.d):null;
+  function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
+  var diff=(last&&pa)?Math.round((last.v-pa.v)*10)/10:null;
+  var tiles='<div class="incgrid4">'
+    +tile('이번 달 누적',last?fF(last.v):'-',last?(+mk.slice(5))+'월 '+last.d+'일 마감':'')
+    +tile('지난달 같은 날',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'지난달 자료 없음')
+    +tile('차이',diff==null?'-':(diff>0?'+':'')+fF(diff),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
+    +tile('월말 예상',pj&&pj.v!=null?fF(pj.v):'-',pj?pj.how:'', '#E8590C')+'</div>';
+  var rows=cur.map(function(p,i){var pr=i?cur[i-1]:null,dd=pr?Math.round((p.v-pr.v)*10)/10:null,gap=pr?p.d-pr.d:0,pp=anaAt(prev,p.d);
+    return '<tr><td>'+(+mk.slice(5))+'/'+p.d+'</td><td class="num">'+fF(p.v)+'</td><td class="num" style="color:'+(dd==null?'var(--t3)':(dd>=0?'var(--green)':'var(--red)'))+'">'+(dd==null?'-':(isR?(dd>0?'+':'')+fmt1(dd)+'%p':(dd>0?'+':'')+fmt1(dd))+(gap>1?' <span style="font-size:10px;color:var(--t3)">('+gap+'일)</span>':''))+'</td><td class="num">'+(pp?fF(pp.v)+' <span style="font-size:10px;color:var(--t3)">('+pp.d+'일)</span>':'-')+'</td><td class="num" style="color:'+(pp?((p.v-pp.v)>=0?'var(--green)':'var(--red)'):'var(--t3)')+'">'+(pp?((p.v-pp.v)>0?'+':'')+fF(Math.round((p.v-pp.v)*10)/10):'-')+'</td></tr>';}).reverse().join('');
+  var tbl='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>누적</th><th>전 업로드 대비</th><th>지난달 같은 날</th><th>차이</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">이번 달 자료가 없어요</td></tr>')+'</tbody></table></div>';
+  // 월말 예상 순위 (총국·사업국)
+  var lvSel=S.anaLv||'사업국';
+  var lst=Object.keys(q).filter(function(c){return q[c].lv===lvSel;}).map(function(c){var p2=anaProject(c,'순증'),t=Number(q[c].목표)||0,s=Number(q[c].순증)||0;
+    var pfi=anaFinal(c,'순증',pm);return {c:c,nm:q[c].소속명,mg:q[c].관리자||'',s:s,t:t,a:t?q3flr(s/t*100,1):0,ps:p2?p2.v:null,pa:(p2&&t)?q3flr(p2.v/t*100,1):null,lf:pfi,la:(function(){var bm=((APP.q3cum||{}).byMonth||{})[pm]||{},o=bm[c];return (o&&o.목표)?q3flr(o.순증/o.목표*100,1):null;})()};});
+  lst.sort(function(a,b){return (b.pa==null?-1e9:b.pa)-(a.pa==null?-1e9:a.pa);});
+  var lvb='<div class="rtog jsub" style="margin:6px 0 8px">'+['총국','사업국'].map(function(l){return '<button class="rtb'+(lvSel===l?' on':'')+'" onclick="S.anaLv=\''+l+'\';renderAdmin()">'+l+'</button>';}).join('')+'</div>';
+  var ptbl='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>#</th><th>조직</th><th>목표</th><th>현재 순증</th><th>현재 달성률</th><th>월말 예상 순증</th><th>예상 달성률</th><th>지난달 달성률</th></tr></thead><tbody>'
+    +lst.map(function(x,i){return '<tr'+(x.c===code?' style="background:rgba(30,111,217,.1)"':'')+'><td>'+(i+1)+'</td><td style="text-align:left">'+shortName(x.nm)+' <span style="color:var(--t3);font-size:11px">'+x.mg+'</span></td><td class="num">'+fmt(x.t)+'</td><td class="num">'+fmt1(x.s)+'</td><td class="num">'+fmt1(x.a)+'%</td><td class="num" style="font-weight:800;color:#E8590C">'+(x.ps==null?'-':fmt1(x.ps))+'</td><td class="num" style="font-weight:800;color:'+(x.pa!=null&&x.pa>=100?'var(--green)':'var(--t1)')+'">'+(x.pa==null?'-':fmt1(x.pa)+'%')+'</td><td class="num">'+(x.la==null?'-':fmt1(x.la)+'%')+'</td></tr>';}).join('')+'</tbody></table></div>';
+  var nDays=Object.keys(anaDays()).length;
+  return '<div class="mt">📈 실적 분석</div><div class="ib gr">업로드된 일자별 자료로 추이·전월 비교·월말 예상을 보여줘요 · 저장된 일자 '+fmt(nDays)+'일 (업로드한 날만 있어요)</div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+sel+'</div>'+mb
+    +'<div class="stl">'+nm+' · '+ANA_M.filter(function(o){return o.k===m;})[0].l+'</div>'+tiles
+    +anaSvg(cur,prev,pf,pj?pj.v:null,dim,fF)
+    +'<div class="stl" style="margin-top:6px">일자별 누적</div>'+tbl
+    +'<div class="stl" style="margin-top:18px">월말 예상 달성률 순위 (합산과목 순증)</div>'+lvb+ptbl
+    +'<div class="ib bl" style="margin-top:10px">· 월말 예상 = 현재 누적 + (지난달 월말 − 지난달 같은 날 누적). 지난달 같은 날 자료가 없으면 일수 비례로 추정해요.<br>· 지난달 같은 날은 그 날 이전에 가장 가까운 업로드일 기준이에요. · 전사는 6개 총국 합계(③소평) · 입회는 10월 6일 이후 자료부터 있어요.<br>· 전년 자료는 앱에 없어 비교할 수 없어요.</div>';
+}
 function renderAdmin(){
-  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
   if(curMonth()>=10){tabs=tabs.filter(function(t){return t.id!=='sejong';});if(S.atab==='sejong')S.atab='sisang';}   // 세종클럽은 3분기 한정
   if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
@@ -3539,6 +3620,7 @@ function renderAdmin(){
   else if(S.atab==='sisang')b.innerHTML=adminSisang();
   else if(S.atab==='sejong')b.innerHTML=sejongClub();
   else if(S.atab==='hist')b.innerHTML=adminHist();
+  else if(S.atab==='ana')b.innerHTML=adminAnalysis();
   else if(S.atab==='search')b.innerHTML=search();
   else b.innerHTML=adminSisang();
 }
@@ -6251,6 +6333,7 @@ async function doUpload(){
       }
     }catch(e){}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:keyOfDate(meta.date),asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;
+      try{var _dk=sprDay(meta.date);if(_dk){if(!APP.daily)await loadDaily();var _dd=APP.daily||{days:{}};_dd.days=_dd.days||{};var _o={},_F=['순증','목표','퇴회','과목수','D순증','교사수','마스타순증','스구N','입회'];Object.keys(nq3).forEach(function(c){var o=nq3[c];if(o.lv!=='총국'&&o.lv!=='사업국'&&o.lv!=='본부')return;var r={lv:o.lv};_F.forEach(function(f){if(o[f]!=null)r[f]=o[f];});_o[c]=r;});_dd.days[_dk]={asof:meta.date,org:_o};APP.daily=_dd;await saveFile('cumulative/daily.json',JSON.stringify(_dd),'daily snapshot '+_dk);}}catch(e){}
       try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d<_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=nq3.HQ.입회;_sp.tea.HQ=nq3.HQ.교사수;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint base HQ');}
       if(_sp&&_d===_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=Math.round((nq3.HQ.입회-nq3.HQ.당일입회)*10)/10;_sp.tea.HQ=nq3.HQ.교사수;}   // 시작일 업로드: 누적−당일 = 전날 마감 누적
       if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
