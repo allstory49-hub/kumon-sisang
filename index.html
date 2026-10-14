@@ -797,8 +797,12 @@ async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevs
 async function loadSprint(){try{var r=await dfetch('cumulative/chong_sprint.json?t='+Date.now());if(r.ok)APP.sprint=await r.json();}catch(e){APP.sprint=null;}}
 async function loadToiExp(){try{var r=await dfetch('cumulative/toi_exp.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.toiExp=jx.data||{};}}catch(e){APP.toiExp={};}}
 // ⑧⑨ 예상퇴회: 'M월 예상퇴회' = M월 퇴회 (전월말과목 = M-1월말). 11월→11월분, 12월→12월분 → cumulative/toi_exp.json
-async function saveToiExp(){var cur=APP.toiExp||{},ch=false;[['toi11','2026-11'],['toi12','2026-12']].forEach(function(p){if(UP[p[0]]){cur[p[1]]=parseToiFile(UP[p[0]].data);ch=true;}});
-  if(!ch)return false;await saveFile('cumulative/toi_exp.json',JSON.stringify({updated:new Date().toISOString().slice(0,10),data:cur}),'toi exp update');APP.toiExp=cur;UP.toi11=null;UP.toi12=null;return true;}
+async function saveToiExp(dk){var cur=APP.toiExp||{},ch=false,cats={};[['toi11','2026-11'],['toi12','2026-12']].forEach(function(p){if(UP[p[0]]){cur[p[1]]=parseToiFile(UP[p[0]].data);try{cats[p[1]]=parseToiCat(UP[p[0]].data);}catch(e){}ch=true;}});
+  if(!ch)return false;await saveFile('cumulative/toi_exp.json',JSON.stringify({updated:new Date().toISOString().slice(0,10),data:cur}),'toi exp update');APP.toiExp=cur;
+  // 분석용: 업로드일 기준 '다음 달' 예상퇴회(과목별)를 일자별로 저장
+  try{dk=dk||sprDay(APP.meta&&APP.meta.date);if(dk){var y=+dk.slice(0,4),mo=+dk.slice(5,7)+1;if(mo>12){mo=1;y++;}var nk=y+'-'+(mo<10?'0':'')+mo;
+    if(cats[nk]){if(!APP.daily)await loadDaily();var D=APP.daily||{days:{}};D.days=D.days||{};var e=D.days[dk]||{asof:(APP.meta&&APP.meta.date)||'',org:{}};e.et=cats[nk];e.etFor=nk;D.days[dk]=e;APP.daily=D;await saveFile('cumulative/daily.json',JSON.stringify(D),'daily et '+dk);}}}catch(e){}
+  UP.toi11=null;UP.toi12=null;return true;}
 async function loadJaeExpFixed(){try{var r=await dfetch('cumulative/jae_exp_fixed.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.jaeExpFixed=jx.data||{};APP.jaeExpFixedMonth=jx.month||'2026-09';}}catch(e){APP.jaeExpFixed=null;}}
 async function loadJaeyak(){try{var r=await dfetch('cumulative/jaeyak.json?t='+Date.now());if(r.ok){var j=await r.json();APP.jaeyak=j.data;APP.jaeyakAsof=j.asof||'';}}catch(e){APP.jaeyak=null;}}
 async function loadSejongItal(){try{var r=await dfetch('sejong/ital.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongItal=j.data;APP.sejongItalAsof=j.asof||'';APP.sejongItalRaw=j.raw||null;}}catch(e){APP.sejongItal=null;APP.sejongItalRaw=null;}}
@@ -3597,6 +3601,7 @@ function adminAnalysis(){
     return head+'<div class="ib am">📋 과목별 예상퇴회 파일을 받으면 이 분석이 추가돼요. 파일 양식을 보내주세요.</div>';
   var fF=isA?function(v){return fmt1(v)+'%';}:fmt1;
   var cur=anaSeries(code,met,cat,mk),prev=anaSeries(code,met,cat,pm);
+  if(met==='et')head+='<div class="ib bl" style="margin-top:0">📋 이번 달에 업로드한 <b>다음 달 예상퇴회</b>(등록 누적)를 일자별로 보여줘요. 지난달 비교는 지난달에 등록된 이번 달 예상퇴회예요. N과목 = NKU 열</div>';
   if(!cur.length)return head+'<div class="ib am">📋 아직 이번 달 '+ml+cl+' 자료가 없어요. ④ 관통_지구 파일을 업로드하면 그날부터 쌓여요.</div>';
   var last=cur[cur.length-1],pos=anaPos(mk,last.d),pd=anaDateAt(pm,pos.seg,pos.idx),pa=pd?anaAt(prev,pd):null;
   // 구간별 값
@@ -4427,13 +4432,13 @@ function upload(){
     +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
     +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
-    +'<div class="stl">⑧ 11월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 4분기 지국·사업국 퇴회율용</span></div>'
+    +'<div class="stl">⑧ 11월_예상퇴회(과목별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
     +'<div class="upz'+(UP.toi11?' done':'')+'" onclick="document.getElementById(\'t11f\').click()"><div class="upi'+(UP.toi11?' done':'')+'">'+(UP.toi11?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.toi11?UP.toi11.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi11?' done':'')+'">11월 예상퇴회·전월말과목 파일 (조직별)</div></div></div>'
+    +'<div><div class="upl">'+(UP.toi11?UP.toi11.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi11?' done':'')+'">11월 예상퇴회 파일 (과목별 예상퇴회 포함)</div></div></div>'
     +'<input type="file" id="t11f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi11\')">'
-    +'<div class="stl">⑨ 12월_예상퇴회.xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 4분기 지국·사업국 퇴회율용</span></div>'
+    +'<div class="stl">⑨ 12월_예상퇴회(과목별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
     +'<div class="upz'+(UP.toi12?' done':'')+'" onclick="document.getElementById(\'t12f\').click()"><div class="upi'+(UP.toi12?' done':'')+'">'+(UP.toi12?ICON_OK:ICON_UP)+'</div>'
-    +'<div><div class="upl">'+(UP.toi12?UP.toi12.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi12?' done':'')+'">12월 예상퇴회·전월말과목 파일 (조직별)</div></div></div>'
+    +'<div><div class="upl">'+(UP.toi12?UP.toi12.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi12?' done':'')+'">12월 예상퇴회 파일 (과목별 예상퇴회 포함)</div></div></div>'
     +'<input type="file" id="t12f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi12\')">'
     +'<button class="actb" id="ubtn" onclick="doUpload()" '+((UP.teacher&&UP.org)||UP.toi11||UP.toi12?'':'disabled')+'>데이터 반영하기</button>'
     +'<div id="umsg" style="margin-top:10px;font-size:12px;text-align:center;line-height:1.5"></div>'
@@ -5967,14 +5972,26 @@ function parseJaeyak(data){
   return m;
 }
 function parseJaeyakSafe(d){try{return parseJaeyak(d);}catch(e){return null;}}
+function toiCols(rows){   // 예상퇴회 파일 열 위치: 신양식(과목별)·구양식 자동 인식
+  var h0=rows[0]||[],h1=rows[1]||[],C={gwa:4,toi:6,tea:5,N:-1,O:-1,S:-1,isNew:false};
+  h0.forEach(function(v,i){v=String(v||'').trim();if(v==='전월말과목')C.gwa=i;if(v==='교사예상퇴회'){C.toi=i;C.isNew=true;}});
+  h1.forEach(function(v,i){v=String(v||'').trim();if(v==='NKU')C.N=i;else if(v==='온공')C.O=i;else if(v==='합계')C.S=i;});
+  if(C.isNew)C.tea=-1;return C;}
 function parseToiFile(data){
-  // 예상퇴회 파일: 소속코드(0) 전월말과목(4) 교사수(5) 예상퇴회(6). header 2줄.
+  // 예상퇴회 파일 → 조직별 총 예상퇴회·전월말과목 (인센티브 퇴회율용)
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
-  var m={};
-  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;
-    m[cc]={toi:Number(r[6])||0,gwa:Number(r[4])||0,tea:Number(r[5])||0};}
+  var C=toiCols(rows),m={};
+  for(var i=1;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(!classifyOrg(cc))continue;
+    m[cc]={toi:Number(r[C.toi])||0,gwa:Number(r[C.gwa])||0,tea:C.tea>=0?(Number(r[C.tea])||0):0};}
   return m;
 }
+function parseToiCat(data){   // 분석용: 과목별 예상퇴회(합계·NKU=N·온공) 지구 → 사업국·총국·전사 합산
+  var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+  var C=toiCols(rows);if(C.S<0)return null;var out={};
+  function add(k,r){var o=out[k]||(out[k]={St:0,Nt:0,Ot:0});o.St=Math.round((o.St+(Number(r[C.S])||0))*10)/10;o.Nt=Math.round((o.Nt+(C.N>=0?Number(r[C.N])||0:0))*10)/10;o.Ot=Math.round((o.Ot+(C.O>=0?Number(r[C.O])||0:0))*10)/10;}
+  for(var i=1;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!=='지구')continue;
+    var jc=ANA_EXC[cc]||(cc.slice(0,4)+'0'),ec=jc.slice(0,2)+'000',ch=cc.charAt(0)+'1000';add('ALL',r);add(ec,r);add(ch,r);}
+  return out;}
 function parseMutoe(data){
   // 예상퇴회 목록: 교사정보(col 5)에 교사번호. 행 1개 = 퇴회 과목 1건. header 2줄.
   // 교사번호별 행 수 = 교사 전체 퇴회수. 명단에 없는 교사 = 퇴회 0(무퇴회).
@@ -6359,7 +6376,7 @@ async function doUpload(){
       if(_sp&&_d===_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=Math.round((nq3.HQ.입회-nq3.HQ.당일입회)*10)/10;_sp.tea.HQ=nq3.HQ.교사수;}   // 시작일 업로드: 누적−당일 = 전날 마감 누적
       if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
     if(UP.jigu2){try{var _kw=anaParseKw(UP.jigu2.data),_dk2=sprDay(meta.date);if(_dk2){if(!APP.daily)await loadDaily();var _d2=APP.daily||{days:{}};_d2.days=_d2.days||{};var _e2=_d2.days[_dk2]||{asof:meta.date,org:{}};_e2.kw=_kw;_d2.days[_dk2]=_e2;APP.daily=_d2;await saveFile('cumulative/daily.json',JSON.stringify(_d2),'daily kw '+_dk2);}}catch(e){}}
-    try{await saveToiExp();}catch(e){}
+    try{await saveToiExp(sprDay(meta.date));}catch(e){}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data,keyOfDate(meta.date));if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:keyOfDate(meta.date),source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
     if(UP.jigu&&keyOfDate(meta.date)<='2026-09'){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~9월 누적',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
