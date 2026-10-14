@@ -4694,7 +4694,7 @@ function prtRender(){
       +'<span><span class="sw" style="background:#E6F5EE;border:1.5px solid #1D9E75"></span>본인</span>'
       +'</div>'
     +'<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'
-    +'<div class="ft"><span>※ 실적조정으로 인한 순위변동이 있을 수 있습니다.</span><span>출력 '+new Date().toLocaleDateString('ko-KR')+'</span></div>'
+    +'<div class="ft"><span>'+(PRT.noAdj?'':'※ 실적조정으로 인한 순위변동이 있을 수 있습니다.')+'</span><span>출력 '+new Date().toLocaleDateString('ko-KR')+'</span></div>'
     +'</body></html>';
   var w=window.open('','_blank');
   if(!w){alert('팝업이 차단되었습니다. 브라우저에서 팝업을 허용해 주세요.');return;}
@@ -5043,7 +5043,7 @@ function prtImage(){
   g.beginPath();g.moveTo(x0,hy+headH);g.lineTo(x0+tableW,hy+headH);g.stroke();
   if(meExtra){y+=8;txt('···',x0+tableW/2,y-4,12,'#8A939C','800');var yy=y;drawRow(meExtra,PRT.rows.indexOf(meExtra));g.strokeStyle='#2B3540';g.lineWidth=2;g.strokeRect(x0+1,yy,tableW-2,rowH);}
   // 범례
-  txt('※ 색 = 시상금 급간 (진한색 달성 · 연한색 미달성) · 빨간 숫자 = 잔여'+(cutAfter>=0?' · 주황선 위 시상 대상':'')+' · 실적조정으로 순위 변동 가능',x0+2,y+footH/2+2,11.5,'#6B7680','500','left');
+  txt('※ 색 = 시상금 급간 (진한색 달성 · 연한색 미달성) · 빨간 숫자 = 잔여'+(cutAfter>=0?' · 주황선 위 시상 대상':'')+(PRT.noAdj?'':' · 실적조정으로 순위 변동 가능'),x0+2,y+footH/2+2,11.5,'#6B7680','500','left');
   // 안내 포스터가 있으면 표 위에 붙임
   if(PRT.banner){var bh=PRT.banner(null,W);var cv3=document.createElement('canvas');cv3.width=W*DPR;cv3.height=(bh+H)*DPR;var g3=cv3.getContext('2d');g3.scale(DPR,DPR);
     g3.fillStyle='#FFFFFF';g3.fillRect(0,0,W,bh+H);PRT.banner(g3,W);g3.setTransform(1,0,0,1,0,0);g3.drawImage(cv,0,bh*DPR);cv=cv3;}
@@ -5445,7 +5445,7 @@ function prtIncList(key){
           r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};
         DK.forEach(function(dk,j){var v=sprDayVal(x.소속코드,dk);row['dy'+j]=(v==null?'-':fmt1(v));});
         return row;}),
-      cutLabel:'인당 1.2↑ 1~3위',n:6,banner:sprBanner,
+      cutLabel:'인당 1.2↑ 1~3위',n:6,banner:sprBanner,noAdj:true,
       foot:(function(){var DK=sprDays(),sp=APP.sprint||{},st=sprState()||{},hq=(sp.base||{}).HQ!=null;
         var T,E;
         if(hq){T=Number(sp.tea.HQ)||0;var cv=(st.src==='fin'&&sp.fin&&sp.fin.val.HQ!=null)?Number(sp.fin.val.HQ):Number(((APP.q3cur||{}).HQ||{}).입회);E=(st.phase==='before'||isNaN(cv))?0:Math.round((cv-Number(sp.base.HQ))*10)/10;}
