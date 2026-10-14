@@ -3563,18 +3563,26 @@ function anaPos(mk,d){var k=anaSegOf(mk,d),e=anaEff(mk,d),bd=anaBizDays(mk,k),id
 function anaDateAt(mk,k,idx){var bd=anaBizDays(mk,k);if(!bd.length||idx<1)return null;var x=bd[Math.min(idx,bd.length)-1];if(idx>=bd.length)return anaSegCalEnd(mk,k);   // 구간 마지막 영업일 = 주말 포함 구간 끝
   var w=anaDow(mk,x);return w===5?Math.min(x+2,anaDim(mk)):x;}
 function anaPrevMk(mk){var y=+mk.slice(0,4),mo=+mk.slice(5)-1;if(mo<1){mo=12;y--;}return y+'-'+(mo<10?'0':'')+mo;}
-function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로드일)
-  var out=[],D=(APP.daily&&APP.daily.days)||{};
-  Object.keys(D).sort().forEach(function(k){if(k.slice(0,7)!==mk)return;var e=D[k],v=null;
-    if(met==='ach'){v=anaAch(e.org,code);}else if(met==='et'){var _E=(S.anaEt===2)?e.et2:e.et;v=_E?anaKwVal(_E[code],'t',cat):null;}else{v=e.kw?anaKwVal(e.kw[code],met,cat):null;}
+function anaOrg3(org,code,f,useHQ){   // ③소평 값: 전사 = 구몬사업본부(HQ) 또는 6개 총국 합계
+  if(!org)return null;if(code==='ALL'){if(useHQ){var h=org.HQ;return h&&h[f]!=null?Number(h[f]):null;}
+    var s=0,ok=false;Object.keys(org).forEach(function(c){var o=org[c];if(o&&(o.lv==='총국'||(!o.lv&&classifyOrg(c)==='총국'))&&o[f]!=null){s+=Number(o[f])||0;ok=true;}});return ok?Math.round(s*10)/10:null;}
+  var o=org[code];return o&&o[f]!=null?Number(o[f]):null;}
+function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로드일 + 오늘 올라간 자료)
+  var out=[],D=(APP.daily&&APP.daily.days)||{},cur=sprDay(APP.meta&&APP.meta.date);
+  var src={};Object.keys(D).forEach(function(k){if(k.slice(0,7)===mk)src[k]=D[k];});
+  if(cur&&cur.slice(0,7)===mk&&APP.q3cur){src[cur]=Object.assign({},src[cur]||{},{org:APP.q3cur});}
+  var keys=Object.keys(src).sort(),use3=(met==='ach')||((met==='in'||met==='ns')&&cat==='S');
+  var allHQ=keys.length&&keys.every(function(k){return src[k].org&&src[k].org.HQ;});
+  keys.forEach(function(k){var e=src[k],v=null;
+    if(met==='ach'){if(code==='ALL'){var h=e.org&&e.org.HQ;v=(h&&h.목표)?q3flr(h.순증/h.목표*100,1):null;}else v=anaAch(e.org,code);}
+    else if(met==='et'){var _E=(S.anaEt===2)?e.et2:e.et;v=_E?anaKwVal(_E[code],'t',cat):null;}
+    else if(use3){v=anaOrg3(e.org,code,met==='in'?'입회':'순증',allHQ);}
+    else{v=e.kw?anaKwVal(e.kw[code],met,cat):null;}
     if(v!=null)out.push({d:+k.slice(8),k:k,v:v});});
-  if(met==='ach'){var cur=sprDay(APP.meta&&APP.meta.date);if(cur&&cur.slice(0,7)===mk&&!out.some(function(p){return p.k===cur;})){var v2=anaAch(APP.q3cur,code);if(v2!=null)out.push({d:+cur.slice(8),k:cur,v:v2});}}
   return out;}
-function anaAch(org,code){if(!org)return null;var s=0,t=0,ok=false;
-  Object.keys(org).forEach(function(c){var o=org[c];if(!o)return;var hit=(code==='ALL')?(o.lv==='총국'||(!o.lv&&classifyOrg(c)==='총국')):(c===code);if(hit){s+=Number(o.순증)||0;t+=Number(o.목표)||0;ok=true;}});
-  return (ok&&t)?q3flr(s/t*100,1):null;}
+function anaAllHQ(mk){var D=(APP.daily&&APP.daily.days)||{},ks=Object.keys(D).filter(function(k){return k.slice(0,7)===mk;});return ks.length&&ks.every(function(k){return D[k].org&&D[k].org.HQ;});}
 function anaAt(series,day){var r=null;series.forEach(function(p){if(p.d<=day)r=p;});return r;}
-function anaFinalAch(code,mk){var bm=((APP.q3cum||{}).byMonth||{})[mk];return bm?anaAch(bm,code):null;}
+function anaFinalAch(code,mk){var bm=((APP.q3cum||{}).byMonth||{})[mk];if(!bm)return null;if(code==='ALL'){var h=bm.HQ;return (h&&h.목표)?q3flr(h.순증/h.목표*100,1):null;}return anaAch(bm,code);}
 function anaSvg(cur,prev,proj,dim,fmtF,segE){
   var W=680,H=250,L=56,R=14,T=14,B=30,pts=cur.concat(prev);if(proj!=null)pts.push({d:dim,v:proj});
   if(!pts.length)return '<div class="ib am">아직 그래프로 그릴 자료가 없어요.</div>';
@@ -3637,7 +3645,7 @@ function adminAnalysis(){
   return head+tiles+anaSvg(cur,prev,proj,dim,fF,anaSegEnds(mk))
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
     +'<div class="stl" style="margin-top:16px">일자별 누적</div>'+dayT
-    +'<div class="ib bl" style="margin-top:10px">· 과목 구분: 합산과목 = ④관통 \'관리과목\' · 온공 = 마스타과목 · N = N과목 · 관리과목 = 합산 − 온공 − N (사업국·총국·전사는 지구 합산)<br>· 지난달 비교값은 같은 구간의 같은 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준(전사 = 6개 총국 합계).</div>';
+    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회·순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 지난달 비교값은 같은 구간의 같은 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
 function renderAdmin(){
   var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
