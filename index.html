@@ -2245,7 +2245,7 @@ function sprRank(){
   var sp=APP.sprint;if(!sp)return [];var st=sprState();
   var arr=Object.keys(sp.base||{}).filter(function(c){return classifyOrg(c)==='총국';}).map(function(c){var o=(APP.q3cur||{})[c]||{},tea=Number((sp.tea||{})[c])||Number(o.교사수)||0;
     var curV=(st.src==='fin'&&sp.fin)?Number(sp.fin.val[c]):Number(o.입회);
-    var ent=(st.phase==='before'||isNaN(curV))?0:Math.round((curV-Number(sp.base[c]||0))*10)/10;
+    var ent=sprEnt(c,curV);
     var big=/^[KT]/.test(c);
     return {소속코드:c,소속명:o.소속명||c,관리자:o.관리자||'',tea:tea,ent:ent,per:tea?q3flr(ent/tea,2):0,raw:tea?ent/tea:0,big:big};});
   arr.sort(function(a,b){return (b.raw-a.raw)||(b.ent-a.ent);});
@@ -2264,7 +2264,15 @@ function sprDays(){var sp=APP.sprint||{},D=sp.days||{},st=sprState()||{};var cur
     var o={key:d,prev:prev,label:lb};prev=d;return o;});}
 function sprDayVal(code,dk){var sp=APP.sprint||{},D=sp.days||{},cur=sprDay(APP.meta&&APP.meta.date);
   function cum(d){if(!d)return Number((sp.base||{})[code])||0;if(D[d]&&D[d][code]!=null)return Number(D[d][code]);if(d===cur)return Number(((APP.q3cur||{})[code]||{}).입회)||0;return NaN;}
-  var v=cum(dk.key)-cum(dk.prev);return isNaN(v)?null:Math.round(v*10)/10;}
+  var v=cum(dk.key)-cum(dk.prev);return isNaN(v)?null:Math.round((v+sprDelAdj(code,dk))*10)/10;}
+// 삭제 가산: 일자별 입회 = 관리과목 당일입회 + 삭제(당일) · 누적입회 차이에 그 사이 삭제분을 더함
+function sprDel(code,d){var sp=APP.sprint||{},L=sp.dl||{},cur=sprDay(APP.meta&&APP.meta.date);
+  if(L[d]&&L[d][code])return L[d][code];
+  if(d&&d===cur){var o=(APP.q3cur||{})[code];if(o&&o.삭제누적!=null)return [Number(o.삭제당일)||0,Number(o.삭제누적)||0];}
+  return null;}
+function sprDelAdj(code,dk){var E=sprDel(code,dk.key);if(!E)return 0;var P=dk.prev?sprDel(code,dk.prev):null;return P?Math.max(0,E[1]-P[1]):E[0];}
+function sprEnt(code,curV){var sp=APP.sprint||{},st=sprState()||{};if(st.phase==='before'||isNaN(curV))return 0;
+  var a=0;sprDays().forEach(function(dk){a+=sprDelAdj(code,dk);});return Math.round((curV-Number((sp.base||{})[code]||0)+a)*10)/10;}
 function sprNeed(x,per){return Math.max(0,Math.ceil(per*x.tea-x.ent-1e-9));}
 function chongSprintCard(){
   var sp=APP.sprint;if(!sp)return '<div class="ib am">인센티브 데이터를 불러오는 중이에요.</div>';
@@ -2283,7 +2291,7 @@ function chongSprintCard(){
       +'<div class="incres '+(me.win?'win':'lose')+'">'+(me.win?'🎉 '+me.prank+'위 · 시상금 '+fmt(me.pay)+'원':(me.elig?'현재 '+me.rank+'위 (상위 3위 밖)':'인당입회 1.2 이상 시 시상 대상이에요'))+'</div>'+remain:'')
     +(me&&sprDays().length?'<div class="stl" style="margin-top:12px">일자별 입회</div>'+sprDays().map(function(dk){var v=sprDayVal(me.소속코드,dk);return '<div class="histrow"><span>'+dk.label+'</span><b>'+(v==null?'-':fmt1(v)+'건')+'</b></div>';}).join('')+'<div class="histrow" style="font-weight:800"><span>기간 합계</span><b>'+fmt1(me.ent)+'건</b></div>':'')
     +rankBoardX(arr,code,[{h:'교사',f:function(x){return fmt(x.tea);}},{h:'입회',f:function(x){return fmt1(x.ent);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],function(x){return x.win;},'인당입회 순위 (6개 총국)',3,'시상 3위')
-    +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 기간 내 입회 수 ÷ 9월말 교사 수<br>· 기간 내 입회 = 누적입회 − 10월 12일 마감 누적입회 (③소평)<br>· 인당입회 1.2 미만 시 시상에서 제외돼요.</div></div>';
+    +'<div class="ib bl" style="margin-bottom:0">· 인당입회 = 기간 내 입회 수 ÷ 9월말 교사 수<br>· 기간 내 입회 = 일자별 (관리과목 당일입회 + 삭제 당일) 합계 (③소평) · 삭제된 이전 입회가 당일입회에서 빠지므로 다시 더해요<br>· 인당입회 1.2 미만 시 시상에서 제외돼요.</div></div>';
 }
 function julyChongOct(){
   var tabs=['입회 스퍼트','TOP TOUR','커피차','🏫 총국 관리'];   // '지속운영'은 기준 확정 전까지 숨김(chongOpsCard10 유지)
@@ -5590,7 +5598,7 @@ function prtIncList(key){
       cutLabel:'인당 1.2↑ 1~3위',n:6,banner:sprBanner,noAdj:true,
       foot:(function(){var DK=sprDays(),sp=APP.sprint||{},st=sprState()||{},hq=(sp.base||{}).HQ!=null;
         var T,E;
-        if(hq){T=Number(sp.tea.HQ)||0;var cv=(st.src==='fin'&&sp.fin&&sp.fin.val.HQ!=null)?Number(sp.fin.val.HQ):Number(((APP.q3cur||{}).HQ||{}).입회);E=(st.phase==='before'||isNaN(cv))?0:Math.round((cv-Number(sp.base.HQ))*10)/10;}
+        if(hq){T=Number(sp.tea.HQ)||0;var cv=(st.src==='fin'&&sp.fin&&sp.fin.val.HQ!=null)?Number(sp.fin.val.HQ):Number(((APP.q3cur||{}).HQ||{}).입회);E=sprEnt('HQ',cv);}
         else{T=arr.reduce(function(a,x){return a+x.tea;},0);E=arr.reduce(function(a,x){return a+x.ent;},0);}
         var f={_foot:true,_rank:'',_tier:-1,nm:hq?'전사(사업본부)':'전사(총국 합계)',mg:'',t:fmt(T),e:fmt1(Math.round(E*10)/10),p:T?fmtD2(q3flr(E/T,2)):'-',pay:'',r1:'',r2:''};
         DK.forEach(function(dk,j){var v=0,ok=false;if(hq){var d0=sprDayVal('HQ',dk);if(d0!=null){v=d0;ok=true;}}else arr.forEach(function(x){var d=sprDayVal(x.소속코드,dk);if(d!=null){v+=d;ok=true;}});f['dy'+j]=ok?fmt1(Math.round(v*10)/10):'-';});return f;})()});
@@ -6169,7 +6177,7 @@ function parseSopyeongOrg(data){
     var sj=Number(r[32])||0;
     m[cc]={lv:lv,소속명:String(r[1]||'').trim(),관리자:String(r[2]||'').trim(),사번:String(r[3]||'').trim().split('.')[0],
       순증:sj,일반순증:sj,목표:Number(r[33])||0,달성률:q3flr(Number(r[35])||0,1),
-      D순증:Number(r[16])||0,퇴회:Number(r[30])||0,과목수:Number(r[5])||0,교사수:Number(r[4])||0,스구N:Number(r[54])||0,입회:Number(r[26])||0,당일입회:Number(r[25])||0};
+      D순증:Number(r[16])||0,퇴회:Number(r[30])||0,과목수:Number(r[5])||0,교사수:Number(r[4])||0,스구N:Number(r[54])||0,입회:Number(r[26])||0,당일입회:Number(r[25])||0,삭제당일:Math.abs(Number(r[28])||0),삭제누적:Math.abs(Number(r[29])||0)};
   }
   return m;
 }
@@ -6183,7 +6191,7 @@ function buildQ3cur(){
     var s=so[code], p=prev[code]||{};
     out[code]={lv:s.lv,소속명:s.소속명,관리자:s.관리자,사번:s.사번,총국:chongNameOf(code),
       순증:s.순증,목표:s.목표,달성률:s.달성률,퇴회:s.퇴회,과목수:s.과목수,
-      D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,스구N:s.스구N||0,입회:s.입회||0,당일입회:s.당일입회||0,
+      D순증:s.D순증,일반순증:s.일반순증,교사수:s.교사수,스구N:s.스구N||0,입회:s.입회||0,당일입회:s.당일입회||0,삭제당일:s.삭제당일||0,삭제누적:s.삭제누적||0,
       마스타순증:p.마스타순증||0,마스타교사:p.마스타교사||s.교사수};
   });
   // 관통에서 마스타 갱신
@@ -6408,7 +6416,7 @@ async function doUpload(){
       try{var _dk=sprDay(meta.date);if(_dk){if(!APP.daily)await loadDaily();var _dd=APP.daily||{days:{}};_dd.days=_dd.days||{};var _o={},_F=['순증','목표','퇴회','과목수','D순증','교사수','마스타순증','스구N','입회'];Object.keys(nq3).forEach(function(c){var o=nq3[c];if(o.lv!=='총국'&&o.lv!=='사업국'&&o.lv!=='본부')return;var r={lv:o.lv};_F.forEach(function(f){if(o[f]!=null)r[f]=o[f];});_o[c]=r;});_dd.days[_dk]={asof:meta.date,org:_o};APP.daily=_dd;await saveFile('cumulative/daily.json',JSON.stringify(_dd),'daily snapshot '+_dk);}}catch(e){}
       try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d<_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=nq3.HQ.입회;_sp.tea.HQ=nq3.HQ.교사수;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint base HQ');}
       if(_sp&&_d===_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=Math.round((nq3.HQ.입회-nq3.HQ.당일입회)*10)/10;_sp.tea.HQ=nq3.HQ.교사수;}   // 시작일 업로드: 누적−당일 = 전날 마감 누적
-      if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
+      if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;var _l={};Object.keys(_v).forEach(function(c){var o=nq3[c];if(o)_l[c]=[o.삭제당일||0,o.삭제누적||0];});_sp.dl=_sp.dl||{};_sp.dl[_d]=_l;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
     if(UP.jigu2){try{var _kw=anaParseKw(UP.jigu2.data),_dk2=sprDay(meta.date);if(_dk2){if(!APP.daily)await loadDaily();var _d2=APP.daily||{days:{}};_d2.days=_d2.days||{};var _e2=_d2.days[_dk2]||{asof:meta.date,org:{}};_e2.kw=_kw;_d2.days[_dk2]=_e2;APP.daily=_d2;await saveFile('cumulative/daily.json',JSON.stringify(_d2),'daily kw '+_dk2);}}catch(e){}}
     try{await saveToiExp(sprDay(meta.date));}catch(e){}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
