@@ -3643,13 +3643,25 @@ function adminAnalysis(){
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+'</div>';
   // 일자별
-  var rows=cur.map(function(p,i){var pr=i?cur[i-1]:null,dd=pr?Math.round((p.v-pr.v)*10)/10:null,ps=anaPos(mk,p.d),od=anaDateAt(pm,ps.seg,ps.idx),pp=od?anaAt(prev,od):null,isEnd=anaSegEnds(mk).indexOf(anaEff(mk,p.d))>=0&&ps.idx===ps.n;
-    return '<tr'+(isEnd?' style="font-weight:800"':'')+'><td>'+(+mk.slice(5))+'/'+p.d+'('+['일','월','화','수','목','금','토'][anaDow(mk,p.d)]+(ANA_HOL[p.k]?'·휴':'')+')'+(isEnd?' <span style="color:#E8590C;font-size:10.5px">'+ps.seg+'구간 마감</span>':'')+'</td><td>'+ps.seg+'구간 '+ps.idx+'일차</td><td class="num">'+fF(p.v)+'</td><td class="num" style="color:'+(dd==null?'var(--t3)':(dd>=0?'var(--green)':'var(--red)'))+'">'+(dd==null?'-':(dd>0?'+':'')+(isA?fmt1(dd)+'%p':fmt1(dd)))+'</td><td class="num">'+(pp?fF(pp.v)+' <span style="font-size:10px;color:var(--t3)">('+pp.d+'일)</span>':'-')+'</td></tr>';}).reverse().join('');
-  var dayT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>구간·영업일</th><th>누적</th><th>전 업로드 대비</th><th>지난달 같은 영업일</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  // 당일 실적: 직전 영업일 누적과의 차이 (업로드가 비면 여러 영업일 합으로 표시)
+  function bizCount(m2,a,b){var n=0;for(var d=a+1;d<=b;d++)if(anaIsBiz(m2,d))n++;return n;}
+  function exactAt(series,m2,date){var p=anaAt(series,date);return (p&&anaEff(m2,p.d)===anaEff(m2,date))?p:null;}
+  function prevBizDate(m2,k,idx){if(idx>1)return anaDateAt(m2,k,idx-1);if(k>1)return anaSegCalEnd(m2,k-1);return 0;}
+  function sgn(v,u){return (v>0?'+':'')+(isA?fmt1(v)+'%p':fmt1(v));}
+  function col(v){return v==null?'var(--t3)':(v>=0?'var(--green)':'var(--red)');}
+  var rows=cur.map(function(p,i){var pr=i?cur[i-1]:null,ps=anaPos(mk,p.d),isEnd=ps.idx===ps.n;
+    var od=anaDateAt(pm,ps.seg,ps.idx),pp=od?anaAt(prev,od):null,cd=pp?Math.round((p.v-pp.v)*10)/10:null;
+    var dv=null,nb=0;if(pr){dv=Math.round((p.v-pr.v)*10)/10;nb=bizCount(mk,anaEff(mk,pr.d),anaEff(mk,p.d));}else if(!isA&&ps.seg===1&&ps.idx===1){dv=p.v;nb=1;}
+    var lv=null;if(od){var pe=exactAt(prev,pm,od),pbd=prevBizDate(pm,ps.seg,ps.idx);if(pe){if(pbd===0)lv=isA?null:pe.v;else{var pb=exactAt(prev,pm,pbd);if(pb)lv=Math.round((pe.v-pb.v)*10)/10;}}}
+    var dd=(dv!=null&&lv!=null&&nb===1)?Math.round((dv-lv)*10)/10:null;
+    return '<tr'+(isEnd?' style="font-weight:800"':'')+'><td>'+(+mk.slice(5))+'/'+p.d+'('+['일','월','화','수','목','금','토'][anaDow(mk,p.d)]+(ANA_HOL[p.k]?'·휴':'')+')'+(isEnd?' <span style="color:#E8590C;font-size:10.5px">'+ps.seg+'구간 마감</span>':'')+'</td><td>'+ps.seg+'구간 '+ps.idx+'일차</td>'
+      +'<td class="num">'+fF(p.v)+'</td><td class="num">'+(pp?fF(pp.v)+' <span style="font-size:10px;color:var(--t3)">('+pp.d+'일)</span>':'-')+'</td><td class="num" style="color:'+col(cd)+'">'+(cd==null?'-':sgn(cd))+'</td>'
+      +'<td class="num" style="color:'+col(dv)+'">'+(dv==null?'-':sgn(dv)+(nb>1?' <span style="font-size:10px;color:var(--t3)">('+nb+'영업일 합)</span>':''))+'</td><td class="num">'+(lv==null?'-':sgn(lv))+'</td><td class="num" style="color:'+col(dd)+'">'+(dd==null?'-':sgn(dd))+'</td></tr>';}).reverse().join('');
+  var dayT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th rowspan="2">일자</th><th rowspan="2">구간·영업일</th><th colspan="3">누적</th><th colspan="3">당일 실적</th></tr><tr><th>이번 달</th><th>지난달 같은 영업일</th><th>차이</th><th>이번 달</th><th>지난달 같은 영업일</th><th>차이</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   return head+tiles+anaSvg(cur,prev,proj,dim,fF,anaSegEnds(mk))
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
     +'<div class="stl" style="margin-top:16px">일자별 누적</div>'+dayT
-    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회·순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 지난달 비교값은 같은 구간의 같은 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
+    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회·순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 지난달 비교값은 같은 구간의 같은 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시해 당일 비교를 생략해요. 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
 function renderAdmin(){
   var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
