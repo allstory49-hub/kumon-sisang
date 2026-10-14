@@ -3598,7 +3598,7 @@ function anaSvg(cur,prev,proj,dim,fmtF,segE){
   function line(s,col,w,dash){if(!s.length)return '';return '<polyline points="'+s.map(function(q){return X(q.d)+','+Y(q.v);}).join(' ')+'" fill="none" stroke="'+col+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>'+s.map(function(q){return '<circle cx="'+X(q.d)+'" cy="'+Y(q.v)+'" r="3" fill="'+col+'"/>';}).join('');}
   var pj=(proj!=null&&cur.length)?line([cur[cur.length-1],{d:dim,v:proj}],'#E8590C',2,'6 5'):'';
   return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">'+g+line(prev,'#9AA5B1',2)+line(cur,'#1E6FD9',3)+pj+'</svg>'
-    +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin:4px 0 10px"><span><b style="color:#1E6FD9">━</b> 이번 달</span><span><b style="color:#9AA5B1">━</b> 지난달</span><span><b style="color:#E8590C">┅</b> 월말 예상</span></div>';}
+    +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin:4px 0 10px"><span><b style="color:#1E6FD9">━</b> 이번 달</span><span><b style="color:#9AA5B1">━</b> 전월</span><span><b style="color:#E8590C">┅</b> 월말 예상</span></div>';}
 function adminAnalysis(){
   if(!APP.daily){loadDaily().then(function(){if(S.atab==='ana')renderAdmin();});return '<div class="ib bl">분석 데이터를 불러오는 중…</div>';}
   S.anaCode=S.anaCode||'ALL';S.anaMet=S.anaMet||'in';S.anaCat=S.anaCat||'S';
@@ -3617,7 +3617,7 @@ function adminAnalysis(){
     return head+'<div class="ib am">📋 과목별 예상퇴회 파일을 받으면 이 분석이 추가돼요. 파일 양식을 보내주세요.</div>';
   var fF=isA?function(v){return fmt1(v)+'%';}:fmt1;
   var cur=anaSeries(code,met,cat,mk),prev=anaSeries(code,met,cat,pm);
-  if(met==='et')head+='<div class="ib bl" style="margin-top:0">📋 이번 달에 업로드한 <b>'+(S.anaEt===2?'차차월('+toiNk(mk+'-01',2).slice(5).replace(/^0/,'')+'월)':'차월('+toiNk(mk+'-01',1).slice(5).replace(/^0/,'')+'월)')+' 예상퇴회</b> 등록 누적을 일자별로 보여줘요. 지난달 비교는 지난달에 올린 '+(S.anaEt===2?'차차월':'차월')+' 예상퇴회예요. N과목 = NKU 열</div>';
+  if(met==='et')head+='<div class="ib bl" style="margin-top:0">📋 이번 달에 업로드한 <b>'+(S.anaEt===2?'차차월('+toiNk(mk+'-01',2).slice(5).replace(/^0/,'')+'월)':'차월('+toiNk(mk+'-01',1).slice(5).replace(/^0/,'')+'월)')+' 예상퇴회</b> 등록 누적을 일자별로 보여줘요. 전월 비교는 전월에 올린 '+(S.anaEt===2?'차차월':'차월')+' 예상퇴회예요. N과목 = NKU 열</div>';
   if(!cur.length)return head+'<div class="ib am">📋 아직 이번 달 '+ml+cl+' 자료가 없어요. ④ 관통_지구 파일을 업로드하면 그날부터 쌓여요.</div>';
   var last=cur[cur.length-1],pos=anaPos(mk,last.d),pd=anaDateAt(pm,pos.seg,pos.idx),pa=pd?anaAt(prev,pd):null;
   // 구간별 값
@@ -3630,16 +3630,16 @@ function adminAnalysis(){
     var lvs=(!done&&started&&k===pos.seg)?segVal(prev,pm,k,anaDateAt(pm,k,pos.idx)):null;
     var cmp=(done?lv:lvs),df=(tv!=null&&cmp!=null)?Math.round((tv-cmp)*10)/10:null;
     var s0=(k===1?1:anaSegCalEnd(mk,k-1)+1);
-    segRows+='<tr'+(k===pos.seg?' style="background:rgba(30,111,217,.08)"':'')+'><td><b>'+k+'구간</b></td><td>'+s0+'~'+ce+'일</td><td>'+(started?(done?'마감':'진행 중 '+pos.idx+'/'+pos.n+'영업일'):'-')+'</td><td class="num">'+(tv==null?'-':fF(tv))+'</td><td class="num">'+(cmp==null?'-':fF(cmp))+(lvs!=null?' <span style="font-size:10px;color:var(--t3)">(같은 영업일)</span>':'')+'</td><td class="num" style="color:'+(df==null?'var(--t3)':(df>=0?'var(--green)':'var(--red)'))+'">'+(df==null?'-':(df>0?'+':'')+(isA?fmt1(df)+'%p':fmt1(df)))+'</td><td class="num">'+(lv==null?'-':fF(lv))+'</td></tr>';}
-  var segT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>구간</th><th>기간</th><th>상태</th><th>이번 달</th><th>지난달 비교값</th><th>차이</th><th>지난달 구간 합계</th></tr></thead><tbody>'+segRows+'</tbody></table></div>';
-  // 월말 예상: 현재 + (지난달 월말 − 지난달 같은 영업일)
+    segRows+='<tr'+(k===pos.seg?' style="background:rgba(30,111,217,.08)"':'')+'><td><b>'+k+'구간</b></td><td>'+s0+'~'+ce+'일</td><td>'+(started?(done?'마감':'진행 중 '+pos.idx+'/'+pos.n+'영업일'):'-')+'</td><td class="num">'+(tv==null?'-':fF(tv))+'</td><td class="num">'+(cmp==null?'-':fF(cmp))+(lvs!=null?' <span style="font-size:10px;color:var(--t3)">(동 영업일)</span>':'')+'</td><td class="num" style="color:'+(df==null?'var(--t3)':(df>=0?'var(--green)':'var(--red)'))+'">'+(df==null?'-':(df>0?'+':'')+(isA?fmt1(df)+'%p':fmt1(df)))+'</td><td class="num">'+(lv==null?'-':fF(lv))+'</td></tr>';}
+  var segT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>구간</th><th>기간</th><th>상태</th><th>이번 달</th><th>전월 비교값</th><th>차이</th><th>전월 구간 합계</th></tr></thead><tbody>'+segRows+'</tbody></table></div>';
+  // 월말 예상: 현재 + (전월 월말 − 전월 동 영업일)
   var pf=isA?anaFinalAch(code,pm):(prev.length?prev[prev.length-1]:null);if(!isA)pf=(pf&&pf.d>=anaDim(pm)-1)?pf.v:null;
   var proj=null,how='';
-  if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='지난달 같은 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (지난달 자료 없음)';}
+  if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
   var diff=pa?Math.round((last.v-pa.v)*10)/10:null;
   var tiles='<div class="incgrid4">'+tile('이번 달 누적',fF(last.v),(+mk.slice(5))+'월 '+last.d+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
-    +tile('지난달 같은 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'지난달 자료 없음')
+    +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'전월 자료 없음')
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+'</div>';
   // 일자별
@@ -3650,7 +3650,7 @@ function adminAnalysis(){
   function sgn(v,u){return (v>0?'+':'')+(isA?fmt1(v)+'%p':fmt1(v));}
   function col(v){return v==null?'var(--t3)':(v>=0?'var(--green)':'var(--red)');}
   function dlab(m2,d){var e=anaEff(m2,d);return (+m2.slice(5))+'/'+e+'('+['일','월','화','수','목','금','토'][anaDow(m2,e)]+')';}
-  var curU=cur.filter(function(p,i){return !(cur[i+1]&&anaEff(mk,cur[i+1].d)===anaEff(mk,p.d));});   // 같은 영업일로 묶이는 자료는 마지막 것만
+  var curU=cur.filter(function(p,i){return !(cur[i+1]&&anaEff(mk,cur[i+1].d)===anaEff(mk,p.d));});   // 동 영업일로 묶이는 자료는 마지막 것만
   var rows=curU.map(function(p,i){var pr=i?curU[i-1]:null,ps=anaPos(mk,p.d),isEnd=ps.idx===ps.n;
     var od=anaDateAt(pm,ps.seg,ps.idx),pp=od?anaAt(prev,od):null,cd=pp?Math.round((p.v-pp.v)*10)/10:null;
     var dv=null,nb=0,pod=null;
@@ -3659,14 +3659,15 @@ function adminAnalysis(){
     var lv=null;if(od&&pp&&pod!=null){if(pod===0)lv=pp.v;else{var pb=anaAt(prev,pod);if(pb)lv=Math.round((pp.v-pb.v)*10)/10;}}
     var dd=(dv!=null&&lv!=null)?Math.round((dv-lv)*10)/10:null;
     var nbt=nb>1?' <span style="font-size:10px;color:var(--t3)">('+nb+'영업일 합)</span>':'';
-    return '<tr'+(isEnd?' style="font-weight:800"':'')+'><td>'+dlab(mk,p.d)+(isEnd?' <span style="color:#E8590C;font-size:10.5px">'+ps.seg+'구간 마감</span>':'')+'</td><td>'+ps.seg+'구간 '+ps.idx+'일차</td>'
-      +'<td class="num">'+fF(p.v)+'</td><td class="num">'+(pp?fF(pp.v)+' <span style="font-size:10px;color:var(--t3)">('+dlab(pm,pp.d)+')</span>':'-')+'</td><td class="num" style="color:'+col(cd)+'">'+(cd==null?'-':sgn(cd))+'</td>'
-      +'<td class="num" style="color:'+col(dv)+'">'+(dv==null?'-':sgn(dv)+nbt)+'</td><td class="num">'+(lv==null?'-':sgn(lv)+nbt)+'</td><td class="num" style="color:'+col(dd)+'">'+(dd==null?'-':sgn(dd))+'</td></tr>';}).reverse().join('');
-  var dayT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th rowspan="2">일자</th><th rowspan="2">구간·영업일</th><th colspan="3">누적</th><th colspan="3">당일 실적</th></tr><tr><th>이번 달</th><th>지난달 같은 영업일</th><th>차이</th><th>이번 달</th><th>지난달 같은 영업일</th><th>차이</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    var tr='<tr'+(isEnd?' style="font-weight:800"':'')+'><td>'+dlab(mk,p.d)+(isEnd?' <span style="color:#E8590C;font-size:10.5px">'+ps.seg+'구간 마감</span>':'')+'</td><td>'+ps.seg+'구간 '+ps.idx+'일차</td>';
+    return {c:tr+'<td class="num">'+fF(p.v)+'</td><td class="num">'+(pp?fF(pp.v)+' <span style="font-size:10px;color:var(--t3)">('+dlab(pm,pp.d)+')</span>':'-')+'</td><td class="num" style="color:'+col(cd)+'">'+(cd==null?'-':sgn(cd))+'</td></tr>',
+      d:tr+'<td class="num" style="color:'+col(dv)+'">'+(dv==null?'-':sgn(dv)+nbt)+'</td><td class="num">'+(lv==null?'-':sgn(lv)+nbt)+'</td><td class="num" style="color:'+col(dd)+'">'+(dd==null?'-':sgn(dd))+'</td></tr>'};}).reverse();
+  function dtab(rk,h){return '<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>구간·영업일</th><th>이번 달</th><th>전월 동 영업일</th><th>차이</th></tr></thead><tbody>'+rows.map(function(r){return r[rk];}).join('')+'</tbody></table></div>';}
+  var dayT='<div class="stl" style="margin-top:16px">일자별 누적 실적</div>'+dtab('c')+'<div class="stl" style="margin-top:16px">일자별 당일 실적</div>'+dtab('d');
   return head+tiles+anaSvg(cur,prev,proj,dim,fF,anaSegEnds(mk))
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
-    +'<div class="stl" style="margin-top:16px">일자별 누적</div>'+dayT
-    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회·순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 지난달 비교값은 같은 구간의 같은 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 지난달도 같은 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
+    +dayT
+    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회·순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
 function renderAdmin(){
   var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
