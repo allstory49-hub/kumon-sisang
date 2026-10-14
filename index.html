@@ -5439,7 +5439,7 @@ function prtIncList(key){
     var arr=sprRank();
     prtOpen({title:'[단기] 총국 2구간 마감 입회 스퍼트',
       sub:'10.13~10.18 · 인당입회 1.2↑ 1~3위 · 1위 60/50만·2위 40/30만·3위 30/20만 (경서·경상/그 외) · 인당 = 기간 입회 ÷ 9월말 교사수',
-      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'교사수',k:'t',num:1}].concat(sprDays().map(function(dk,j){return {g:'일자별 입회',h:dk.label,k:'dy'+j,num:1};})).concat([{h:'기간 입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'시상금',k:'pay',num:1,hi:1},{h:'인당1.2 잔여(입회)',k:'r1',num:1},{h:'윗 순위 잔여(입회)',k:'r2',num:1}]),
+      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'교사수',k:'t',num:1}].concat(sprDays().map(function(dk,j){return {g:'일자별 입회',h:dk.label,k:'dy'+j,num:1};})).concat([{h:'기간 입회',k:'e',num:1},{h:'인당입회',k:'p',num:1,hi:1},{h:'시상금',k:'pay',num:1,hi:1},{h:'인당1.2 잔여(입회)',k:'r1',num:1}]),
       rows:arr.map(function(x){var DK=sprDays();var el=arr.filter(function(y){return y.elig;}),up=(x.elig&&x.prank>1)?el[x.prank-2]:null;
         var row={_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['p']),nm:x.소속명,mg:x.관리자,t:fmt(x.tea),e:fmt1(x.ent),p:fmtD2(x.per),pay:(x.pay||x.exp)?fmt(x.pay||x.exp):'-',
           r1:x.elig?'-':fmt(sprNeed(x,1.2)),r2:up?fmt(sprNeed(x,up.raw)):'-'};
