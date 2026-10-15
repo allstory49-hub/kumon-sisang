@@ -5101,7 +5101,7 @@ function prtImage(){
   function mw(t,size,w){mc.font=(w||'700')+' '+size+'px '+FF;return mc.measureText(String(t==null?'':t)).width;}
   function disp(c,v){v=(v==null?'':String(v));if(!c.num&&/^(조직|사업국|총국|지국)$/.test(c.h))v=v.replace(/(사업국|총국|지국)$/,'');return v;}
   var FS=16, HFS=14.5, rowH=30, headH=40, subY=0, titleH=PRT.banner?2:62, infoH=30, footH=30, rkW=50;
-  var all=rows.concat(meExtra?[meExtra]:[]);
+  var all=rows.concat(meExtra?[meExtra]:[]).concat(PRT.foot?[PRT.foot]:[]);
   var cw=cols.map(function(c){
     var w=mw(c.h,HFS,'800')+18;
     all.forEach(function(r){w=Math.max(w,mw(disp(c,r[c.k]),FS,c.hi?'800':'700')+18);});
@@ -5600,7 +5600,7 @@ function prtIncList(key){
         var T,E;
         if(hq){T=Number(sp.tea.HQ)||0;var cv=(st.src==='fin'&&sp.fin&&sp.fin.val.HQ!=null)?Number(sp.fin.val.HQ):Number(((APP.q3cur||{}).HQ||{}).입회);E=sprEnt('HQ',cv);}
         else{T=arr.reduce(function(a,x){return a+x.tea;},0);E=arr.reduce(function(a,x){return a+x.ent;},0);}
-        var f={_foot:true,_rank:'',_tier:-1,nm:hq?'전사(사업본부)':'전사(총국 합계)',mg:'',t:fmt(T),e:fmt1(Math.round(E*10)/10),p:T?fmtD2(q3flr(E/T,2)):'-',pay:'',r1:'',r2:''};
+        var f={_foot:true,_rank:'',_tier:-1,nm:'전사',mg:'',t:fmt(T),e:fmt1(Math.round(E*10)/10),p:T?fmtD2(q3flr(E/T,2)):'-',pay:'',r1:'',r2:''};
         DK.forEach(function(dk,j){var v=0,ok=false;if(hq){var d0=sprDayVal('HQ',dk);if(d0!=null){v=d0;ok=true;}}else arr.forEach(function(x){var d=sprDayVal(x.소속코드,dk);if(d!=null){v+=d;ok=true;}});f['dy'+j]=ok?fmt1(Math.round(v*10)/10):'-';});return f;})()});
     return;
   }
