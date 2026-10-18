@@ -777,6 +777,7 @@ async function saveToGitHub(bakedJs){
   await loadJaeExpFixed();
   await loadToiExp();
   await loadSprint();
+  loadAnaHist();
   try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
@@ -3549,6 +3550,38 @@ function info(){
 var ANA_EXC={JI281:'JI270',JI282:'JI270',JK021:'JK010',JK022:'JK010',RL041:'RL030',RL042:'RL030',TM121:'TM110',TM122:'TM110',TO101:'TO090',TO102:'TO090'};
 var ANA_CAT=[{k:'S',l:'합산과목'},{k:'G',l:'관리과목'},{k:'O',l:'온공과목'},{k:'N',l:'N과목'}];
 var ANA_MET=[{k:'in',l:'입회'},{k:'ns',l:'순증'},{k:'et',l:'예상퇴회'},{k:'del',l:'삭제'},{k:'ach',l:'달성률'}];
+async function loadAnaHist(){try{var r=await dfetch('cumulative/ana_hist.json?t='+Date.now());if(r.ok)APP.anaHist=await r.json();}catch(e){APP.anaHist=null;}}
+// ───── 합산과목 입회 월말 예상: 과거 일자별 입회의 영업일 패턴 ─────
+// 슬롯(30칸): 0 첫날 · 1~4 1구간 · 5 1구간마감 · 6 계 · 7~10 2구간 · 11 2구간마감 · 12 계 · 13 누적 · 14~18 3구간 · 19 3구간마감 · 20 계 · 21~24 4구간 · 25 월마감전일 · 26 월마감 · 27 계 · 28 누적 · 29 총계
+var ANA_DT_L={reg:'1·2구간 평일',k3:'3구간 평일',k4:'4구간 평일',e0:'첫날',e1:'1구간 마감일',e2:'2구간 마감일',e3:'3구간 마감일',e5:'월마감 전일',e6:'월마감일'};
+function anaHistRatios(mk){var H=APP.anaHist;if(!H||!H.months)return null;var ex=H.exc||[];
+  var ms=Object.keys(H.months).filter(function(m){return m<mk&&ex.indexOf(m)<0&&H.months[m][29];}).sort().slice(-6);if(ms.length<3)return null;
+  function avg(a){a=a.filter(function(x){return x!=null;});return a.length?a.reduce(function(p,q){return p+q;},0)/a.length:null;}
+  function med(a){a=a.filter(function(x){return x!=null&&!isNaN(x);}).sort(function(x,y){return x-y;});if(!a.length)return null;var h=a.length>>1;return a.length%2?a[h]:(a[h-1]+a[h])/2;}
+  var K={reg:[],k3:[],k4:[],e0:[],e1:[],e2:[],e3:[],e5:[],e6:[]};
+  ms.forEach(function(m){var d=H.months[m],L=avg([1,2,3,4,7,8,9,10].map(function(i){return d[i];}));if(!L)return;
+    var a3=avg([14,15,16,17,18].map(function(i){return d[i];})),a4=avg([21,22,23,24].map(function(i){return d[i];}));
+    K.k3.push(a3==null?null:a3/L);K.k4.push(a4==null?null:a4/L);
+    [['e0',0],['e1',5],['e2',11],['e3',19],['e5',25],['e6',26]].forEach(function(x){var v=d[x[1]];K[x[0]].push(v==null?null:v/L);});});
+  var r={reg:1};Object.keys(K).forEach(function(k){if(k!=='reg')r[k]=med(K[k]);});
+  if(r.k4==null)r.k4=r.k3;if(r.e5==null)r.e5=r.k4;
+  return {ms:ms,r:r};}
+function anaDayType(mk,d){var k=anaSegOf(mk,d),bd=anaBizDays(mk,k),i=bd.indexOf(d);
+  if(d===anaBizDays(mk,1)[0])return 'e0';
+  if(k===4){if(i===bd.length-1)return 'e6';if(i===bd.length-2)return 'e5';return 'k4';}
+  if(i===bd.length-1)return ['e1','e2','e3'][k-1];
+  return k===3?'k3':'reg';}
+function anaHistProj(mk,cur){var R=anaHistRatios(mk);if(!R||!cur.length)return null;var r=R.r,sv=0,sf=0,nd=0;var ms=[];
+  cur.forEach(function(p,i){var pr=i?cur[i-1]:null,a=pr?anaEff(mk,pr.d):0,b=anaEff(mk,p.d),days=[];
+    for(var d=a+1;d<=b;d++)if(anaIsBiz(mk,d))days.push(d);if(!days.length)return;
+    var val=null;if(pr&&!(pr.src&&p.src&&pr.src!==p.src))val=p.v-pr.v;else if(pr&&days.length===1&&p.dd!=null&&anaIsBiz(mk,p.d))val=p.dd;if(val==null)return;
+    var ty=days.map(function(d){return anaDayType(mk,d);});if(ty.some(function(t){return t.charAt(0)==='e'||r[t]==null;}))return;   // 첫날·마감일이 섞인 구간은 평일 기준값 계산에서 제외
+    var o={v:val,n:days.length,f:0,early:ty.every(function(t){return t==='reg';})};ty.forEach(function(t){o.f+=r[t];});ms.push(o);});
+  var use=ms.filter(function(o){return o.early;});if(!use.length)use=ms;   // 기준값: 1·2구간 평일 (없을 때만 3·4구간 평일을 배수로 환산)
+  use.forEach(function(o){sv+=o.v;sf+=o.f;nd+=o.n;});
+  if(!sf)return null;var L=sv/sf,last=cur[cur.length-1],le=anaEff(mk,last.d),dim=anaDim(mk),rem={},tot=0;
+  for(var d=le+1;d<=dim;d++)if(anaIsBiz(mk,d)){var t=anaDayType(mk,d);if(r[t]==null)return null;rem[t]=(rem[t]||0)+1;tot+=L*r[t];}
+  return {T:Math.round((last.v+tot)*10)/10,L:L,nd:nd,rem:rem,r:r,ms:R.ms,tot:tot};}
 async function loadDaily(){try{var r=await dfetch('cumulative/daily.json?t='+Date.now());if(r.ok)APP.daily=await r.json();}catch(e){APP.daily=null;}}
 function anaParseKw(data){   // 관통_지구 → 지구 행을 사업국·총국·전사로 합산 (누적입회·순증·퇴회, 과목별)
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
@@ -3651,14 +3684,20 @@ function adminAnalysis(){
   var segT='<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>구간</th><th>기간</th><th>상태</th><th>당월</th><th>전월 비교값</th><th>차이</th><th>전월 구간 합계</th></tr></thead><tbody>'+segRows+'</tbody></table></div>';
   // 월말 예상: 현재 + (전월 월말 − 전월 동 영업일)
   var pf=isA?anaFinalAch(code,pm):(prev.length?prev[prev.length-1]:null);if(!isA)pf=(pf&&pf.d>=anaDim(pm)-1)?pf.v:null;
-  var proj=null,how='';
-  if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
+  var proj=null,how='',hp=null;
+  if(met==='in'&&cat==='S'){hp=anaHistProj(mk,cur);if(hp){proj=hp.T;how='과거 '+hp.ms.length+'개월 영업일 패턴 (남은 영업일 반영)';}}
+  if(hp){}else if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
   var diff=pa?Math.round((last.v-pa.v)*10)/10:null;
   var tiles='<div class="incgrid4">'+tile('당월 누적',fF(last.v),(+mk.slice(5))+'월 '+last.d+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
     +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'전월 자료 없음')
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+'</div>';
+  if(hp){var ord=['reg','k3','e2','e3','k4','e5','e6','e1','e0'],br='';ord.forEach(function(t){var n=hp.rem[t];if(!n)return;var pd=hp.L*hp.r[t];br+='<tr><td>'+ANA_DT_L[t]+'</td><td class="num">'+n+'일</td><td class="num">'+fmt1(Math.round(pd*10)/10)+'</td><td class="num">'+fmt1(Math.round(pd*n*10)/10)+'</td></tr>';});
+    tiles+='<div class="stl" style="margin-top:6px">월말 예상 계산 (남은 영업일)</div><div style="overflow-x:auto"><table class="anatb"><thead><tr><th>남은 날</th><th>일수</th><th>하루 예상</th><th>예상 입회</th></tr></thead><tbody>'
+      +'<tr><td><b>현재 누적</b></td><td></td><td></td><td class="num"><b>'+fmt1(last.v)+'</b></td></tr>'+br
+      +'<tr style="font-weight:800;color:#E8590C"><td>월말 예상</td><td class="num">'+Object.keys(hp.rem).reduce(function(a,k){return a+hp.rem[k];},0)+'일</td><td></td><td class="num">'+fmt1(hp.T)+'</td></tr></tbody></table></div>'
+      +'<div class="ib bl" style="margin-top:6px">· 당월 평일 기준값(1·2구간 평일 하루 환산) <b>'+fmt1(Math.round(hp.L*10)/10)+'</b> × 날 유형별 배수 — 배수는 과거 '+hp.ms.length+'개월('+hp.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+') 일자별 입회의 중앙값 (이슈 월 제외)<br>· 배수: 3구간 평일 '+hp.r.k3.toFixed(2)+' · 4구간 평일 '+hp.r.k4.toFixed(2)+' · 2구간 마감 '+hp.r.e2.toFixed(2)+' · 3구간 마감 '+hp.r.e3.toFixed(2)+' · 월마감 전일 '+hp.r.e5.toFixed(2)+' · 월마감 '+hp.r.e6.toFixed(2)+'<br>· 기준값은 첫날·구간 마감일을 뺀 1·2구간 평일 실적('+hp.nd+'영업일) 하루 평균이에요. 남은 날은 매일 업로드한 날부터 다시 세요.</div>';}
   // 일자별
   // 당일 실적: 직전 영업일 누적과의 차이 (업로드가 비면 여러 영업일 합으로 표시)
   function bizCount(m2,a,b){var n=0;for(var d=a+1;d<=b;d++)if(anaIsBiz(m2,d))n++;return n;}
@@ -3672,7 +3711,7 @@ function adminAnalysis(){
     var od=anaDateAt(pm,ps.seg,ps.idx),pp=od?anaAt(prev,od):null,cd=pp?Math.round((p.v-pp.v)*10)/10:null;
     var dv=null,nb=0,pod=null;
     if(pr){nb=bizCount(mk,anaEff(mk,pr.d),anaEff(mk,p.d));var qs=anaPos(mk,pr.d);pod=anaDateAt(pm,qs.seg,qs.idx);
-      if(p.dd!=null&&nb===1)dv=p.dd;else if(pr.src&&p.src&&pr.src!==p.src)dv=null;else dv=Math.round((p.v-pr.v)*10)/10;}
+      if(!(pr.src&&p.src&&pr.src!==p.src))dv=Math.round((p.v-pr.v)*10)/10;else if(p.dd!=null&&nb===1&&anaIsBiz(mk,p.d))dv=p.dd;else dv=null;}
     else if(!isA){dv=p.v;nb=bizCount(mk,0,anaEff(mk,p.d));pod=0;}
     var lv=null;if(od&&pp&&pod!=null){if(pod===0)lv=pp.v;else{var pb=anaAt(prev,pod);if(pb)lv=Math.round((pp.v-pb.v)*10)/10;}}
     var dd=(dv!=null&&lv!=null)?Math.round((dv-lv)*10)/10:null;
