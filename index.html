@@ -3668,11 +3668,12 @@ function anaToiNow(code,cat,mk){var D=(APP.daily&&APP.daily.days)||{},ks=Object.
     var w=e.kw&&e.kw[code];if(!w)continue;var v=cat==='G'?(w.St-(w.Nt||0)-(w.Ot||0)):w[cat+'t'];if(v!=null)return {v:Math.round(v*10)/10,src:'④관통',k:ks[i]};}
   return null;}
 async function loadDaily(){try{var r=await dfetch('cumulative/daily.json?t='+Date.now());if(r.ok)APP.daily=await r.json();}catch(e){APP.daily=null;}}
+function anaCenterLeaf(cc){return /^X[A-Z]\d\d[1-9]$/.test(cc);}   // 구몬학습센터 하위(XA011 등) · 전사 합계에 포함
 function anaParseKw(data){   // 관통_지구 → 지구 행을 사업국·총국·전사로 합산 (누적입회·순증·퇴회, 과목별)
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
   var out={},C={Si:11,Sn:15,St:13,Ni:25,Nn:29,Nt:27,Oi:32,On:36,Ot:34};
   function add(key,r){var o=out[key]||(out[key]={});Object.keys(C).forEach(function(f){o[f]=Math.round(((o[f]||0)+(Number(r[C[f]])||0))*10)/10;});}
-  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!=='지구')continue;
+  for(var i=2;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(anaCenterLeaf(cc)){add('ALL',r);add('X1000',r);continue;}if(classifyOrg(cc)!=='지구')continue;
     var jc=ANA_EXC[cc]||(cc.slice(0,4)+'0'),ec=jc.slice(0,2)+'000',ch=cc.charAt(0)+'1000';add('ALL',r);add(ec,r);add(ch,r);}
   return out;}
 function anaKwVal(o,met,cat){if(!o)return null;var f=(met==='in'?'i':met==='ns'?'n':'t');
@@ -3705,7 +3706,8 @@ function anaEnt3(org,code,fc,fd){if(!org)return null;fc=fc||'입회';fd=fd||'당
   function one(o){if(!o||o[fc]==null)return null;return {v:Math.round(Number(o[fc])*10)/10,dd:(o[fd]!=null)?Math.round(Number(o[fd])*10)/10:null};}
   if(code==='ALL'){if(org.HQ&&org.HQ[fc]!=null){var h=one(org.HQ);h.src='hq';return h;}
     var s=0,ss=0,ok=true,any=false;Object.keys(org).forEach(function(c){var o=org[c];if(o&&o.lv==='총국'){var x=one(o);if(!x){ok=false;return;}any=true;s+=x.v;if(x.dd==null||ss==null)ss=null;else ss+=x.dd;}});
-    return (ok&&any)?{v:Math.round(s*10)/10,dd:ss==null?null:Math.round(ss*10)/10,src:'sum'}:null;}
+    var X=org.X1000?one(org.X1000):null;if(X){s+=X.v;if(ss!=null&&X.dd!=null)ss+=X.dd;else ss=null;}   // 6개 총국 + 구몬학습센터
+    return (ok&&any)?{v:Math.round(s*10)/10,dd:ss==null?null:Math.round(ss*10)/10,src:X?'hq':'sum'}:null;}
   var r=one(org[code]);if(r)r.src='org';return r;}
 function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로드일 + 오늘 올라간 자료)
   var out=[],D=(APP.daily&&APP.daily.days)||{},cur=sprDay(APP.meta&&APP.meta.date);
@@ -3717,6 +3719,7 @@ function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로
     if(met==='ach'){if(code==='ALL'){var h=e.org&&e.org.HQ;v=(h&&h.목표)?q3flr(h.순증/h.목표*100,1):null;}else v=anaAch(e.org,code);}
     else if(met==='et'){var _E=(S.anaEt===2)?e.et2:e.et;v=_E?anaKwVal(_E[code],'t',cat):null;}
     else if(met==='del'||(met==='in'&&cat==='S')){var r3=(met==='del')?anaEnt3(e.org,code,'삭제누적','삭제당일'):anaEnt3(e.org,code);if(r3){out.push({d:+k.slice(8),k:k,v:r3.v,dd:r3.dd,src:r3.src});}return;}
+    else if(use3&&code==='ALL'){var r4=anaEnt3(e.org,'ALL','순증','_');if(r4)out.push({d:+k.slice(8),k:k,v:r4.v,src:r4.src});return;}   // 전사 = 그날 구몬사업본부(센터 포함)
     else if(use3){v=anaOrg3(e.org,code,'순증',allHQ);}
     else{v=e.kw?anaKwVal(e.kw[code],met,cat):null;}
     if(v!=null)out.push({d:+k.slice(8),k:k,v:v});});
@@ -3820,7 +3823,7 @@ function adminAnalysis(){
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
     +((met==='in'&&code==='ALL')?anaBoardHtml(mk):'')
     +dayT
-    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회 = ③소평 관리과목 당일입회·누적입회 · 삭제 = ③소평 관리과목 삭제(당일·누적, 10/12~) · 합산과목 순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬사업본부 행(그 달 모든 날에 있을 때, 없으면 6개 총국 합계)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국·전사는 지구 합산<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
+    +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회 = ③소평 관리과목 당일입회·누적입회 · 삭제 = ③소평 관리과목 삭제(당일·누적, 10/12~) · 합산과목 순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬학습센터 포함(그날 ③ 구몬사업본부 행, 없으면 6개 총국 + 센터)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국은 지구 합산, 전사는 지구 + 구몬학습센터<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
 function renderAdmin(){
   var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
@@ -6176,7 +6179,7 @@ function parseToiCat(data){   // 분석용: 과목별 예상퇴회(합계·NKU=N
   var wb=XLSX.read(data,{type:'array'});var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
   var C=toiCols(rows);if(C.S<0)return null;var out={};
   function add(k,r){var o=out[k]||(out[k]={St:0,Nt:0,Ot:0});o.St=Math.round((o.St+(Number(r[C.S])||0))*10)/10;o.Nt=Math.round((o.Nt+(C.N>=0?Number(r[C.N])||0:0))*10)/10;o.Ot=Math.round((o.Ot+(C.O>=0?Number(r[C.O])||0:0))*10)/10;}
-  for(var i=1;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(classifyOrg(cc)!=='지구')continue;
+  for(var i=1;i<rows.length;i++){var r=rows[i];if(!r)continue;var cc=String(r[0]||'').trim();if(anaCenterLeaf(cc)){add('ALL',r);add('X1000',r);continue;}if(classifyOrg(cc)!=='지구')continue;
     var jc=ANA_EXC[cc]||(cc.slice(0,4)+'0'),ec=jc.slice(0,2)+'000',ch=cc.charAt(0)+'1000';add('ALL',r);add(ec,r);add(ch,r);}
   return out;}
 function parseMutoe(data){
@@ -6558,7 +6561,7 @@ async function doUpload(){
       }
     }catch(e){}
     if(UP.jik2){try{var nq3=buildQ3cur();if(nq3){await saveFile('cumulative/q3cur.json',JSON.stringify({month:keyOfDate(meta.date),asof:meta.date,org:nq3}),'q3cur update');APP.q3cur=nq3;
-      try{var _dk=sprDay(meta.date);if(_dk){if(!APP.daily)await loadDaily();var _dd=APP.daily||{days:{}};_dd.days=_dd.days||{};var _o={},_F=['순증','목표','퇴회','과목수','D순증','교사수','마스타순증','스구N','입회','당일입회','삭제당일','삭제누적'];Object.keys(nq3).forEach(function(c){var o=nq3[c];if(o.lv!=='총국'&&o.lv!=='사업국'&&o.lv!=='본부')return;var r={lv:o.lv};_F.forEach(function(f){if(o[f]!=null)r[f]=o[f];});_o[c]=r;});_dd.days[_dk]={asof:meta.date,org:_o};APP.daily=_dd;await saveFile('cumulative/daily.json',JSON.stringify(_dd),'daily snapshot '+_dk);}}catch(e){}
+      try{var _dk=sprDay(meta.date);if(_dk){if(!APP.daily)await loadDaily();var _dd=APP.daily||{days:{}};_dd.days=_dd.days||{};var _o={},_F=['순증','목표','퇴회','과목수','D순증','교사수','마스타순증','스구N','입회','당일입회','삭제당일','삭제누적'];Object.keys(nq3).forEach(function(c){var o=nq3[c];if(o.lv!=='총국'&&o.lv!=='사업국'&&o.lv!=='본부'&&o.lv!=='센터')return;var r={lv:o.lv};_F.forEach(function(f){if(o[f]!=null)r[f]=o[f];});_o[c]=r;});_dd.days[_dk]={asof:meta.date,org:_o};APP.daily=_dd;await saveFile('cumulative/daily.json',JSON.stringify(_dd),'daily snapshot '+_dk);}}catch(e){}
       try{var _sp=APP.sprint,_d=sprDay(meta.date);if(_sp&&_d<_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=nq3.HQ.입회;_sp.tea.HQ=nq3.HQ.교사수;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint base HQ');}
       if(_sp&&_d===_sp.from&&nq3.HQ&&_sp.base.HQ==null){_sp.base.HQ=Math.round((nq3.HQ.입회-nq3.HQ.당일입회)*10)/10;_sp.tea.HQ=nq3.HQ.교사수;}   // 시작일 업로드: 누적−당일 = 전날 마감 누적
       if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;var _l={};Object.keys(_v).forEach(function(c){var o=nq3[c];if(o)_l[c]=[o.삭제당일||0,o.삭제누적||0];});_sp.dl=_sp.dl||{};_sp.dl[_d]=_l;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
