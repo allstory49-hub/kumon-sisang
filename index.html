@@ -3574,19 +3574,20 @@ function anaFileTypes(days){var segs={},T={};days.forEach(function(x){(segs[x.se
 function anaBoardRatios(mk){var A=APP.anaDays,ex=((APP.anaHist||{}).exc)||['2026-07'];if(!A||!A.months)return null;
   var ms=Object.keys(A.months).filter(function(m){var d=A.months[m].days||[];return m<mk&&ex.indexOf(m)<0&&d.length>=15&&d.some(function(x){return x.seg===4;});}).sort().slice(-6);if(ms.length<3)return null;
   function med(a){a=a.filter(function(x){return x!=null&&!isNaN(x);}).sort(function(x,y){return x-y;});if(!a.length)return null;var h=a.length>>1;return a.length%2?a[h]:(a[h-1]+a[h])/2;}
-  var R={};['S','N','O'].forEach(function(c){var K={};ms.forEach(function(m){var ds=A.months[m].days,T=anaFileTypes(ds),reg=ds.filter(function(x){return T[x.d]==='reg';}).map(function(x){return x[c];});
-      var L=reg.length?reg.reduce(function(a,b){return a+b;},0)/reg.length:0;if(!L)return;var g={};ds.forEach(function(x){(g[T[x.d]]=g[T[x.d]]||[]).push(x[c]/L);});
+  var R={};['S','N','O'].forEach(function(c){var K={};ms.forEach(function(m){var ds=A.months[m].days,T=anaFileTypes(ds),reg=ds.filter(function(x){return T[x.d]==='reg'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
+      var L=reg.length?reg.reduce(function(a,b){return a+b;},0)/reg.length:0;if(!L)return;var g={};ds.forEach(function(x){if(x[c]==null||x.n>1)return;(g[T[x.d]]=g[T[x.d]]||[]).push(x[c]/L);});
       Object.keys(g).forEach(function(t){(K[t]=K[t]||[]).push(g[t].reduce(function(a,b){return a+b;},0)/g[t].length);});});
     var r={};Object.keys(K).forEach(function(t){r[t]=med(K[t]);});r.reg=1;R[c]=r;});
   return {ms:ms,R:R};}
-function anaBoard(mk){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP.anaDays||{months:{}},F=(A.months[mk]||{}).days||[],act={},lump={};
-  F.forEach(function(x){act[x.d]={S:x.S,N:x.N,O:x.O,src:'file'};});
+function anaBoard(mk,cut){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP.anaDays||{months:{}},F=(A.months[mk]||{}).days||[],act={},lump={};
+  F.forEach(function(x){act[x.d]={S:x.S,N:x.N,O:x.O,src:'file'};if(x.n>1)lump[x.d]=x.n;});
   var fileLast=F.length?F[F.length-1].d:0;
   // 파일 이후: ③(합산) · ④관통(NKU·온공) 업로드 누적 차이
   function fill(series,key){for(var i=1;i<series.length;i++){var p=series[i],pr=series[i-1];if(pr.src&&p.src&&pr.src!==p.src)continue;
     var a=anaEff(mk,pr.d),b=anaEff(mk,p.d),ds=[];for(var d=a+1;d<=b;d++)if(anaIsBiz(mk,d))ds.push(d);if(!ds.length||ds[ds.length-1]<=fileLast)continue;if(ds[0]<=fileLast)continue;
     var last=ds[ds.length-1],o=act[last]||(act[last]={src:'up'});if(o.src==='file')continue;o[key]=Math.round((p.v-pr.v)*10)/10;if(ds.length>1)lump[last]=ds.length;}}
   fill(anaSeries('ALL','in','S',mk),'S');fill(anaSeries('ALL','in','N',mk),'N');fill(anaSeries('ALL','in','O',mk),'O');
+  if(cut)Object.keys(act).forEach(function(d){if(+d>cut)delete act[d];});   // 예상 기록: 그날까지 자료만으로 다시 계산
   var all=[];for(var s=1;s<=4;s++)anaBizDays(mk,s).forEach(function(d){all.push({d:d,seg:s,t:anaDayType(mk,d)});});
   var lastAct=0;all.forEach(function(x){if(act[x.d]&&act[x.d].S!=null)lastAct=x.d;});
   var L={};['S','N','O'].forEach(function(c){var v=[];all.forEach(function(x){var o=act[x.d];if(x.t==='reg'&&o&&o[c]!=null&&!lump[x.d])v.push(o[c]);});L[c]=v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;});
@@ -3597,6 +3598,24 @@ function anaBoard(mk){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP.ana
     if(x.v.S!=null&&x.v.N!=null)x.v.G=Math.round((x.v.S-x.v.N)*10)/10;});
   var tot={S:0,G:0,N:0,O:0},act0={S:0,N:0,O:0},n=0;all.forEach(function(x){['S','G','N','O'].forEach(function(c){if(x.v[c]!=null)tot[c]+=x.v[c];});if(!x.fc)['S','N','O'].forEach(function(c){if(x.v[c]!=null)act0[c]+=x.v[c];});});
   return {days:all,L:L,R:RB.R,ms:RB.ms,tot:tot,act:act0,actS:act0.S,fileLast:fileLast,title:(A.months[mk]||{}).title||''};}
+// 월 마감 시 자동 추가: 업로드할 때마다 그 달 일자별 실적(합산 ③ · NKU·온공 ④)을 배수 자료(ana_days)에 저장 — 파일로 올린 날짜는 그대로 둠
+async function anaDaysAutoSave(mk){if(!APP.anaDays)await loadAnaDays();var A=APP.anaDays||{months:{}};A.months=A.months||{};var B=anaBoard(mk);if(!B)return;
+  var M=A.months[mk]||{title:'',days:[]},keep=(M.days||[]).filter(function(x){return !x.auto;}),fl=keep.length?keep[keep.length-1].d:0,add=[];
+  B.days.forEach(function(x){if(x.fc||x.inLump||x.d<=fl||x.v.S==null)return;var o={d:x.d,seg:x.seg,S:x.v.S,G:(x.v.N!=null?Math.round((x.v.S-x.v.N)*10)/10:null),N:(x.v.N==null?null:x.v.N),O:(x.v.O==null?null:x.v.O),D:null,auto:1};if(x.lump>1)o.n=x.lump;add.push(o);});
+  if(!add.length)return;M.days=keep.concat(add);M.title=M.title||((+mk.slice(5))+'월 (업로드 자동 저장)');A.months[mk]=M;APP.anaDays=A;
+  await saveFile('cumulative/ana_days.json',JSON.stringify(A),'ana days auto '+mk);}
+// 월말 예상 기록: 각 영업일에 그날까지 자료로 계산한 월말 예상 vs 실제 마감
+function anaPredLogHtml(mk){var opts=Object.keys((APP.anaDays||{}).months||{}).filter(function(m){return m<=mk&&anaBoardRatios(m);}).sort().reverse();if(!opts.length)return '';
+  var pm=S.anaPredM&&opts.indexOf(S.anaPredM)>=0?S.anaPredM:opts[0],F=anaBoard(pm);if(!F)return '';
+  var done=!F.days.some(function(x){return x.fc;}),fin=done?F.tot.S:null,WK=['일','월','화','수','목','금','토'],cum=0,rows='',errs=[];
+  F.days.forEach(function(x){if(x.fc){return;}if(x.v.S!=null)cum+=x.v.S;if(x.inLump||x.v.S==null)return;var b=anaBoard(pm,x.d);if(!b||b.L.S==null)return;var p=b.tot.S,e=fin?(p-fin)/fin*100:null;if(e!=null&&Math.round(cum)!==Math.round(fin))errs.push(Math.abs(e));
+    rows='<tr><td>'+(+pm.slice(5))+'/'+x.d+'('+WK[anaDow(pm,x.d)]+')</td><td>'+x.seg+'구간</td><td class="num">'+fmt(Math.round(cum))+'</td><td class="num" style="color:#E8590C;font-weight:800">'+fmt(Math.round(p))+'</td>'
+      +(done?'<td class="num">'+fmt(Math.round(fin))+'</td><td class="num" style="color:'+(Math.abs(e)<=3?'var(--green)':Math.abs(e)<=6?'#B7791F':'var(--red)')+'">'+(e>0?'+':'')+e.toFixed(1)+'%</td>':'')+'</tr>'+rows;});
+  var sel='<select onchange="S.anaPredM=this.value;renderAdmin()" style="padding:6px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-weight:700">'+opts.map(function(m){return '<option value="'+m+'"'+(m===pm?' selected':'')+'>'+m.slice(2).replace('-','.')+(m===mk?' (당월)':'')+'</option>';}).join('')+'</select>';
+  var avg=errs.length?errs.reduce(function(a,b){return a+b;},0)/errs.length:null;
+  return '<div class="stl" style="margin-top:16px">월말 예상 기록 (합산 입회 · 전사)</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'+sel+'<span style="font-size:12px;color:var(--t3)">'+(done?'실제 마감 '+fmt(Math.round(fin))+' · 평균 오차 '+(avg==null?'-':avg.toFixed(1))+'% (마지막 날 제외)':'진행 중 — 월말이 지나면 실제 마감과 오차가 표시돼요')+'</span></div>'
+    +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>구간</th><th>그날까지 실적</th><th>월말 예상</th>'+(done?'<th>실제 마감</th><th>오차</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="ib bl" style="margin-top:6px">· 각 영업일까지의 자료만으로 같은 방식(평일 기준값 × 날 유형별 배수, 그 달 이전 최근 6개월)으로 다시 계산한 월말 예상이에요 · 오차 ±3% 이내 초록 · ±6% 이내 노랑</div>';}
 function anaBoardHtml(mk){var B=anaBoard(mk);
   var up='<label class="rtb" style="display:inline-block;cursor:pointer;margin:2px 0 8px">📥 일자별 입회현황 파일 올리기<input type="file" accept=".xlsx,.xls" style="display:none" onchange="anaDaysUpload(this)"></label> <span id="anaDaysMsg" style="font-size:12px;color:var(--t3)"></span>';
   if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div>'+up+'<div class="ib am">「일자별 입회현황」 파일(월별 시트)을 올리면 일자별 실적과 남은 일자 예상이 나와요.</div>';
@@ -3821,7 +3840,7 @@ function adminAnalysis(){
   var dayT='<div class="stl" style="margin-top:16px">일자별 당일 실적</div>'+dtab('d')+'<div class="stl" style="margin-top:16px">일자별 누적 실적</div>'+dtab('c');
   return head+tiles+anaSvg(cur,prev,proj,dim,fF,anaSegEnds(mk))
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
-    +((met==='in'&&code==='ALL')?anaBoardHtml(mk):'')
+    +((met==='in'&&code==='ALL')?anaBoardHtml(mk)+anaPredLogHtml(mk):'')
     +dayT
     +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회 = ③소평 관리과목 당일입회·누적입회 · 삭제 = ③소평 관리과목 삭제(당일·누적, 10/12~) · 합산과목 순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬학습센터 포함(그날 ③ 구몬사업본부 행, 없으면 6개 총국 + 센터)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국은 지구 합산, 전사는 지구 + 구몬학습센터<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
@@ -6567,6 +6586,7 @@ async function doUpload(){
       if(_sp&&_d>=_sp.from&&_d<=_sp.to){var _v={};Object.keys(_sp.base||{}).forEach(function(c){if(nq3[c])_v[c]=nq3[c].입회;});if(nq3.HQ)_v.HQ=nq3.HQ.입회;_sp.fin={asof:meta.date,val:_v};_sp.days=_sp.days||{};_sp.days[_d]=_v;var _l={};Object.keys(_v).forEach(function(c){var o=nq3[c];if(o)_l[c]=[o.삭제당일||0,o.삭제누적||0];});_sp.dl=_sp.dl||{};_sp.dl[_d]=_l;await saveFile('cumulative/chong_sprint.json',JSON.stringify(_sp),'chong sprint update');}}catch(e){}}}catch(e){}}
     if(UP.jigu2){try{var _kw=anaParseKw(UP.jigu2.data),_dk2=sprDay(meta.date);if(_dk2){if(!APP.daily)await loadDaily();var _d2=APP.daily||{days:{}};_d2.days=_d2.days||{};var _e2=_d2.days[_dk2]||{asof:meta.date,org:{}};_e2.kw=_kw;_d2.days[_dk2]=_e2;APP.daily=_d2;await saveFile('cumulative/daily.json',JSON.stringify(_d2),'daily kw '+_dk2);}}catch(e){}}
     try{await saveToiExp(sprDay(meta.date));}catch(e){}
+    if(UP.jik2){try{await anaDaysAutoSave(keyOfDate(meta.date));}catch(e){}}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data,keyOfDate(meta.date));if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:keyOfDate(meta.date),source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
     if(UP.jigu&&keyOfDate(meta.date)<='2026-09'){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~9월 누적',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
