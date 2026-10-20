@@ -3605,17 +3605,17 @@ async function anaDaysAutoSave(mk){if(!APP.anaDays)await loadAnaDays();var A=APP
   if(!add.length)return;M.days=keep.concat(add);M.title=M.title||((+mk.slice(5))+'월 (업로드 자동 저장)');A.months[mk]=M;APP.anaDays=A;
   await saveFile('cumulative/ana_days.json',JSON.stringify(A),'ana days auto '+mk);}
 // 월말 예상 기록: 각 영업일에 그날까지 자료로 계산한 월말 예상 vs 실제 마감
-function anaPredLogHtml(mk){var opts=Object.keys((APP.anaDays||{}).months||{}).filter(function(m){return m<=mk&&anaBoardRatios(m);}).sort().reverse();if(!opts.length)return '';
+function anaPredLogHtml(mk,cat){cat=cat||'S';function tv(t){return cat==='G'?(t.S-t.N-t.O):t[cat];}var CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat];var opts=Object.keys((APP.anaDays||{}).months||{}).filter(function(m){return m<=mk&&anaBoardRatios(m);}).sort().reverse();if(!opts.length)return '';
   var pm=S.anaPredM&&opts.indexOf(S.anaPredM)>=0?S.anaPredM:opts[0],F=anaBoard(pm);if(!F)return '';
-  var done=!F.days.some(function(x){return x.fc;}),fin=done?F.tot.S:null,WK=['일','월','화','수','목','금','토'],cum=0,rows='',errs=[];
-  F.days.forEach(function(x){if(x.fc){return;}if(x.v.S!=null)cum+=x.v.S;if(x.inLump||x.v.S==null)return;var b=anaBoard(pm,x.d);if(!b||b.L.S==null)return;var p=b.tot.S,e=fin?(p-fin)/fin*100:null;if(e!=null&&Math.round(cum)!==Math.round(fin))errs.push(Math.abs(e));
+  var done=!F.days.some(function(x){return x.fc;}),fin=done?tv(F.tot):null,WK=['일','월','화','수','목','금','토'],cum=0,rows='',errs=[];
+  F.days.forEach(function(x){if(x.fc){return;}var dv=cat==='G'?((x.v.S!=null&&x.v.N!=null&&x.v.O!=null)?x.v.S-x.v.N-x.v.O:null):x.v[cat];if(dv!=null)cum+=dv;if(x.inLump||dv==null)return;var b=anaBoard(pm,x.d);if(!b||b.L.S==null||(cat!=='S'&&(b.L.N==null||b.L.O==null)))return;var p=tv(b.tot),e=fin?(p-fin)/fin*100:null;if(e!=null&&Math.round(cum)!==Math.round(fin))errs.push(Math.abs(e));
     rows='<tr><td>'+(+pm.slice(5))+'/'+x.d+'('+WK[anaDow(pm,x.d)]+')</td><td>'+x.seg+'구간</td><td class="num">'+fmt(Math.round(cum))+'</td><td class="num" style="color:#E8590C;font-weight:800">'+fmt(Math.round(p))+'</td>'
       +(done?'<td class="num">'+fmt(Math.round(fin))+'</td><td class="num" style="color:'+(Math.abs(e)<=3?'var(--green)':Math.abs(e)<=6?'#B7791F':'var(--red)')+'">'+(e>0?'+':'')+e.toFixed(1)+'%</td>':'')+'</tr>'+rows;});
   var sel='<select onchange="S.anaPredM=this.value;renderAdmin()" style="padding:6px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t1);font-weight:700">'+opts.map(function(m){return '<option value="'+m+'"'+(m===pm?' selected':'')+'>'+m.slice(2).replace('-','.')+(m===mk?' (당월)':'')+'</option>';}).join('')+'</select>';
   var avg=errs.length?errs.reduce(function(a,b){return a+b;},0)/errs.length:null;
-  return '<div class="stl" style="margin-top:16px">월말 예상 기록 (합산 입회 · 전사)</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'+sel+'<span style="font-size:12px;color:var(--t3)">'+(done?'실제 마감 '+fmt(Math.round(fin))+' · 평균 오차 '+(avg==null?'-':avg.toFixed(1))+'% (마지막 날 제외)':'진행 중 — 월말이 지나면 실제 마감과 오차가 표시돼요')+'</span></div>'
+  return '<div class="stl" style="margin-top:16px">월말 예상 기록 ('+CL+' 입회 · 전사)</div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'+sel+'<span style="font-size:12px;color:var(--t3)">'+(done?'실제 마감 '+fmt(Math.round(fin))+' · 평균 오차 '+(avg==null?'-':avg.toFixed(1))+'% (마지막 날 제외)':'진행 중 — 월말이 지나면 실제 마감과 오차가 표시돼요')+'</span></div>'
     +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>구간</th><th>그날까지 실적</th><th>월말 예상</th>'+(done?'<th>실제 마감</th><th>오차</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div class="ib bl" style="margin-top:6px">· 각 영업일까지의 자료만으로 같은 방식(평일 기준값 × 날 유형별 배수, 그 달 이전 최근 6개월)으로 다시 계산한 월말 예상이에요 · 오차 ±3% 이내 초록 · ±6% 이내 노랑</div>';}
+    +'<div class="ib bl" style="margin-top:6px">· 위 과목 버튼(합산·관리·온공·N)으로 과목을 바꿔 볼 수 있어요 · 관리 = 합산 − N − 온공<br>· 각 영업일까지의 자료만으로 같은 방식(평일 기준값 × 날 유형별 배수, 그 달 이전 최근 6개월)으로 다시 계산한 월말 예상이에요 · 오차 ±3% 이내 초록 · ±6% 이내 노랑</div>';}
 function anaBoardHtml(mk){var B=anaBoard(mk);
   var up='<label class="rtb" style="display:inline-block;cursor:pointer;margin:2px 0 8px">📥 일자별 입회현황 파일 올리기<input type="file" accept=".xlsx,.xls" style="display:none" onchange="anaDaysUpload(this)"></label> <span id="anaDaysMsg" style="font-size:12px;color:var(--t3)"></span>';
   if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div>'+up+'<div class="ib am">「일자별 입회현황」 파일(월별 시트)을 올리면 일자별 실적과 남은 일자 예상이 나와요.</div>';
@@ -3840,7 +3840,7 @@ function adminAnalysis(){
   var dayT='<div class="stl" style="margin-top:16px">일자별 당일 실적</div>'+dtab('d')+'<div class="stl" style="margin-top:16px">일자별 누적 실적</div>'+dtab('c');
   return head+tiles+anaSvg(cur,prev,proj,dim,fF,anaSegEnds(mk))
     +'<div class="stl" style="margin-top:4px">구간별 비교</div>'+segT
-    +((met==='in'&&code==='ALL')?anaBoardHtml(mk)+anaPredLogHtml(mk):'')
+    +((met==='in'&&code==='ALL')?anaBoardHtml(mk)+anaPredLogHtml(mk,cat):'')
     +dayT
     +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회 = ③소평 관리과목 당일입회·누적입회 · 삭제 = ③소평 관리과목 삭제(당일·누적, 10/12~) · 합산과목 순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬학습센터 포함(그날 ③ 구몬사업본부 행, 없으면 6개 총국 + 센터)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국은 지구 합산, 전사는 지구 + 구몬학습센터<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
