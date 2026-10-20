@@ -773,7 +773,7 @@ async function saveToGitHub(bakedJs){
   await loadSejongToi();
   await loadSejongItal();
   await loadJaeyak();
-  await loadFixedPrevSun();
+  await loadFixedPrevSun();applyFixedPrevSun();
   await loadJaeExpFixed();
   await loadToiExp();
   await loadSprint();
@@ -794,6 +794,9 @@ async function saveToGitHub(bakedJs){
 async function loadHistIndex(){try{var r=await dfetch('history/index.json?t='+Date.now());if(r.ok)APP.histIndex=await r.json();}catch(e){APP.histIndex=[];}}
 async function loadSejong(){try{var r=await dfetch('sejong/orgs.json?t='+Date.now());if(r.ok)APP.sejong=await r.json();}catch(e){APP.sejong=null;}}
 async function loadSejongToi(){try{var r=await dfetch('sejong/toi.json?t='+Date.now());if(r.ok){var j=await r.json();APP.sejongToi=j.data;APP.sejongToiRaw=j.raw||null;}}catch(e){APP.sejongToi=null;APP.sejongToiRaw=null;}}
+function applyFixedPrevSun(){   // 조직 통폐합 등으로 파일에 전월말순증이 비어 있는 조직: 수기 값으로 채움 (업로드 없이 바로 반영)
+  var mo=APP.fixedPrevSun&&APP.fixedPrevSun[curMonthKey()];if(!mo||!APP.org)return;
+  Object.keys(APP.org).forEach(function(lv){(APP.org[lv]||[]).forEach(function(x){if(x&&x.전월말순증==null&&mo[x.소속코드]!=null)x.전월말순증=Number(mo[x.소속코드]);});});}
 async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevsun.json?t='+Date.now());if(r.ok)APP.fixedPrevSun=(await r.json()).byMonth||{};}catch(e){APP.fixedPrevSun=null;}}
 async function loadSprint(){try{var r=await dfetch('cumulative/chong_sprint.json?t='+Date.now());if(r.ok)APP.sprint=await r.json();}catch(e){APP.sprint=null;}}
 async function loadToiExp(){try{var r=await dfetch('cumulative/toi_exp.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.toiExp=jx.data||{};}}catch(e){APP.toiExp={};}}
