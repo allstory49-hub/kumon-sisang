@@ -4821,7 +4821,7 @@ function prtSplitRem(P){
 }
 // 순위 상·하위 강조(급간 색 없는 행): 총국 상위1·하위1, 사업국 상위5·하위5
 function prtTBN(){var r0=(PRT.rows||[]).find(function(r){return r._code;});var lv=r0?classifyOrg(r0._code):null;return lv==='총국'?1:(lv==='사업국'?5:0);}
-function prtTB(r){var N=prtTBN();if(!N||!r||r._me)return '';var tot=PRT.rows.length,rk=r._rank||0;if(tot<N*2)return '';if(rk<=N)return 'top';if(rk>tot-N)return 'bot';return '';}
+function prtTB(r){if(PRT&&PRT.noTB)return '';var N=prtTBN();if(!N||!r||r._me)return '';var tot=PRT.rows.length,rk=r._rank||0;if(tot<N*2)return '';if(rk<=N)return 'top';if(rk>tot-N)return 'bot';return '';}
 var PRT_TOP_BG='BDD7EE', PRT_BOT_BG='F28B82';
 function prtOpen(cfg){
   PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
@@ -5794,8 +5794,8 @@ function prtIncList(key){
       rows:arr.map(function(x){var rem='-';
         if(!x.elig)rem='달성100%까지 순증 '+fmt1(needSunFor(100,x.목표,x.순증));
         else if(x.rank>2){var t=arr[1];rem='2위까지 순증 '+fmt1(needSunFor(t.달성률,x.목표,x.순증));}
-        return perFill({_rank:x.rank,_code:x.소속코드,_win:x.win,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),g:x.win?'선정':(x.elig?'순위밖':'미달'),rem:rem},perSplit(x.소속코드,'O2'));}),
-      cutLabel:'상위 2개 (달성률 100%↑)',n:arr.length});
+        return perFill({_rank:x.rank,_code:x.소속코드,_win:x.win,_tier:(x.rank<=2?0:-1),_dark:x.win,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),g:x.win?'선정':(x.elig?'순위밖':'미달'),rem:rem},perSplit(x.소속코드,'O2'));}),
+      cutLabel:'상위 2개 (달성률 100%↑)',n:arr.length,noTB:true});   // 상위 2개만 시상 → 상·하위 5개 순위색 대신 1~2위만 표시
     return;
   }
   if(key==='eopach10'||key==='eopsgn'){
