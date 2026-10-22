@@ -3675,14 +3675,15 @@ async function anaEtHistAutoSave(dk){if(!dk)return;if(!APP.etHist)await loadEtHi
   var nd=etD(dk);do{nd=new Date(nd.getTime()+864e5);}while(!etBiz(nd));var dd=nd.toISOString().slice(0,10),ch=false;
   [[x.etFor,x.et],[x.et2For,x.et2]].forEach(function(p){if(!p[0]||!p[1]||!p[1].ALL)return;var M=H.months[p[0]]||(H.months[p[0]]={fin:null,pts:[]});
     if(M.pts.some(function(q){return q[0]===dd;}))return;M.pts.push([dd,p[1].ALL.St]);M.pts.sort(function(a,b){return a[0]<b[0]?-1:1;});ch=true;});
-  var mk=dk.slice(0,7);Object.keys(H.months).forEach(function(m){var M=H.months[m];if(M.fin==null&&m<=mk&&M.pts.length){M.fin=M.pts[M.pts.length-1][1];ch=true;}});
+  var mk=dk.slice(0,7),hq=x.org&&x.org.HQ;if(hq&&hq.퇴회!=null){var CM=H.months[mk]||(H.months[mk]={fin:null,pts:[]});if(CM.fin!==hq.퇴회){CM.fin=hq.퇴회;CM.finSrc='③ '+(+dk.slice(5,7))+'/'+(+dk.slice(8))+' 마감';ch=true;}}   // 최종 퇴회 = 그 달 ③ 구몬사업본부 퇴회(월말까지 매일 갱신)
+  Object.keys(H.months).forEach(function(m){var M=H.months[m];if(M.fin==null&&m<mk&&M.pts.length){M.fin=M.pts[M.pts.length-1][1];M.finSrc='등록 마감값';ch=true;}});
   if(ch){APP.etHist=H;await saveFile('cumulative/et_hist.json',JSON.stringify(H),'et hist auto '+dk);}}
 function anaToiFinalHtml(T,scaleNote){var ML=function(m){return m.slice(2).replace('-','.');};
   var rows=T.win.map(function(c){return '<tr'+(c.out?' style="color:var(--t3);text-decoration:line-through"':'')+'><td>'+ML(c.m)+' 퇴회</td><td class="num">'+fmt(Math.round(c.fin))+'</td><td class="num">'+(c.f*100).toFixed(1)+'%</td><td class="num">'+fmt(Math.round(c.p))+'</td><td>'+(c.out?'이상치 제외':(T.keep.indexOf(c)>=0?'반영':'-'))+'</td></tr>';}).join('');
   if(T.ly&&!T.win.some(function(c){return c.m===T.ly.m;}))rows+='<tr style="color:var(--t2)"><td>'+ML(T.ly.m)+' 퇴회 (전년 동월)</td><td class="num">'+fmt(Math.round(T.ly.fin))+'</td><td class="num">'+(T.ly.f*100).toFixed(1)+'%</td><td class="num">'+fmt(Math.round(T.ly.p))+'</td><td>참고</td></tr>';
   return '<div class="stl" style="margin-top:6px">'+(+T.tgt.slice(5))+'월 최종 퇴회 예상 (전사)</div><div class="ib bl" style="margin-top:0">현재 등록 <b>'+fmt(Math.round(T.cur.v))+'</b> ('+T.cur.src+' · 등록 마감까지 남은 영업일 '+T.cur.bl+'일) ÷ 같은 시점 등록률 <b>'+(T.fm*100).toFixed(1)+'%</b> = 최종 <b style="color:#E8590C">'+fmt(Math.round(T.pred))+'</b> (범위 '+fmt(Math.round(T.lo))+' ~ '+fmt(Math.round(T.hi))+')'+(T.ly?' · 전년 동월 흐름 적용 시 '+fmt(Math.round(T.ly.p)):'')+'</div>'
-    +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>참고 월</th><th>최종 퇴회</th><th>같은 시점 등록률</th><th>적용 시 최종</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'<div class="ib bl" style="margin-top:6px">· 대상월 퇴회는 그 전달 말까지 등록이 이어져요(예: 12월 퇴회는 10~11월 등록). 등록 마감월의 남은 영업일이 같은 시점끼리 비교해 공휴일·주말 차이를 맞췄어요<br>· 최근 8개월 중 등록 흐름이 크게 다른 달은 이상치로 빼고 최근 6개월 중앙값 사용 · 엑셀에서 비어 있는 날은 앞뒤 기록으로 보간'+(scaleNote?'<br>· '+scaleNote:'')+'</div>';}
+    +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>참고 월</th><th>최종 퇴회(월말)</th><th>같은 시점 등록률</th><th>적용 시 최종</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="ib bl" style="margin-top:6px">· 최종 퇴회 = 그 달 월말 실적 퇴회(26년 1~9월은 「일자별 입회현황」, 이후는 ③ 구몬사업본부 퇴회를 월말까지 자동 갱신) · 대상월 퇴회는 그 전달 말까지 등록이 이어져요(예: 12월 퇴회는 10~11월 등록). 등록 마감월의 남은 영업일이 같은 시점끼리 비교해 공휴일·주말 차이를 맞췄어요<br>· 최근 8개월 중 등록 흐름이 크게 다른 달은 이상치로 빼고 최근 6개월 중앙값 사용 · 엑셀에서 비어 있는 날은 앞뒤 기록으로 보간'+(scaleNote?'<br>· '+scaleNote:'')+'</div>';}
 async function loadAnaHist(){try{var r=await dfetch('cumulative/ana_hist.json?t='+Date.now());if(r.ok)APP.anaHist=await r.json();}catch(e){APP.anaHist=null;}}
 // ───── 합산과목 입회 월말 예상: 과거 일자별 입회의 영업일 패턴 ─────
 // 슬롯(30칸): 0 첫날 · 1~4 1구간 · 5 1구간마감 · 6 계 · 7~10 2구간 · 11 2구간마감 · 12 계 · 13 누적 · 14~18 3구간 · 19 3구간마감 · 20 계 · 21~24 4구간 · 25 월마감전일 · 26 월마감 · 27 계 · 28 누적 · 29 총계
