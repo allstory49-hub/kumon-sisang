@@ -777,7 +777,7 @@ async function saveToGitHub(bakedJs){
   await loadJaeExpFixed();
   await loadToiExp();
   await loadSprint();
-  loadAnaHist();loadAnaDays();
+  loadAnaHist();loadAnaDays();loadEtHist();
   try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
@@ -3643,6 +3643,46 @@ function anaBoardHtml(mk){var B=anaBoard(mk);
     +'<div class="ib bl" style="margin-top:6px">· 실적: 「일자별 입회현황」 파일('+(B.fileLast?(+mk.slice(5))+'/'+B.fileLast+'까지':'없음')+') + 이후는 업로드 자료(합산 ③소평, NKU·온공 ④관통) · 일반 = 합산 − NKU<br>'
     +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 파일 실적의 중앙값<br>'
     +'· 합산 배수: 2구간 마감 '+r.e2.toFixed(2)+' · 3구간 평일 '+r.k3.toFixed(2)+' · 3구간 마감 '+r.e3.toFixed(2)+' · 4구간 평일 '+r.k4.toFixed(2)+' · 월마감 전일 '+r.e5.toFixed(2)+' · 월마감 '+r.e6.toFixed(2)+'<br>· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
+// ───── 예상퇴회 최종 예측: 「예상퇴회 일자별 변동」 엑셀 이력(대상월별 등록 누적) · 등록 마감월의 남은 영업일 같은 시점 등록률로 최종 퇴회 추정 ─────
+async function loadEtHist(){try{var r=await dfetch('cumulative/et_hist.json?t='+Date.now());if(r.ok)APP.etHist=await r.json();}catch(e){APP.etHist=null;}}
+var ET_HOL={};['2023-01-23','2023-01-24','2023-03-01','2023-05-01','2023-05-05','2023-05-29','2023-06-06','2023-08-15','2023-09-28','2023-09-29','2023-10-02','2023-10-03','2023-10-09','2023-12-25',
+ '2024-01-01','2024-02-09','2024-02-12','2024-03-01','2024-04-10','2024-05-01','2024-05-06','2024-05-15','2024-06-06','2024-08-15','2024-09-16','2024-09-17','2024-09-18','2024-10-01','2024-10-03','2024-10-09','2024-12-25',
+ '2025-01-01','2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-03-03','2025-05-01','2025-05-05','2025-05-06','2025-06-03','2025-06-06','2025-08-15','2025-10-03','2025-10-06','2025-10-07','2025-10-08','2025-10-09','2025-12-25'].forEach(function(k){ET_HOL[k]=1;});
+function etD(s){return new Date(s+'T00:00:00Z');}
+function etBiz(x){var w=x.getUTCDay();if(w===0||w===6)return false;var k=x.toISOString().slice(0,10);return !(ANA_HOL[k]||ET_HOL[k]);}
+function etAddM(m,k){var y=+m.slice(0,4),mo=+m.slice(5)+k;while(mo<1){mo+=12;y--;}while(mo>12){mo-=12;y++;}return y+'-'+(mo<10?'0':'')+mo;}
+function etMEnd(m){return new Date(Date.UTC(+m.slice(0,4),+m.slice(5),0));}
+function etBdBetween(a,b){var n=0,x=new Date(a.getTime()+864e5);while(x<=b){if(etBiz(x))n++;x=new Date(x.getTime()+864e5);}return n;}
+function etVAtBd(m,k,bl){var H=APP.etHist.months[m];if(!H)return null;var e=etMEnd(etAddM(m,-k));
+  var pts=H.pts.filter(function(p){return etD(p[0])<=e;}).map(function(p){return [etBdBetween(etD(p[0]),e),p[1]];}).sort(function(a,b){return b[0]-a[0];});
+  for(var i=0;i+1<pts.length;i++){var a=pts[i],b=pts[i+1];if(a[0]>=bl&&bl>=b[0])return a[0]===b[0]?b[1]:a[1]+(b[1]-a[1])*(a[0]-bl)/(a[0]-b[0]);}
+  if(pts.length&&pts[pts.length-1][0]===bl)return pts[pts.length-1][1];return null;}
+function anaToiFinal(mk,which){var H=APP.etHist;if(!H||!H.months)return null;var tgt=etAddM(mk,which),k=which,e=etMEnd(mk),cur=null;
+  var F=H.months[tgt];if(F&&F.pts.length){var lp=F.pts[F.pts.length-1];cur={v:lp[1],bl:etBdBetween(etD(lp[0]),e),src:'엑셀 '+(+lp[0].slice(5,7))+'/'+(+lp[0].slice(8))};}
+  var D=(APP.daily&&APP.daily.days)||{};Object.keys(D).sort().forEach(function(dk){var x=D[dk],E=which===2?x.et2:x.et,fr=which===2?x.et2For:x.etFor;if(!E||!E.ALL||fr!==tgt)return;
+    var bl=Math.max(0,etBdBetween(etD(dk),e)-1);if(!cur||bl<cur.bl)cur={v:E.ALL.St,bl:bl,src:'업로드 '+(+dk.slice(5,7))+'/'+(+dk.slice(8))+' 마감'};});   // 업로드(마감일 자료)는 다음 영업일 엑셀 기록과 같은 시점
+  if(!cur||!cur.v)return null;
+  var cand=Object.keys(H.months).filter(function(m){return m<tgt&&m<=mk&&H.months[m].fin;}).sort().map(function(m){var v=etVAtBd(m,k,cur.bl);return v?{m:m,f:v/H.months[m].fin,fin:H.months[m].fin}:null;}).filter(Boolean);
+  var win=cand.slice(-8);if(win.length<3)return null;
+  function med(a){a=a.slice().sort(function(x,y){return x-y;});var h=a.length>>1;return a.length%2?a[h]:(a[h-1]+a[h])/2;}
+  var md=med(win.map(function(c){return c.f;})),mad=med(win.map(function(c){return Math.abs(c.f-md);}))||0.01;
+  win.forEach(function(c){c.out=Math.abs(c.f-md)>3*1.4826*mad;c.p=cur.v/c.f;});
+  var keep=win.filter(function(c){return !c.out;}).slice(-6),fm=med(keep.map(function(c){return c.f;}));
+  var ly=cand.filter(function(c){return c.m===etAddM(tgt,-12);})[0];if(ly)ly.p=cur.v/ly.f;
+  return {tgt:tgt,cur:cur,pred:cur.v/fm,fm:fm,lo:Math.min.apply(null,keep.map(function(c){return c.p;})),hi:Math.max.apply(null,keep.map(function(c){return c.p;})),win:win,keep:keep,ly:ly};}
+// 업로드 때마다 예상퇴회(차월·차차월 전사 합계)를 이력에 이어 붙이고, 등록이 끝난 달은 최종값으로 확정
+async function anaEtHistAutoSave(dk){if(!dk)return;if(!APP.etHist)await loadEtHist();var H=APP.etHist||{months:{}};H.months=H.months||{};var x=((APP.daily||{}).days||{})[dk];if(!x)return;
+  var nd=etD(dk);do{nd=new Date(nd.getTime()+864e5);}while(!etBiz(nd));var dd=nd.toISOString().slice(0,10),ch=false;
+  [[x.etFor,x.et],[x.et2For,x.et2]].forEach(function(p){if(!p[0]||!p[1]||!p[1].ALL)return;var M=H.months[p[0]]||(H.months[p[0]]={fin:null,pts:[]});
+    if(M.pts.some(function(q){return q[0]===dd;}))return;M.pts.push([dd,p[1].ALL.St]);M.pts.sort(function(a,b){return a[0]<b[0]?-1:1;});ch=true;});
+  var mk=dk.slice(0,7);Object.keys(H.months).forEach(function(m){var M=H.months[m];if(M.fin==null&&m<=mk&&M.pts.length){M.fin=M.pts[M.pts.length-1][1];ch=true;}});
+  if(ch){APP.etHist=H;await saveFile('cumulative/et_hist.json',JSON.stringify(H),'et hist auto '+dk);}}
+function anaToiFinalHtml(T,scaleNote){var ML=function(m){return m.slice(2).replace('-','.');};
+  var rows=T.win.map(function(c){return '<tr'+(c.out?' style="color:var(--t3);text-decoration:line-through"':'')+'><td>'+ML(c.m)+' 퇴회</td><td class="num">'+fmt(Math.round(c.fin))+'</td><td class="num">'+(c.f*100).toFixed(1)+'%</td><td class="num">'+fmt(Math.round(c.p))+'</td><td>'+(c.out?'이상치 제외':(T.keep.indexOf(c)>=0?'반영':'-'))+'</td></tr>';}).join('');
+  if(T.ly&&!T.win.some(function(c){return c.m===T.ly.m;}))rows+='<tr style="color:var(--t2)"><td>'+ML(T.ly.m)+' 퇴회 (전년 동월)</td><td class="num">'+fmt(Math.round(T.ly.fin))+'</td><td class="num">'+(T.ly.f*100).toFixed(1)+'%</td><td class="num">'+fmt(Math.round(T.ly.p))+'</td><td>참고</td></tr>';
+  return '<div class="stl" style="margin-top:6px">'+(+T.tgt.slice(5))+'월 최종 퇴회 예상 (전사)</div><div class="ib bl" style="margin-top:0">현재 등록 <b>'+fmt(Math.round(T.cur.v))+'</b> ('+T.cur.src+' · 등록 마감까지 남은 영업일 '+T.cur.bl+'일) ÷ 같은 시점 등록률 <b>'+(T.fm*100).toFixed(1)+'%</b> = 최종 <b style="color:#E8590C">'+fmt(Math.round(T.pred))+'</b> (범위 '+fmt(Math.round(T.lo))+' ~ '+fmt(Math.round(T.hi))+')'+(T.ly?' · 전년 동월 흐름 적용 시 '+fmt(Math.round(T.ly.p)):'')+'</div>'
+    +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>참고 월</th><th>최종 퇴회</th><th>같은 시점 등록률</th><th>적용 시 최종</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="ib bl" style="margin-top:6px">· 대상월 퇴회는 그 전달 말까지 등록이 이어져요(예: 12월 퇴회는 10~11월 등록). 등록 마감월의 남은 영업일이 같은 시점끼리 비교해 공휴일·주말 차이를 맞췄어요<br>· 최근 8개월 중 등록 흐름이 크게 다른 달은 이상치로 빼고 최근 6개월 중앙값 사용 · 엑셀에서 비어 있는 날은 앞뒤 기록으로 보간'+(scaleNote?'<br>· '+scaleNote:'')+'</div>';}
 async function loadAnaHist(){try{var r=await dfetch('cumulative/ana_hist.json?t='+Date.now());if(r.ok)APP.anaHist=await r.json();}catch(e){APP.anaHist=null;}}
 // ───── 합산과목 입회 월말 예상: 과거 일자별 입회의 영업일 패턴 ─────
 // 슬롯(30칸): 0 첫날 · 1~4 1구간 · 5 1구간마감 · 6 계 · 7~10 2구간 · 11 2구간마감 · 12 계 · 13 누적 · 14~18 3구간 · 19 3구간마감 · 20 계 · 21~24 4구간 · 25 월마감전일 · 26 월마감 · 27 계 · 28 누적 · 29 총계
@@ -3803,6 +3843,7 @@ function adminAnalysis(){
   var proj=null,how='',hp=null;
   var bd0=(met==='in'&&code==='ALL')?anaBoard(mk):null;
   if(met==='in'&&cat==='S'){if(bd0){proj=Math.round(bd0.tot.S*10)/10;how='일자별 예상 합계 (아래 일자별 입회 현황)';hp={board:1};}else{hp=anaHistProj(mk,cur);if(hp){proj=hp.T;how='과거 '+hp.ms.length+'개월 영업일 패턴 (남은 영업일 반영)';}}}
+  var etT=null;if(met==='et'){etT=anaToiFinal(mk,S.anaEt===2?2:1);if(etT&&cur.length){var _sc=(code==='ALL'&&cat==='S')?1:(last.v/etT.cur.v);proj=Math.round(etT.pred*_sc*10)/10;how=(+etT.tgt.slice(5))+'월 최종 퇴회 예상 (같은 시점 등록률 '+(etT.fm*100).toFixed(1)+'%)';hp={board:1};}}
   var nsP=null;if(met==='ns'){var _pi=anaProjIn(code,cat,mk),_tn=anaToiNow(code,cat,mk);if(_pi!=null&&_tn){nsP={pi:_pi,tn:_tn};proj=Math.round((_pi-_tn.v)*10)/10;how='예상 입회 '+fmt(Math.round(_pi))+' − 퇴회 '+fmt(Math.round(_tn.v));hp={board:1};}}
   if(hp){}else if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
@@ -3811,6 +3852,7 @@ function adminAnalysis(){
     +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'전월 자료 없음')
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+'</div>';
+  if(etT)tiles+=anaToiFinalHtml(etT,(code==='ALL'&&cat==='S')?'':'선택한 조직·과목은 전사 예상의 증가 비율('+fmt(Math.round(etT.cur.v))+' → '+fmt(Math.round(etT.pred))+')을 그대로 적용한 값이에요');
   if(nsP)tiles+='<div class="ib bl" style="margin-top:6px">· 순증 월말 예상 = 월말 예상 입회 <b>'+fmt(Math.round(nsP.pi))+'</b> − 퇴회 <b>'+fmt(Math.round(nsP.tn.v))+'</b> = <b style="color:#E8590C">'+fmt(Math.round(nsP.pi-nsP.tn.v))+'</b><br>· 예상 입회: 입회 탭의 월말 예상(남은 영업일 × 날 유형별 배수)과 같은 계산 · 퇴회: '+nsP.tn.src+' '+(+nsP.tn.k.slice(5,7))+'/'+(+nsP.tn.k.slice(8))+' 자료 (퇴회는 월초에 대부분 확정돼 그대로 사용)</div>';
   if(hp&&!hp.board){var ord=['reg','k3','e2','e3','k4','e5','e6','e1','e0'],br='';ord.forEach(function(t){var n=hp.rem[t];if(!n)return;var pd=hp.L*hp.r[t];br+='<tr><td>'+ANA_DT_L[t]+'</td><td class="num">'+n+'일</td><td class="num">'+fmt1(Math.round(pd*10)/10)+'</td><td class="num">'+fmt1(Math.round(pd*n*10)/10)+'</td></tr>';});
     tiles+='<div class="stl" style="margin-top:6px">월말 예상 계산 (남은 영업일)</div><div style="overflow-x:auto"><table class="anatb"><thead><tr><th>남은 날</th><th>일수</th><th>하루 예상</th><th>예상 입회</th></tr></thead><tbody>'
@@ -6590,6 +6632,7 @@ async function doUpload(){
     if(UP.jigu2){try{var _kw=anaParseKw(UP.jigu2.data),_dk2=sprDay(meta.date);if(_dk2){if(!APP.daily)await loadDaily();var _d2=APP.daily||{days:{}};_d2.days=_d2.days||{};var _e2=_d2.days[_dk2]||{asof:meta.date,org:{}};_e2.kw=_kw;_d2.days[_dk2]=_e2;APP.daily=_d2;await saveFile('cumulative/daily.json',JSON.stringify(_d2),'daily kw '+_dk2);}}catch(e){}}
     try{await saveToiExp(sprDay(meta.date));}catch(e){}
     if(UP.jik2){try{await anaDaysAutoSave(keyOfDate(meta.date));}catch(e){}}
+    try{await anaEtHistAutoSave(sprDay(meta.date));}catch(e){}
     if(UP.jik2&&keyOfDate(meta.date)<='2026-09'){try{var stoi=buildSejongToi();if(stoi){await saveFile('sejong/toi.json',JSON.stringify({updated:meta.date,quarter:'2026-Q3',data:stoi.data,raw:stoi.raw}),'sejong toi update');APP.sejongToi=stoi.data;APP.sejongToiRaw=stoi.raw;}}catch(e){}}
     if(UP.jik2){try{var jk=buildJaeyakFromSopyeong(UP.jik2.data,keyOfDate(meta.date));if(jk){await saveFile('cumulative/jaeyak.json',JSON.stringify({asof:meta.date,month:keyOfDate(meta.date),source:'③소평',data:jk}),'jaeyak update');APP.jaeyak=jk;}}catch(e){}}
     if(UP.jigu&&keyOfDate(meta.date)<='2026-09'){try{var sital=buildSejongItal();if(sital){await saveFile('sejong/ital.json',JSON.stringify({asof:meta.date,quarter:'2026-Q3',months:'7~9월 누적',data:sital}),'sejong ital update');APP.sejongItal=sital;APP.sejongItalAsof=meta.date;}}catch(e){}}
