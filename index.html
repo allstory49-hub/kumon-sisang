@@ -785,7 +785,7 @@ async function saveToGitHub(bakedJs){
   await loadMastaTopOrg();
   await loadMastaTopTea();
   await loadJjk();
-  await loadClubElite();
+  await loadClubElite();syncMgrNames();
   renderBadge();
   showPage('lp');
 })();
@@ -819,6 +819,10 @@ async function loadCumEnv(){try{var r=await dfetch('cumulative/env_q2.json?t='+D
 async function loadMastaTopOrg(){try{var r=await dfetch('cumulative/mastatop_orgs.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopOrg=j.orgs||{};}}catch(e){APP.mastaTopOrg=null;}}
 async function loadMastaTopTea(){try{var r=await dfetch('cumulative/mastatop_teachers.json?t='+Date.now());if(r.ok){var j=await r.json();APP.mastaTopTea=j.teachers||{};}}catch(e){APP.mastaTopTea=null;}}
 async function loadJjk(){try{var r=await dfetch('cumulative/jigujikyeora.json?t='+Date.now());if(r.ok){APP.jjk45=(await r.json()).jigu||{};}var r2=await dfetch('cumulative/jigujikyeora_jun.json?t='+Date.now());if(r2.ok){APP.jjk6=(await r2.json()).jigu||{};}}catch(e){APP.jjk45=APP.jjk45||{};APP.jjk6=APP.jjk6||{};}}
+function syncMgrNames(){   // 저장된 인센티브 자료(10CLUB·온공 Top)의 관리자명을 현재 ③소평 관리자로 맞춤 (인사이동 반영)
+  var q=APP.q3cur||{};function cur(c){return q[c]&&q[c].관리자?q[c].관리자:null;}
+  var D=APP.club10&&APP.club10.data;if(D)Object.keys(D).forEach(function(c){var m=cur(c);if(m)D[c].mgr=m;});
+  var O=APP.mastaTopOrg;if(O)Object.keys(O).forEach(function(c){var m=cur(c);if(m)O[c].관리자=m;});}
 async function loadClubElite(){
   try{var r=await dfetch('cumulative/club10.json?t='+Date.now());if(r.ok)APP.club10=await r.json();}catch(e){APP.club10=null;}
   try{var r2=await dfetch('cumulative/elite.json?t='+Date.now());if(r2.ok)APP.elite45=(await r2.json()).jiguk||{};}catch(e){APP.elite45=null;}
