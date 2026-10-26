@@ -3671,7 +3671,8 @@ function anaToiFinal(mk,which){var H=APP.etHist;if(!H||!H.months)return null;var
   var D=(APP.daily&&APP.daily.days)||{};Object.keys(D).sort().forEach(function(dk){var x=D[dk],E=which===2?x.et2:x.et,fr=which===2?x.et2For:x.etFor;if(!E||!E.ALL||fr!==tgt)return;
     var bl=Math.max(0,etBdBetween(etD(dk),e)-1);if(!cur||bl<cur.bl)cur={v:E.ALL.St,bl:bl,src:'업로드 '+(+dk.slice(5,7))+'/'+(+dk.slice(8))+' 마감'};});   // 업로드(마감일 자료)는 다음 영업일 엑셀 기록과 같은 시점
   if(!cur||!cur.v)return null;
-  var cand=Object.keys(H.months).filter(function(m){return m<tgt&&m<=mk&&H.months[m].fin;}).sort().map(function(m){var v=etVAtBd(m,k,cur.bl);return v?{m:m,f:v/H.months[m].fin,fin:H.months[m].fin}:null;}).filter(Boolean);
+  var EXM=((APP.anaHist||{}).exc)||['2026-07'];   // 이슈 월(입회 분석과 같은 목록)은 비교에서 제외
+  var cand=Object.keys(H.months).filter(function(m){return m<tgt&&m<=mk&&H.months[m].fin&&EXM.indexOf(m)<0;}).sort().map(function(m){var v=etVAtBd(m,k,cur.bl);return v?{m:m,f:v/H.months[m].fin,fin:H.months[m].fin}:null;}).filter(Boolean);
   var win=cand.slice(-8);if(win.length<3)return null;
   function med(a){a=a.slice().sort(function(x,y){return x-y;});var h=a.length>>1;return a.length%2?a[h]:(a[h-1]+a[h])/2;}
   var md=med(win.map(function(c){return c.f;})),mad=med(win.map(function(c){return Math.abs(c.f-md);}))||0.01;
