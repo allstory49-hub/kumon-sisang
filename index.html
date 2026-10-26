@@ -549,6 +549,11 @@ input,button{font-family:inherit;font-size:14px}
       mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
   .tb::-webkit-scrollbar{display:none}
   .tbb{flex:0 0 auto}
+  /* 관리자 탭: 한 줄에 모두 보이게(스크롤로 왼쪽이 가려지지 않도록) */
+  #aTabs{-webkit-mask-image:none;mask-image:none;padding-right:0;overflow-x:visible}
+  #aTabs .tbn{flex:1 1 auto;min-width:0;padding:12px 4px;text-align:center}
+  @media (max-width:520px){#aTabs .tbn{font-size:12px;padding:12px 1px;letter-spacing:-.2px}}
+  @media (max-width:340px){#aTabs .tbn{white-space:normal;word-break:keep-all;line-height:1.3;padding:8px 1px}}
   /* 역할 토글도 가로 스크롤 */
   .rtog{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .rtog::-webkit-scrollbar{display:none}
