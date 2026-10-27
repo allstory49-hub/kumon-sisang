@@ -549,6 +549,8 @@ input,button{font-family:inherit;font-size:14px}
       mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
   .tb::-webkit-scrollbar{display:none}
   .tbb{flex:0 0 auto}
+  /* 순위표 이름 아래 소속(작은 글씨)은 한 줄로 · 길면 … 처리 */
+  .rn2{overflow:hidden}.rn2 .rsb{display:inline-block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
   /* 관리자 탭: 한 줄에 모두 보이게(스크롤로 왼쪽이 가려지지 않도록) */
   #aTabs{-webkit-mask-image:none;mask-image:none;padding-right:0;overflow-x:visible}
   #aTabs .tbn{flex:1 1 auto;min-width:0;padding:12px 4px;text-align:center}
@@ -858,6 +860,15 @@ async function selectHist(m,ctx){
 }
 function histSnap(){return S.histM?APP.histCache[S.histM]:null;}
 
+// 휴대폰 등 좁은 화면: 칸보다 긴 숫자·제목은 글자 크기를 줄여 칸 안에 맞춤 (겹침·잘림 방지)
+var FIT_SEL='.rcol-v,.r20-cv,.r20-cs,.rhc,.r20h .r20-col,.ig4v,.ig4l,.tbn,.rb,.r20-n';
+function fitNums(root){(root||document).querySelectorAll(FIT_SEL).forEach(function(el){if(!el.offsetParent)return;
+  if(el.dataset.fs0){el.style.fontSize=el.dataset.fs0==='-'?'':el.dataset.fs0;}
+  var cw=el.clientWidth;if(!cw||el.scrollWidth<=cw+1)return;
+  if(!el.dataset.fs0)el.dataset.fs0=el.style.fontSize||'-';
+  var fs=parseFloat(getComputedStyle(el).fontSize),n=0;while(el.scrollWidth>el.clientWidth+1&&fs>8&&n<14){fs-=0.5;el.style.fontSize=fs+'px';n++;}});}
+var _fitT=null;function fitSoon(){clearTimeout(_fitT);_fitT=setTimeout(function(){fitNums();},60);}
+try{new MutationObserver(fitSoon).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',fitSoon);}catch(e){}
 function showPage(id){['pp','lp','cp','up','ip','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
 function out(){S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
 function rbC(n){return n===1?'r1':n===2?'r2':n===3?'r3':'rn';}
