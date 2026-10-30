@@ -905,6 +905,7 @@ function doLogin(){
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
   var ADMINS={'한정호':'921128','김해영':'41542'};   // 관리자 로그인
   if(ADMINS[id]&&ADMINS[id]===pw){showPage('ap');renderAdmin();return;}
+  if(isClosedDay()){document.getElementById('lerr').textContent=CLOSED_MSG;return;}   // 월마감일: 관리자 외 조회 차단
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
   if(t){S.user=t;S.type='teacher';S.pos='구몬교사';S.inSisang=true;S.tab='my';goChooser(id);return;}
   var it=APP.incList.find(function(r){return r.교사명===id&&r.교사번호===pw;});
@@ -928,9 +929,14 @@ function doLogin(){
 }
 
 /* ───── 사용자 화면 ───── */
-function goChooser(name){document.getElementById('cNm').textContent=name;showPage('cp');}
-function goAward(){showPage('up');renderUser();}
-function goIncentive(){showPage('ip');renderIncentive();}
+// 월마감일 조회 차단(관리자 제외) · 한국시간 기준 날짜
+var CLOSED_DAYS=['2026-10-30'],CLOSED_MSG='월마감일에는 조회불가합니다.';
+function kstDay(){var d=new Date(Date.now()+9*3600e3);return d.toISOString().slice(0,10);}
+function isClosedDay(){return CLOSED_DAYS.indexOf(kstDay())>=0;}
+function closedGuard(){if(!isClosedDay()||S.type==='admin')return false;S.user=null;showPage('lp');var e=document.getElementById('lerr');if(e)e.textContent=CLOSED_MSG;return true;}
+function goChooser(name){if(closedGuard())return;document.getElementById('cNm').textContent=name;showPage('cp');}
+function goAward(){if(closedGuard())return;showPage('up');renderUser();}
+function goIncentive(){if(closedGuard())return;showPage('ip');renderIncentive();}
 /* 지난 기록 - 개인 시상 */
 function histPersonalSisang(){
   var sec='<div class="stl" style="margin-top:20px">📅 지난 기록</div>'+histBtns('award');
