@@ -808,14 +808,16 @@ async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevs
 async function loadSprint(){try{var r=await dfetch('cumulative/chong_sprint.json?t='+Date.now());if(r.ok)APP.sprint=await r.json();}catch(e){APP.sprint=null;}}
 async function loadToiExp(){try{var r=await dfetch('cumulative/toi_exp.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.toiExp=jx.data||{};}}catch(e){APP.toiExp={};}}
 // ⑧⑨ 예상퇴회: 'M월 예상퇴회' = M월 퇴회 (전월말과목 = M-1월말). 11월→11월분, 12월→12월분 → cumulative/toi_exp.json
+function toiMLbl(n){var k=toiNk(kstDay(),n);return (k.slice(0,4)!==kstDay().slice(0,4)?k.slice(2,4)+'년 ':'')+(+k.slice(5))+'월 예상퇴회';}
 function toiNk(dk,n){var y=+dk.slice(0,4),mo=+dk.slice(5,7)+n;while(mo>12){mo-=12;y++;}return y+'-'+(mo<10?'0':'')+mo;}
 async function saveToiExp(dk){   // ⑧ 차월 · ⑨ 차차월 예상퇴회 (데이터 월 기준)
   dk=dk||sprDay(APP.meta&&APP.meta.date);if(!dk)return false;
   var cur=APP.toiExp||{},ch=false,cats={};
-  [['toi11',1],['toi12',2]].forEach(function(p){if(UP[p[0]]){var nk=toiNk(dk,p[1]);cur[nk]=parseToiFile(UP[p[0]].data);try{cats[p[1]]=parseToiCat(UP[p[0]].data);}catch(e){}ch=true;}});
+  var tb=kstDay();   // 차월·차차월 = 업로드하는 날(오늘) 기준 다음 달·다다음 달 (월초에 지난달 마감 자료를 올려도 파일은 오늘 받은 것)
+  [['toi11',1],['toi12',2]].forEach(function(p){if(UP[p[0]]){var nk=toiNk(tb,p[1]);cur[nk]=parseToiFile(UP[p[0]].data);try{cats[p[1]]=parseToiCat(UP[p[0]].data);}catch(e){}ch=true;}});
   if(!ch)return false;await saveFile('cumulative/toi_exp.json',JSON.stringify({updated:new Date().toISOString().slice(0,10),data:cur}),'toi exp update');APP.toiExp=cur;
   try{if(cats[1]||cats[2]){if(!APP.daily)await loadDaily();var D=APP.daily||{days:{}};D.days=D.days||{};var e=D.days[dk]||{asof:(APP.meta&&APP.meta.date)||'',org:{}};
-    if(cats[1]){e.et=cats[1];e.etFor=toiNk(dk,1);}if(cats[2]){e.et2=cats[2];e.et2For=toiNk(dk,2);}D.days[dk]=e;APP.daily=D;await saveFile('cumulative/daily.json',JSON.stringify(D),'daily et '+dk);}}catch(e){}
+    if(cats[1]){e.et=cats[1];e.etFor=toiNk(tb,1);}if(cats[2]){e.et2=cats[2];e.et2For=toiNk(tb,2);}D.days[dk]=e;APP.daily=D;await saveFile('cumulative/daily.json',JSON.stringify(D),'daily et '+dk);}}catch(e){}
   UP.toi11=null;UP.toi12=null;return true;}
 async function loadJaeExpFixed(){try{var r=await dfetch('cumulative/jae_exp_fixed.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.jaeExpFixed=jx.data||{};APP.jaeExpFixedMonth=jx.month||'2026-09';}}catch(e){APP.jaeExpFixed=null;}}
 async function loadJaeyak(){try{var r=await dfetch('cumulative/jaeyak.json?t='+Date.now());if(r.ok){var j=await r.json();APP.jaeyak=j.data;APP.jaeyakAsof=j.asof||'';}}catch(e){APP.jaeyak=null;}}
@@ -4721,11 +4723,11 @@ function upload(){
     +'<div class="upz'+(UP.member?' done':'')+'" onclick="document.getElementById(\'mf\').click()"><div class="upi'+(UP.member?' done':'')+'">'+(UP.member?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.member?UP.member.name:'파일 선택하기')+'</div><div class="ups'+(UP.member?' done':'')+'">신규 회원 인센티브(유입) 파일</div></div></div>'
     +'<input type="file" id="mf" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'member\')">'
-    +'<div class="stl">⑧ 차월_예상퇴회(과목별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
+    +'<div class="stl">⑧ 차월_예상퇴회(과목별).xlsx <b style="color:var(--blue)">→ '+toiMLbl(1)+'</b> <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
     +'<div class="upz'+(UP.toi11?' done':'')+'" onclick="document.getElementById(\'t11f\').click()"><div class="upi'+(UP.toi11?' done':'')+'">'+(UP.toi11?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.toi11?UP.toi11.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi11?' done':'')+'">차월(다음 달) 예상퇴회 파일 · 과목별</div></div></div>'
     +'<input type="file" id="t11f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi11\')">'
-    +'<div class="stl">⑨ 차차월_예상퇴회(과목별).xlsx <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
+    +'<div class="stl">⑨ 차차월_예상퇴회(과목별).xlsx <b style="color:var(--blue)">→ '+toiMLbl(2)+'</b> <span style="font-weight:500;color:var(--t3);font-size:11px">— 퇴회율 인센티브 · 분석</span></div>'
     +'<div class="upz'+(UP.toi12?' done':'')+'" onclick="document.getElementById(\'t12f\').click()"><div class="upi'+(UP.toi12?' done':'')+'">'+(UP.toi12?ICON_OK:ICON_UP)+'</div>'
     +'<div><div class="upl">'+(UP.toi12?UP.toi12.name:'파일 선택하기')+'</div><div class="ups'+(UP.toi12?' done':'')+'">차차월(다다음 달) 예상퇴회 파일 · 과목별</div></div></div>'
     +'<input type="file" id="t12f" accept=".xlsx,.xls" style="display:none" onchange="pickFile(this,\'toi12\')">'
