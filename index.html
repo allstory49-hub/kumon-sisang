@@ -873,7 +873,7 @@ function fitNums(root){(root||document).querySelectorAll(FIT_SEL).forEach(functi
 var _fitT=null;function fitSoon(){clearTimeout(_fitT);_fitT=setTimeout(function(){fitNums();},60);}
 try{new MutationObserver(fitSoon).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',fitSoon);}catch(e){}
 function showPage(id){['pp','lp','cp','up','ip','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
-function out(){S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
+function out(){if(S.peek){S.peek=false;S.user=null;S.type='teacher';showPage('ap');renderAdmin();return;}S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
 function rbC(n){return n===1?'r1':n===2?'r2':n===3?'r3':'rn';}
 function badgeStyle(rank){
   if(rank>10)return 'background:var(--card2);color:var(--t2)';
@@ -4170,7 +4170,7 @@ function adminAnalysis(){
     +'<div class="ib bl" style="margin-top:10px">· 합산과목 입회 = ③소평 관리과목 당일입회·누적입회 · 삭제 = ③소평 관리과목 삭제(당일·누적, 10/12~) · 합산과목 순증 = ③소평(일자별 자료 7/12~ · 입회는 10/6~) · 전사는 구몬학습센터 포함(그날 ③ 구몬사업본부 행, 없으면 6개 총국 + 센터)<br>· 관리·온공·N과목 = ④관통(온공=마스타과목, N=N과목, 관리=관통 합산−온공−N) · 사업국·총국은 지구 합산, 전사는 지구 + 구몬학습센터<br>· 전월 비교값은 동 구간의 동 영업일 시점 누적(마감된 구간은 구간 합계)이에요. 당일 실적은 직전 영업일 누적과의 차이이고, 업로드가 빠진 날은 여러 영업일 합으로 표시하고 전월도 동 영업일 구간의 합과 비교해요. 일자는 주말·공휴일 자료를 합산한 영업일로 표시해요(예: 10/11 자료 → 10/8(목)). 업로드 안 한 날은 그 전 가장 가까운 업로드일 값으로 봐요.<br>· 달성률은 ③소평 기준 · 전사 = 구몬사업본부 달성률(10/13 자료부터 있음).</div>';
 }
 function renderAdmin(){
-  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'교사 조회'}];
+  var tabs=[{id:'sisang',l:'🏆 시상'},{id:'inc',l:'💰 인센티브'},{id:'sejong',l:'🏅 세종클럽'},{id:'ana',l:'📈 분석'},{id:'hist',l:'📅 기록'},{id:'upload',l:'📤 업로드'},{id:'search',l:'지구장 조회'}];
   if(curMonth()>=10){tabs=tabs.filter(function(t){return t.id!=='sejong';});if(S.atab==='sejong')S.atab='sisang';}   // 세종클럽은 3분기 한정
   if(!S.atab)S.atab='sisang';
   document.getElementById('aTabs').innerHTML=tabs.map(function(t){return '<button class="tbn'+(S.atab===t.id?' on':'')+'" onclick="S.atab=\''+t.id+'\';renderAdmin()">'+t.l+'</button>';}).join('');
@@ -7039,17 +7039,39 @@ function adminRank(){
 }
 
 function search(){
-  var h='<div class="mt">교사 조회</div><div class="sb2"><input class="si" id="sInp" placeholder="이름 또는 교사번호..."><button class="sbtn" onclick="doSearch()">조회</button></div>';
+  var h='<div class="mt">지구장 조회</div><div class="sb2"><input class="si" id="sInp" placeholder="지구장 이름 또는 지구명..." onkeydown="if(event.key===\'Enter\')doSearch()"><button class="sbtn" onclick="doSearch()">조회</button></div>';
   if(S.search===null)return h;
-  if(!S.search)return h+'<div class="empty">검색 결과가 없습니다.</div>';
-  var r=S.search,aw=fmt1(r.시상계);
-  return h+'<div class="hc"><div class="ht"><div class="av">'+r.교사명.slice(0,2)+'</div><div><div class="hn">'+r.교사명+'</div><div class="hsb"><span class="bpos g">교사</span> · '+r.소속명+' · <b style="color:var(--amber)">'+r.순위+'위</b></div></div></div>'
-    +'<div class="sg"><div class="sc"><div class="sl">시상점수</div><div class="sv" style="color:'+(aw>=0?'var(--green)':'var(--red)')+'">'+aw+'</div></div>'
-    +'<div class="sc"><div class="sl">교사번호</div><div class="sv" style="font-size:15px">'+r.교사번호+'</div></div>'
-    +'<div class="sc"><div class="sl">근무기간</div><div class="sv" style="font-size:15px">'+r.근무기간+'개월</div></div>'
-    +'<div class="sc"><div class="sl">소속</div><div class="sv" style="font-size:14px">'+r.소속명+'</div></div></div></div>';
+  if(!S.search||!S.search.length)return h+'<div class="empty">검색 결과가 없습니다.</div>';
+  var cur=APP.q3cur||{};
+  return h+S.search.map(function(o,i){
+    var q=cur[o.소속코드]||{},nm=o.관리자명||q.관리자||'-';
+    var jk=cur[(o.소속코드||'').slice(0,4)+'0']||{},ep=cur[(o.소속코드||'').slice(0,2)+'000']||{};
+    var cell=function(l,v,c){return '<div class="sc"><div class="sl">'+l+'</div><div class="sv" style="font-size:15px'+(c?';color:'+c:'')+'">'+v+'</div></div>';};
+    var ms=o.과목순증!=null?o.과목순증:q.순증,dg=o.디지털순증!=null?o.디지털순증:q.D순증,ar=o.달성률!=null?o.달성률:q.달성률;
+    return '<div class="hc"><div class="ht"><div class="av">'+String(nm).slice(0,2)+'</div><div><div class="hn">'+nm+'</div><div class="hsb"><span class="bpos g">지구장</span> · '+(o.소속명||q.소속명)+(o.순위?' · <b style="color:var(--amber)">'+o.순위+'위</b>':'')+'</div>'
+      +'<div class="hsb" style="margin-top:2px">'+[ep.소속명,jk.소속명].filter(Boolean).join(' · ')+(jk.관리자?' (지국장 '+jk.관리자+')':'')+'</div></div></div>'
+      +'<div class="sg">'+cell('사번',o.사번||q.사번||'-')+cell('교사수',fmt(o.교사수!=null?o.교사수:q.교사수)+'명')
+      +cell('과목순증',ms==null?'-':fmt1(ms),ms<0?'var(--red)':'')+cell('디지털순증',dg==null?'-':fmt(dg),dg<0?'var(--red)':'')
+      +cell('달성률',ar==null?'-':fmt1(ar)+'%')+cell('시상점수',o.시상점수!=null&&o._inS?fmt1(o.시상점수):'-')+'</div>'
+      +'<button class="sbtn" style="width:100%;margin-top:10px" onclick="peekJigu('+i+')">👀 이 지구장 화면으로 보기</button></div>';
+  }).join('');
 }
-function doSearch(){var q=document.getElementById('sInp').value.trim();if(!q)return;S.search=APP.teachers.find(function(r){return r.교사명===q||r.교사번호===q;})||false;renderAdmin();}
+function doSearch(){
+  var q=document.getElementById('sInp').value.trim();if(!q)return;
+  var res=[],seen={};
+  (APP.org['지구']||[]).forEach(function(o){if((o.관리자명||'').indexOf(q)>=0||(o.소속명||'').indexOf(q)>=0||o.사번===q){var c=Object.assign({_inS:true},o);res.push(c);seen[o.소속코드]=1;}});
+  var cur=APP.q3cur||{};
+  Object.keys(cur).forEach(function(c){var o=cur[c];if(o.lv!=='지구'||seen[c])return;if((o.관리자||'').indexOf(q)>=0||(o.소속명||'').indexOf(q)>=0||String(o.사번)===q)
+    res.push({소속코드:c,소속명:o.소속명,관리자명:o.관리자,사번:String(o.사번),과목순증:o.순증,디지털순증:o.D순증,달성률:o.달성률,교사수:o.교사수,_q:1});});
+  S.search=res;renderAdmin();
+}
+function peekJigu(i){
+  var o=(S.search||[])[i];if(!o)return;
+  if(o._inS){var r=(APP.org['지구']||[]).find(function(x){return x.소속코드===o.소속코드;});S.user=r;S.inSisang=true;}
+  else{S.user={소속코드:o.소속코드,소속명:o.소속명,관리자명:o.관리자명,사번:o.사번,과목순증:o.과목순증,디지털순증:o.디지털순증,달성률:o.달성률,교사수:o.교사수,시상점수:0,지구당:0,지구수:0,전월말:o.교사수,전월말순증:null,특별점수:0,태블릿점수:0,스구N재약정:0};S.inSisang=false;}
+  S.type='org';S.pos='지구';S.tab='my';S.peek=true;
+  document.getElementById('cNm').textContent=(S.user.관리자명||'')+' (관리자 보기)';showPage('cp');
+}
 
 document.addEventListener('keydown',function(e){if(e.key==='Enter'){var lp=document.getElementById('lp');if(lp&&lp.classList.contains('active'))doLogin();}});
 </script>
