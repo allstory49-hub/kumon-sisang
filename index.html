@@ -7048,11 +7048,13 @@ function search(){
     var jk=cur[(o.소속코드||'').slice(0,4)+'0']||{},ep=cur[(o.소속코드||'').slice(0,2)+'000']||{};
     var cell=function(l,v,c){return '<div class="sc"><div class="sl">'+l+'</div><div class="sv" style="font-size:15px'+(c?';color:'+c:'')+'">'+v+'</div></div>';};
     var ms=o.과목순증!=null?o.과목순증:q.순증,dg=o.디지털순증!=null?o.디지털순증:q.D순증,ar=o.달성률!=null?o.달성률:q.달성률;
-    return '<div class="hc"><div class="ht"><div class="av">'+String(nm).slice(0,2)+'</div><div><div class="hn">'+nm+'</div><div class="hsb"><span class="bpos g">지구장</span> · '+(o.소속명||q.소속명)+(o.순위?' · <b style="color:var(--amber)">'+o.순위+'위</b>':'')+'</div>'
+    return '<div class="hc"><div class="ht"><div class="av">'+String(nm).slice(0,2)+'</div><div><div class="hn">'+nm+'</div><div class="hsb"><span class="bpos g">지구장</span> · '+(o.소속명||q.소속명)+'</div>'
       +'<div class="hsb" style="margin-top:2px">'+[ep.소속명,jk.소속명].filter(Boolean).join(' · ')+(jk.관리자?' (지국장 '+jk.관리자+')':'')+'</div></div></div>'
-      +'<div class="sg">'+cell('사번',o.사번||q.사번||'-')+cell('교사수',fmt(o.교사수!=null?o.교사수:q.교사수)+'명')
+      +'<div class="sg">'+cell('전사 순위',o.순위?'<span style="color:var(--amber)">'+fmt(o.순위)+'위</span><div class="ss">'+fmt((APP.org['지구']||[]).length)+'개 중</div>':'-')
+      +cell('총국 순위',o.총국순위?'<span style="color:var(--blue)">'+fmt(o.총국순위)+'위</span><div class="ss">'+(o.총국총원?fmt(o.총국총원)+'개 중':'')+'</div>':'-')
+      +cell('사번',o.사번||q.사번||'-')+cell('교사수',fmt(o.교사수!=null?o.교사수:q.교사수)+'명')
       +cell('과목순증',ms==null?'-':fmt1(ms),ms<0?'var(--red)':'')+cell('디지털순증',dg==null?'-':fmt(dg),dg<0?'var(--red)':'')
-      +cell('달성률',ar==null?'-':fmt1(ar)+'%')+cell('시상점수',o.시상점수!=null&&o._inS?fmt1(o.시상점수):'-')+'</div>'
+      +cell('달성률',ar==null?'-':fmt1(ar)+'%')+cell('시상점수',o._inS?fmt1(o.지구당!=null?o.지구당:o.시상점수):'-')+'</div>'
       +'<button class="sbtn" style="width:100%;margin-top:10px" onclick="peekJigu('+i+')">👀 이 지구장 화면으로 보기</button></div>';
   }).join('');
 }
