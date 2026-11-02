@@ -808,6 +808,7 @@ async function loadFixedPrevSun(){try{var r=await dfetch('cumulative/fixed_prevs
 async function loadSprint(){try{var r=await dfetch('cumulative/chong_sprint.json?t='+Date.now());if(r.ok)APP.sprint=await r.json();}catch(e){APP.sprint=null;}}
 async function loadToiExp(){try{var r=await dfetch('cumulative/toi_exp.json?t='+Date.now());if(r.ok){var jx=await r.json();APP.toiExp=jx.data||{};}}catch(e){APP.toiExp={};}}
 // ⑧⑨ 예상퇴회: 'M월 예상퇴회' = M월 퇴회 (전월말과목 = M-1월말). 11월→11월분, 12월→12월분 → cumulative/toi_exp.json
+function prevBizDay(){var x=new Date(Date.now()+9*3600e3);x=new Date(Date.UTC(x.getUTCFullYear(),x.getUTCMonth(),x.getUTCDate()));do{x=new Date(x.getTime()-864e5);}while(!etBiz(x));return x.toISOString().slice(0,10);}
 function toiMLbl(n){var k=toiNk(kstDay(),n);return (k.slice(0,4)!==kstDay().slice(0,4)?k.slice(2,4)+'년 ':'')+(+k.slice(5))+'월 예상퇴회';}
 function toiNk(dk,n){var y=+dk.slice(0,4),mo=+dk.slice(5,7)+n;while(mo>12){mo-=12;y++;}return y+'-'+(mo<10?'0':'')+mo;}
 async function saveToiExp(dk){   // ⑧ 차월 · ⑨ 차차월 예상퇴회 (데이터 월 기준)
@@ -4694,6 +4695,7 @@ function upload(){
   var has=APP.meta&&APP.meta.date;
   return '<div class="mt">데이터 업로드</div>'
     +(has?'<div class="ib gr">✅ 현재 데이터: <b>'+APP.meta.date+'</b> 기준 · 교사 '+(APP.meta.total||0).toLocaleString()+'명 · 지구 '+(APP.org.지구||[]).length+'개</div>':'<div class="ib am">아직 데이터가 없습니다. 두 파일을 올려주세요.</div>')
+    +'<div class="ib am" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>📅 자료 마감일</b><input type="date" id="udate" value="'+prevBizDay()+'" style="padding:6px 8px;border:1px solid var(--bd);border-radius:8px;font-size:14px;font-weight:700"><span style="font-size:12px;color:var(--t2)">기본값은 직전 영업일(월요일엔 금요일)이에요. 올리는 자료의 마감일과 다르면 바꿔주세요.</span></div>'
     +'<div class="ib bl">ℹ️ 시상은 ①②, 인센티브는 ③④⑤⑥⑦ 파일이 필요해요 (⑧⑨ 차월·차차월 예상퇴회는 매일 올리면 퇴회율 인센티브·분석에 반영). <b>데이터 반영하기</b>를 누르면 저장되고 약 1분 뒤 전 직원이 조회할 수 있어요. 안 올린 인센티브 파일은 직전 값이 유지돼요.</div>'
     +'<div class="stl">① 교평_일단위.xlsx</div>'
     +'<div class="upz'+(UP.teacher?' done':'')+'" onclick="document.getElementById(\'tf\').click()"><div class="upi'+(UP.teacher?' done':'')+'">'+(UP.teacher?ICON_OK:ICON_UP)+'</div>'
@@ -6630,8 +6632,8 @@ async function doUpload(){
     var incEnv=parseEnv(UP.jik?UP.jik.data:null);
     var incCross=parseCross(UP.cross?UP.cross.data:null);
     await tick();
-    var now=new Date();now.setDate(now.getDate()-1);
-    var meta={date:now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
+    var _ud=(document.getElementById('udate')&&document.getElementById('udate').value)||prevBizDay();   // 자료 마감일(기본: 직전 영업일 · 월요일엔 금요일)
+    var meta={date:(+_ud.slice(0,4))+'년 '+(+_ud.slice(5,7))+'월 '+(+_ud.slice(8))+'일 마감',total:tR.stats.total,max:tR.stats.max,avg:tR.stats.avg,positive:tR.stats.positive};
     try{if(await freezeMonthIfChanged(meta.date))msg.innerHTML='<span style="color:var(--blue)">✓ 지난달 실적 확정 보관 완료</span>';}catch(e){}
     msg.innerHTML='<span style="color:var(--blue)">✓ 분석 완료 · 전일 순위 확인 중...</span>';
     await tick();
