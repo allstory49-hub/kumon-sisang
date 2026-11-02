@@ -1284,11 +1284,11 @@ function club10Calc(cc,o){
   var bms=o.cum8_ms||0, bp=o.cum8_per||0;
   ['2026-09','2026-10','2026-11','2026-12'].forEach(function(mk){
     if(mk>=lk)return;var r=bm[mk]&&bm[mk][cc];if(!r)return;
-    var ms=Number(r.마스타순증)||0, t=Number(r.마스타교사||r.교사수)||0;
+    var ms=Number(r.마스타순증)||0, t=Number(r.교사수||r.마스타교사)||0;
     bms+=ms; bp+=t?ms/t:0;
   });
   var cur=(APP.q3cur||{})[cc], cms, cp, ct;
-  if(cur){cms=Number(cur.마스타순증)||0;ct=Number(cur.마스타교사||cur.교사수)||0;cp=ct?cms/ct:0;}
+  if(cur){cms=Number(cur.마스타순증)||0;ct=Number(cur.교사수||cur.마스타교사)||0;cp=ct?cms/ct:0;}
   else{cms=(lk==='2026-09')?(o.sep_ms||0):0;cp=(lk==='2026-09')?(o.sep_per||0):0;ct=0;}
   function t2(v){return Math.trunc(v*100+(v>=0?1e-9:-1e-9))/100;}
   return {base_ms:bms,base_per:t2(bp),cur_ms:cms,cur_per:t2(cp),tea:(ct||o.교사수9||0),tot_ms:bms+cms,tot_per:t2(bp+cp),tot_raw:bp+cp};
@@ -1300,7 +1300,7 @@ function club10Card(){
   var D=APP.club10.data, N=APP.club10.notice||{};
   // 9월분은 관통(q3cur 온공·교사수)으로 매일 갱신 — 있으면 덮어씀
   function sepOng(cc){var o=(APP.q3cur||{})[cc];if(!o)return null;
-    var ms=Number(o.마스타순증)||0, t=Number(o.마스타교사||o.교사수)||0;
+    var ms=Number(o.마스타순증)||0, t=Number(o.교사수||o.마스타교사)||0;
     return {ms:ms,tea:t,per:t?Math.floor(ms/t*100)/100:0};}
   // 1~7호점 달성 기록 (공지: 잔여 없음 = 달성 완료)
   var lockedCodes=Object.keys(N).filter(function(c){return N[c].호점;}).sort(function(a,b){return N[a].rank-N[b].rank;});
@@ -1760,7 +1760,7 @@ function ongPerCap(code,raw){
     if(mk===lk)o=(APP.q3cur||{})[code];
     else if(mk<lk)o=byMonth[mk]&&byMonth[mk][code];
     else return;
-    var ms=Number(o&&o.마스타순증)||0, t=Number(o&&(o.마스타교사||o.교사수))||0;
+    var ms=Number(o&&o.마스타순증)||0, t=Number(o&&(o.교사수||o.마스타교사))||0;
     var pr=t?ms/t:0, p=t?q3flr(pr,2):0;
     byM[mk]={ms:ms,tea:t,per:p}; ms_.push(mk);
     per+=raw?pr:p; msSum+=ms;
