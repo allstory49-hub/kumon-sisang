@@ -6759,8 +6759,8 @@ function buildQ3cur(){
       if(!eop[ec])eop[ec]={ms:0,tea:0};
       eop[ec].ms+=(Number(out[c].마스타순증)||0);eop[ec].tea+=(Number(out[c].마스타교사)||0);
     });
-    if(!got.지국)Object.keys(jik).forEach(function(c){if(out[c]&&out[c].lv==='지국'){out[c].마스타순증=jik[c].ms;if(!out[c].마스타교사)out[c].마스타교사=jik[c].tea;}});
-    if(!got.사업국)Object.keys(eop).forEach(function(c){if(out[c]&&out[c].lv==='사업국'){out[c].마스타순증=eop[c].ms;if(!out[c].마스타교사)out[c].마스타교사=eop[c].tea;}});
+    if(!got.지국)Object.keys(jik).forEach(function(c){if(out[c]&&out[c].lv==='지국'){out[c].마스타순증=jik[c].ms;if(jik[c].tea)out[c].마스타교사=jik[c].tea;}});
+    if(!got.사업국)Object.keys(eop).forEach(function(c){if(out[c]&&out[c].lv==='사업국'){out[c].마스타순증=eop[c].ms;if(eop[c].tea)out[c].마스타교사=eop[c].tea;}});
   }
   // 사업국 스구N 순증 = ④ 관통_지구 'N과목 순증'(col29)을 지구→사업국으로 합산 (③소평 값 대체)
   if(UP.jigu2){try{
