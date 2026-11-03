@@ -1738,7 +1738,7 @@ function q3Toi(code,q){
     else if(mk<lk)o=byMonth[mk]&&byMonth[mk][code];
     else if(!(APP.toiExp||{})[mk])return;   // 미래월: 예상퇴회 파일이 있으면 미리 반영(예상퇴회 관리)
     var t=Number(o&&o.퇴회)||0, g=Number(o&&o.과목수)||0, inF=!!(o&&o.퇴회);
-    var ex=(APP.toiExp||{})[mk];       // 11·12월: 예상퇴회 파일(퇴회·전월말과목) 우선
+    var ex=(mk>lk)?(APP.toiExp||{})[mk]:null;       // 미래월만 예상퇴회 파일(퇴회·전월말과목) · 당월은 ③소평(퇴회·과목수)
     if(ex){var e=ex[code];if(e){t=Number(e.toi)||0;g=Number(e.gwa)||0;inF=true;if(!g){var pm0=Object.keys(monthly).pop();if(pm0)g=monthly[pm0].gwa;}}/* 전월말 과목이 빈 예상퇴회 파일은 직전 달 과목수로 대신 */else{t=0;inF=false;var pm=Object.keys(monthly).pop();if(pm)g=monthly[pm].gwa;}}
     // 누적은 toiHorizon(다음 달, 10/27 마감 자료부터 차차월) 예상퇴회까지 포함
     var nx=toiHorizon();
