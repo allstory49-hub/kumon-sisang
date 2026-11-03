@@ -979,7 +979,7 @@ async function loadMonthView(mk){
   if(v){try{var r2=await dfetch('cumulative/jaeyak_'+mk+'.json?t='+Date.now());if(r2.ok)v.jaeyak=(await r2.json()).data;}catch(e){}}
   APP.monthView[mk]=v;return v;
 }
-function monthEndLabel(mk){var y=+mk.slice(0,4),m=+mk.slice(5);return y+'년 '+m+'월 '+new Date(y,m,0).getDate()+'일 마감';}
+function monthEndLabel(mk){var y=+mk.slice(0,4),m=+mk.slice(5),d=new Date(y,m,0).getDate();if(typeof anaIsBiz==='function')while(d>20&&!anaIsBiz(mk,d))d--;return y+'년 '+m+'월 '+d+'일 마감';}   /* 월 마지막 영업일 */
 function withMonthView(mk,fn){
   var v=APP.monthView[mk], bm=((APP.q3cum||{}).byMonth||{})[mk];
   if(!v||!bm)return fn();
@@ -2344,7 +2344,7 @@ function julyChongOct(){
 }
 
 // ═════════════ 11월 인센티브 (노출 스위치: NOV_LIVE · 미리보기: 주소 뒤 ?nov=1 또는 관리자 미리보기 버튼) ═════════════
-var NOV_LIVE=false;
+var NOV_LIVE=true;
 function novOn(){return NOV_LIVE||!!S.novPrev||/[?&]nov=1/.test(location.search);}
 function isNovView(){return novOn()&&!APP._viewing;}
 var NOV_M=11,NOV_CONTACT=OCT_CONTACT;
