@@ -3901,8 +3901,8 @@ function anaPredLogHtml(mk,cat){cat=cat||'S';function tv(t){return cat==='G'?(t.
     +'<div style="overflow-x:auto"><table class="anatb"><thead><tr><th>일자</th><th>구간</th><th>그날까지 실적</th><th>월말 예상</th>'+(done?'<th>실제 마감</th><th>오차</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'<div class="ib bl" style="margin-top:6px">· 위 과목 버튼(합산·관리·온공·N)으로 과목을 바꿔 볼 수 있어요 · 관리 = 합산 − N − 온공<br>· 각 영업일까지의 자료만으로 같은 방식(평일 기준값 × 날 유형별 배수, 그 달 이전 최근 6개월)으로 다시 계산한 월말 예상이에요 · 오차 ±3% 이내 초록 · ±6% 이내 노랑</div>';}
 function anaBoardHtml(mk){var B=anaBoard(mk);
-  var up='<label class="rtb" style="display:inline-block;cursor:pointer;margin:2px 0 8px">📥 일자별 입회현황 파일 올리기<input type="file" accept=".xlsx,.xls" style="display:none" onchange="anaDaysUpload(this)"></label> <span id="anaDaysMsg" style="font-size:12px;color:var(--t3)"></span>';
-  if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div>'+up+'<div class="ib am">「일자별 입회현황」 파일(월별 시트)을 올리면 일자별 실적과 남은 일자 예상이 나와요.</div>';
+  var up='';   // 일자별 입회현황 파일 올리기 제거 — 업로드 탭 자료(③소평·④관통)로 자동 저장 (예전에 참고용으로 올린 파일 자료는 그대로 사용)
+  if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div>'+up+'<div class="ib am">업로드 자료가 쌓이면 일자별 실적과 남은 일자 예상이 나와요.</div>';
   var WK=['일','월','화','수','목','금','토'],cum=0,rows='',segSum={},M={};
   function f(v){return v==null?'-':fmt(Math.round(v));}
   function sub(lab,o,hasFc,strong){return '<tr style="background:'+(strong?'#FDEBD8':'#EEF1F4')+';font-weight:800"><td colspan="2">'+lab+(hasFc?' <span style="font-size:10px;color:#E8590C">예상 포함</span>':'')+'</td><td class="num">'+f(o.S)+'</td><td class="num">'+f(o.cum)+'</td><td class="num">'+f(o.G)+'</td><td class="num">'+f(o.N)+'</td><td class="num">'+f(o.O)+'</td></tr>';}
@@ -3921,8 +3921,8 @@ function anaBoardHtml(mk){var B=anaBoard(mk);
   return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상) · 전사</div>'+up
     +'<div class="incgrid4">'+'<div class="ig4"><div class="ig4l">실적 누적</div><div class="ig4v" style="font-size:17px">'+fmt(Math.round(B.actS))+'</div></div><div class="ig4"><div class="ig4l">남은 일자 예상</div><div class="ig4v" style="font-size:17px">+'+fmt(Math.round(B.tot.S-B.actS))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 (합산)</div><div class="ig4v" style="font-size:17px;color:#E8590C">'+fmt(Math.round(B.tot.S))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 NKU · 온공</div><div class="ig4v" style="font-size:15px">'+fmt(Math.round(B.tot.N))+' · '+fmt(Math.round(B.tot.O))+'</div></div></div>'
     +tb
-    +'<div class="ib bl" style="margin-top:6px">· 실적: 「일자별 입회현황」 파일('+(B.fileLast?(+mk.slice(5))+'/'+B.fileLast+'까지':'없음')+') + 이후는 업로드 자료(합산 ③소평, NKU·온공 ④관통) · 일반 = 합산 − NKU<br>'
-    +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+(B.Lest?' · 아직 평일 실적이 없어 첫날 실적÷배수와 전월 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 파일 실적의 중앙값<br>'
+    +'<div class="ib bl" style="margin-top:6px">· 실적: 업로드 탭 자료(합산 ③소평, NKU·온공 ④관통 · 업로드할 때마다 자동 저장) · 일반 = 합산 − NKU<br>'
+    +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+(B.Lest?' · 아직 평일 실적이 없어 첫날 실적÷배수와 전월 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값<br>'
     +'· 합산 배수: 2구간 마감 '+r.e2.toFixed(2)+' · 3구간 평일 '+r.k3.toFixed(2)+' · 3구간 마감 '+r.e3.toFixed(2)+' · 4구간 평일 '+r.k4.toFixed(2)+' · 월마감 전일 '+r.e5.toFixed(2)+' · 월마감 '+r.e6.toFixed(2)+'<br>· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
 // ───── 예상퇴회 최종 예측: 「예상퇴회 일자별 변동」 엑셀 이력(대상월별 등록 누적) · 등록 마감월의 남은 영업일 같은 시점 등록률로 최종 퇴회 추정 ─────
 async function loadEtHist(){try{var r=await dfetch('cumulative/et_hist.json?t='+Date.now());if(r.ok)APP.etHist=await r.json();}catch(e){APP.etHist=null;}}
