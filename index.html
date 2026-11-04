@@ -2508,6 +2508,12 @@ function julyChongNov(){
   return octHead()+jSub(tabs,S.jtab)+body+jContact(NOV_CONTACT);
 }
 // ── 관리자 통계 (11월) ──
+// 인센티브 통계 카드 순서: 반기(하반기·상시) → 분기 → 2개월(예: 10~11월) → 당월 · 같은 묶음 안에서는 기존 순서
+function incStatSort(body){var P='<div class="incwrap">',M='<div class="incstat">';if(body.indexOf(P)!==0||body.slice(-6)!=='</div>')return body;
+  var inner=body.slice(P.length,-6),parts=inner.split(M),pre=parts.shift();
+  function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/반기/.test(t))return 0;if(/상시/.test(t))return 0.5;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
+  var cards=parts.map(function(p,i){return {h:M+p,r:rk(p),i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.i-y.i);});
+  return P+pre+cards.map(function(c){return c.h;}).join('')+'</div>';}
 function adminInc11(){
   var roles=['교사','지구','지국','사업국','총국'];if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';var M=NOV_M;
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
@@ -2543,7 +2549,7 @@ function adminInc11(){
   }else{var tot=0,lines='';chongLeadRows11().forEach(function(x){tot+=x.tot;});
     body='<div class="incwrap">'+st('[11월] 총국주도 인센티브','기본 배정 + 달성률 추가 배정(150/100/50%) + 6개 총국 스구N 인당·12월 퇴회율 순위',6,'개','전체',Math.round(tot*10000),"prtIncList('chonglead11')")+topTourStat('총국')+coffeeStat()+'</div>';
   }
-  return head+body;
+  return head+incStatSort(body);
 }
 
 function incJuly(){
