@@ -2062,7 +2062,8 @@ function eopRank10(){
 }
 function eopSgnRank(){
   var arr=Object.keys(SGN_T).map(function(c){var o=(APP.q3cur||{})[c]||{},f=q3get(c,'Q4')||{},t=SGN_T[c],s=Number(f.스구N)||0,tn=Number(f.교사수당월)||0;
-    return {소속코드:c,소속명:o.소속명||c,관리자:o.관리자||'',목표:t,순증:s,달성률:t?q3flr(s/t*100,1):0,
+    var bm={};QRANGE.Q4.forEach(function(mk){if(mk<=liveKey()){var mo=monthOrg(mk)[c];bm[mk]=mo?(Number(mo.스구N)||0):0;}});
+    return {소속코드:c,소속명:o.소속명||c,관리자:o.관리자||'',목표:t,순증:s,bm:bm,달성률:t?q3flr(s/t*100,1):0,
       ilPer:tn?q3flr((Number(f.일반순증)||0)/tn,3):0,dPer:tn?q3flr((Number(f.D순증)||0)/tn,3):0};});
   arr.sort(function(a,b){return (b.달성률-a.달성률)||(b.ilPer-a.ilPer)||(b.dPer-a.dPer)||((a.소속코드<b.소속코드)?-1:1);});
   arr.forEach(function(x,i){x.rank=i+1;x.exp=rankPay(x.rank);x.elig=x.달성률>=50;x.pay=x.elig?x.exp:0;});
@@ -2177,7 +2178,7 @@ function eopSgnCard(){
     +'<div class="incres '+(me.pay?'win':'lose')+'">'+(me.pay?'🎉 '+rankTierLbl(me.rank)+' · 시상금 '+fmt(me.pay)+'원':'현재 '+me.rank+'위'+(me.exp?' · 달성률 50% 충족 시 '+fmt(me.exp)+'원':''))+'</div>'
     +remain
     +'<div class="stl" style="margin-top:12px">월별 스구N 순증</div>'+mrows
-    +rankBoardX(arr,code,[{h:'목표',f:function(x){return fmt(x.목표);}},{h:'스구N',f:function(x){return fmt1(x.순증);}},{h:'달성률',f:function(x){return fmt1(x.달성률)+'%';}}],
+    +rankBoardX(arr,code,[].concat(QRANGE.Q4.filter(function(mk){return mk<=liveKey();}).map(function(mk){return {h:mLbl(mk),f:function(x){return fmt1((x.bm||{})[mk]||0);}};})).concat([{h:'누적',f:function(x){return fmt1(x.순증);}},{h:'달성률',f:function(x){return fmt1(x.달성률)+'%';}}]),
       function(x){return x.pay>0;},'스구N 달성률 순위 (전사)',30,'시상 30위')
     +'<div class="ib bl" style="margin-bottom:0">· 전사 4분기 누적 순증 목표 3,000 (월 1,000) · 교사수 & 지류회원수 비례 배분<br>· 스구N 순증 = ④관통_지구 N과목 순증의 사업국 합산 · 동률 시 일반과목순증(인당)↑ > D순증(인당)↑</div></div>';
 }
@@ -6244,13 +6245,14 @@ function prtIncList(key){
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:isS?'[4분기] 사업국 스구N 목표관리':'['+(isNovView()?NOV_M:curMonth())+'월] 사업국 달성률 인센티브',
       sub:'달성률 '+(isS?50:eopAchMin())+'%↑ · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만 · 동률: 일반과목순증(인당)>D순증(인당) · 대상 '+fmt(win)+'개',
-      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:isS?'4분기 목표':'목표',k:'m',num:1},{h:unit,k:'s',num:1},{h:'달성률(%)',k:'a',num:1,hi:1},{h:'예상 시상금',k:'ex',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}],
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:isS?'4분기 목표':'목표',k:'m',num:1}].concat(isS?QRANGE.Q4.filter(function(mk){return mk<=liveKey();}).map(function(mk,j){return {g:'스구N 순증',h:mLbl(mk)+(mk===liveKey()?'(전일)':''),k:'sm'+j,num:1};}).concat([{g:'스구N 순증',h:'누적',k:'s',num:1}]):[{h:unit,k:'s',num:1}]).concat([{h:'달성률(%)',k:'a',num:1,hi:1},{h:'예상 시상금',k:'ex',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}]),
       rows:arr.map(function(x){
         var rem='-';
         if(!x.elig)rem='달성'+(isS?50:eopAchMin())+'%까지 '+unit+' '+fmt1(isS?Math.max(0,Math.ceil(x.목표*0.5)-x.순증):needSunFor(eopAchMin(),x.목표,x.순증));
         else if(x.rank>3){var cut=x.rank<=10?3:x.rank<=20?10:x.rank<=30?20:30,t=arr[cut-1];if(t)rem=cut+'위까지 '+unit+' '+fmt1(isS?Math.max(0,Math.ceil(t.달성률*x.목표/100)-x.순증):needSunFor(t.달성률,x.목표,x.순증));}
-        return {_rank:x.rank,_code:x.소속코드,_win:x.pay>0,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),
-          ex:x.exp?fmt(x.exp):'-',g:(x.pay?'지급':(x.exp?'조건미달':'-')),rem:rem};}),
+        var row={_rank:x.rank,_code:x.소속코드,_win:x.pay>0,_fail:(x.elig?[]:['a']),nm:x.소속명,mg:x.관리자||'',m:fmt(x.목표),s:fmt1(x.순증),a:fmt1(x.달성률),
+          ex:x.exp?fmt(x.exp):'-',g:(x.pay?'지급':(x.exp?'조건미달':'-')),rem:rem};
+        if(isS)QRANGE.Q4.filter(function(mk){return mk<=liveKey();}).forEach(function(mk,j){row['sm'+j]=fmt1((x.bm||{})[mk]||0);});return row;}),
       cutLabel:'상위 30위 (달성률 '+(isS?50:eopAchMin())+'%↑ 시 지급)',n:arr.length});
     return;
   }
