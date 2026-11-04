@@ -2508,10 +2508,10 @@ function julyChongNov(){
   return octHead()+jSub(tabs,S.jtab)+body+jContact(NOV_CONTACT);
 }
 // ── 관리자 통계 (11월) ──
-// 인센티브 통계 카드 순서: 반기(하반기·상시) → 분기 → 2개월(예: 10~11월) → 당월 · 같은 묶음 안에서는 기존 순서
+// 인센티브 통계 카드 순서: 상시 → 반기 → 분기 → 2개월(예: 10~11월) → 당월 · 같은 묶음 안에서는 기존 순서
 function incStatSort(body){var P='<div class="incwrap">',M='<div class="incstat">';if(body.indexOf(P)!==0||body.slice(-6)!=='</div>')return body;
   var inner=body.slice(P.length,-6),parts=inner.split(M),pre=parts.shift();
-  function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/반기/.test(t))return 0;if(/상시/.test(t))return 0.5;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
+  function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/상시/.test(t))return -1;if(/반기/.test(t))return 0;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
   var cards=parts.map(function(p,i){return {h:M+p,r:rk(p),i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.i-y.i);});
   return P+pre+cards.map(function(c){return c.h;}).join('')+'</div>';}
 function adminInc11(){
