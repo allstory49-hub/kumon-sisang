@@ -2453,36 +2453,52 @@ var CHONG_BASE11={J:503,K:936,N:370,R:339,S:282,T:570};
 var CHONG_ADD11={J:[152,101,76],K:[280,187,140],N:[111,74,56],R:[102,68,51],S:[84,56,42],T:[171,114,85]};
 var CHONG_SGN11=[50,30,20,10,10,10,10];
 function chongToiPay11(ch){return ch==='K'?[100,80,60,50,50,50,50]:(ch==='T'?[90,70,50,40,40,40,40]:[80,60,40,30,30,30,30]);}
-function chongSgnRank11(ch){var q=APP.q3cur||{},arr=[];Object.keys(q).forEach(function(c){var o=q[c];if(o.lv!=='지국'||c.charAt(0)!==ch)return;var t=Number(o.교사수)||0,s=Number(o.스구N);if(isNaN(s))s=Number(o.D순증)||0;
-    arr.push({code:c,nm:o.소속명,mg:o.관리자||'',s:s,t:t,per:t?q3flr(s/t,2):0,raw:t?s/t:-1e9});});
-  arr.sort(function(a,b){return (b.raw-a.raw)||(b.s-a.s)||((a.code<b.code)?-1:1);});
+var CHONGS11=['J','K','N','R','S','T'];
+function chongToiGrp11(ch){return ch==='T'?'경상':(ch==='K'?'경서':'동부·북부·충청·호남');}
+// 스구N 순증 인당 순위: 6개 총국 각자 실적(총국 스구N 순증 ÷ 교사수) · 1위 50만·2위 30만·3위 20만·4위~ 10만 (순증 1↑)
+function chongSgnRank11(){var q=APP.q3cur||{},arr=[];CHONGS11.forEach(function(ch){var c=ch+'1000',o=q[c];if(!o)return;var t=Number(o.교사수)||0,s=Number(o.스구N);if(isNaN(s))s=0;
+    arr.push({ch:ch,code:c,nm:o.소속명,mg:o.관리자||'',s:s,t:t,per:t?q3flr(s/t,2):0,raw:t?s/t:-1e9});});
+  arr.sort(function(a,b){return (b.raw-a.raw)||(b.s-a.s);});
   var k=0;arr.forEach(function(x,i){x.rank=i+1;x.elig=x.s>=1;if(x.elig){k++;x.prank=k;}else x.prank=0;x.pay=(x.elig&&x.prank<=7)?CHONG_SGN11[x.prank-1]*10000:0;});return arr;}
-function chongToiRank11(ch){var q=APP.q3cur||{},E=(APP.toiExp||{})['2026-12']||{},P=chongToiPay11(ch),arr=[];
-  var E11=(APP.toiExp||{})['2026-11']||{};Object.keys(q).forEach(function(c){var o=q[c];if(o.lv!=='지국'||c.charAt(0)!==ch)return;var e=E[c];if(!e)return;var t=Number(e.toi)||0,g=Number(e.gwa)||Number((E11[c]||{}).gwa)||Number(o.과목수)||0;if(!g)return;
-    arr.push({code:c,nm:o.소속명,mg:o.관리자||'',toi:t,gwa:g,rate:q3flr(t/g*100,2)});});
-  arr.sort(function(a,b){return (a.rate-b.rate)||(a.toi-b.toi)||((a.code<b.code)?-1:1);});
-  var k=0;arr.forEach(function(x,i){x.rank=i+1;x.elig=x.rate<4.5+0.1&&q3flr(x.rate,1)<=4.5;if(x.elig){k++;x.prank=k;}else x.prank=0;x.pay=(x.elig&&x.prank<=7)?P[x.prank-1]*10000:0;});return arr;}
+// 12월 퇴회율 순위: 6개 총국 각자 실적(총국 12월 예상퇴회 ÷ 11월말 과목) · 4.5%↓ · 금액은 총국 구분별
+function chongToiRank11(){var q=APP.q3cur||{},E=(APP.toiExp||{})['2026-12']||{},E11=(APP.toiExp||{})['2026-11']||{},arr=[];
+  CHONGS11.forEach(function(ch){var c=ch+'1000',o=q[c]||{},e=E[c];if(!e)return;var t=Number(e.toi)||0,g=Number(e.gwa)||Number((E11[c]||{}).gwa)||Number(o.과목수)||0;if(!g)return;
+    arr.push({ch:ch,code:c,nm:o.소속명||chongNameOf(c),mg:o.관리자||'',toi:t,gwa:g,rate:q3flr(t/g*100,2)});});
+  arr.sort(function(a,b){return (a.rate-b.rate)||(a.toi-b.toi);});
+  var k=0;arr.forEach(function(x,i){x.rank=i+1;x.elig=x.rate<=4.5;if(x.elig){k++;x.prank=k;}else x.prank=0;var P=chongToiPay11(x.ch);x.pay=(x.elig&&x.prank<=7)?P[x.prank-1]*10000:0;});return arr;}
+// 6개 총국 종합: 기본 배정 + 달성률 추가 배정 + 스구N 인당 순위 + 12월 퇴회율 순위 (11월 달성률 순)
+function chongLeadRows11(){var q=APP.q3cur||{},sg={},tr={};chongSgnRank11().forEach(function(x){sg[x.ch]=x;});chongToiRank11().forEach(function(x){tr[x.ch]=x;});
+  var arr=CHONGS11.map(function(ch){var c=ch+'1000',o=q[c]||{},a=Number(o.달성률)||0,ad=CHONG_ADD11[ch],add=a>=150?ad[0]:a>=100?ad[1]:a>=50?ad[2]:0,base=CHONG_BASE11[ch]||0,S1=sg[ch]||{},T1=tr[ch]||null;
+    var sp=(S1.pay||0)/10000,tp=T1?(T1.pay||0)/10000:0;
+    return {ch:ch,code:c,nm:o.소속명||chongNameOf(c),mg:o.관리자||'',ach:a,sun:Number(o.순증)||0,mok:Number(o.목표)||0,base:base,add:add,sg:S1,tr:T1,sp:sp,tp:tp,tot:base+add+sp+tp};});
+  arr.sort(function(a,b){return b.ach-a.ach;});arr.forEach(function(x,i){x.rank=i+1;});return arr;}
 function chongLeadCard11(){
   var code=(S.user&&S.user.소속코드)||'',ch=code.charAt(0),o=(APP.q3cur||{})[code]||{},ach=Number(o.달성률)||0,amts=CHONG_ADD11[ch]||[0,0,0],th=[150,100,50];
   var row=-1;for(var i=0;i<3;i++){if(ach>=th[i]){row=i;break;}}
   var tb=th.map(function(t,i){var on=(i===row);return '<div class="jtier'+(on?' on':'')+'"><div class="jtl">11월 달성률 '+t+'% 이상</div><div class="jtr"><b>'+fmt(amts[i])+'만원</b>'+(on?' <span class="jtnow">현재</span>':'')+'</div></div>';}).join('');
   var remain='';if(row!==0){var ti=(row<0)?2:row-1;remain='<div class="'+(row<0?'icremain':'icnext')+'">'+(row<0?'🎯':'⬆️')+' 달성률 '+th[ti]+'%('+fmt(amts[ti])+'만원)까지 순증 <b>'+fmt1(needSunFor(th[ti],Number(o.목표)||0,Number(o.순증)||0))+'</b> 필요</div>';}
-  var grp=(ch==='T')?'경상':(ch==='K'?'경서':'동부·북부·충청·호남'),P=chongToiPay11(ch);
-  var sg=chongSgnRank11(ch),tr=chongToiRank11(ch);
-  function list(arr,cols,win,ttl){var rows=arr.slice(0,10).map(function(x){return '<div class="r20'+(win(x)?' win':'')+'"><div class="r20-n">'+x.rank+'</div><div class="r20-nm">'+shortName(x.nm)+' '+x.mg+'</div>'+cols.map(function(c){return '<div class="r20-col"><div class="r20-cv">'+c.f(x)+'</div></div>';}).join('')+'</div>';}).join('');
-    return '<div class="r20wrap"><div class="r20head">📊 '+ttl+'</div><div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">지국</div>'+cols.map(function(c){return '<div class="r20-col">'+c.h+'</div>';}).join('')+'</div>'+rows+'</div>';}
+  var P=chongToiPay11(ch),sg=chongSgnRank11(),tr=chongToiRank11(),L=chongLeadRows11(),me=L.filter(function(x){return x.ch===ch;})[0]||{};
+  var msg=sg.filter(function(x){return x.ch===ch;})[0],mtr=tr.filter(function(x){return x.ch===ch;})[0];
+  function list(arr,cols,ttl){var rows=arr.map(function(x){var m=(x.ch===ch);return '<div class="r20'+(m?' me':'')+(x.pay>0?' win':'')+'"><div class="r20-n">'+x.rank+'</div><div class="r20-nm">'+chongNameOf(x.code).replace('총국','')+' '+x.mg+(m?' <span class="r20-me">나</span>':'')+'</div>'+cols.map(function(c){return '<div class="r20-col"><div class="r20-cv">'+c.f(x)+'</div></div>';}).join('')+'</div>';}).join('');
+    return '<div class="r20wrap"><div class="r20head">📊 '+ttl+'</div><div class="r20 r20h"><div class="r20-n">#</div><div class="r20-nm">총국</div>'+cols.map(function(c){return '<div class="r20-col">'+c.h+'</div>';}).join('')+'</div>'+rows+'</div>';}
+  var payF=function(x){return x.pay>0?fmt(x.pay/10000)+'만':'-';};
   return '<div class="incsec"><div class="incsech"><span>🏛️ ['+NOV_M+'월] 총국주도 인센티브</span>'+prtBtn("prtIncList('chonglead11')")+'</div>'+novDateBox(' · '+chongNameOf(code))
+    +'<div class="incres win">💰 우리 총국 예상 합계 <b>'+fmt(me.tot||0)+'만원</b> <span style="font-size:12px;opacity:.85">(6개 총국 중 달성률 '+(me.rank||'-')+'위)</span></div>'
     +'<div class="stl">■ 기본 배정 <span style="font-size:11px;color:var(--t3)">(과목수·교사수·지구수 비례)</span></div>'
     +'<div class="incres win">💰 기본 배정 <b>'+fmt(CHONG_BASE11[ch]||0)+'만원</b></div>'
     +'<div class="stl" style="margin-top:12px">■ 추가 배정 · 11월 총국 달성률</div><div class="jtiers">'+tb+'</div>'
     +'<div class="incgrid4">'+g4('11월 달성률',fmt1(ach)+'%',ach>=50?'var(--green)':'var(--red)')+g4('예상 추가 배정',row>=0?fmt(amts[row])+'만원':'-',row>=0?'var(--green)':'var(--t2)')+'</div>'+remain
-    +'<div class="stl" style="margin-top:12px">■ 11월 스구N 순증 인당 순위 (총국 내 지국)</div>'
-    +'<div class="ictiers">1위 <b>50만</b> · 2위 <b>30만</b> · 3위 <b>20만</b> · 4~7위 <b>10만</b> <span style="font-size:11px">(단, 순증 1↑)</span></div>'
-    +list(sg,[{h:'스구N',f:function(x){return fmt(x.s);}},{h:'교사',f:function(x){return fmt(x.t);}},{h:'인당',f:function(x){return fmtD2(x.per);}}],function(x){return x.pay>0;},'스구N 순증 인당 · 상위 10')
-    +'<div class="stl" style="margin-top:12px">■ 12월 퇴회율 4.5% 이하 순위 ('+grp+')</div>'
-    +'<div class="ictiers">1위 <b>'+P[0]+'만</b> · 2위 <b>'+P[1]+'만</b> · 3위 <b>'+P[2]+'만</b> · 4~7위 <b>'+P[3]+'만</b></div>'
-    +(tr.length?list(tr,[{h:'12월 퇴회',f:function(x){return fmt1(x.toi);}},{h:'퇴회율',f:function(x){return fmtD2(x.rate)+'%';}}],function(x){return x.pay>0;},'12월 퇴회율 · 낮은 순 상위 10'):'<div class="ib am">12월 예상퇴회 자료가 아직 없어요.</div>')
-    +'<div class="ib bl" style="margin-bottom:0">· 순위·금액은 <b>12월 8일 마감 기준</b>으로 확정돼요 · 지금은 현재 실적 기준 중간 현황<br>· 12월 퇴회율 = 12월 예상퇴회 ÷ 11월말 관리과목 × 100 (둘째자리 절사) · 스구N 순증 인당 = 지국 스구N 순증 ÷ 교사수<br>· 순위는 총국 안의 지국끼리 비교해요</div></div>';
+    +'<div class="stl" style="margin-top:12px">■ 11월 스구N 순증 인당 순위 (6개 총국)</div>'
+    +'<div class="ictiers">1위 <b>50만</b> · 2위 <b>30만</b> · 3위 <b>20만</b> · 4~6위 <b>10만</b> <span style="font-size:11px">(단, 순증 1↑)</span></div>'
+    +(msg?'<div class="incgrid4">'+g4('우리 총국 스구N 인당',fmtD2(msg.per),msg.per>0?'var(--green)':'var(--red)')+g4('순위 · 예상',msg.rank+'위 · '+payF(msg))+'</div>'+(msg.s<1?'<div class="icremain">🎯 순증 1 이상 조건까지 스구N <b>'+fmt(1-msg.s)+'</b> 필요</div>':''):'')
+    +list(sg,[{h:'스구N',f:function(x){return fmt(x.s);}},{h:'교사',f:function(x){return fmt(x.t);}},{h:'인당',f:function(x){return fmtD2(x.per);}},{h:'시상',f:payF}],'스구N 순증 인당 · 6개 총국')
+    +'<div class="stl" style="margin-top:12px">■ 12월 퇴회율 4.5% 이하 순위 (6개 총국)</div>'
+    +'<div class="ictiers">'+chongToiGrp11(ch)+' 기준: 1위 <b>'+P[0]+'만</b> · 2위 <b>'+P[1]+'만</b> · 3위 <b>'+P[2]+'만</b> · 4~6위 <b>'+P[3]+'만</b></div>'
+    +(tr.length?(mtr?'<div class="incgrid4">'+g4('우리 총국 12월 퇴회율',fmtD2(mtr.rate)+'%',mtr.elig?'var(--green)':'var(--red)')+g4('순위 · 예상',mtr.rank+'위 · '+payF(mtr))+'</div>'+(!mtr.elig?'<div class="icremain">🎯 4.5% 이하까지 퇴회 <b>'+fmt1(Math.max(0,mtr.toi-Math.floor(mtr.gwa*0.045)))+'</b>건 줄여야 해요</div>':''):'')
+      +list(tr,[{h:'12월 퇴회',f:function(x){return fmt1(x.toi);}},{h:'퇴회율',f:function(x){return fmtD2(x.rate)+'%';}},{h:'시상',f:payF}],'12월 퇴회율 · 낮은 순 (6개 총국)'):'<div class="ib am">12월 예상퇴회 자료가 아직 없어요.</div>')
+    +'<div class="stl" style="margin-top:12px">■ 6개 총국 종합 (11월 달성률 순)</div>'
+    +list(L.map(function(x){return Object.assign({pay:0},x);}),[{h:'달성률',f:function(x){return fmt1(x.ach)+'%';}},{h:'배정',f:function(x){return fmt(x.base+x.add);}},{h:'순위시상',f:function(x){return fmt(x.sp+x.tp);}},{h:'합계(만)',f:function(x){return '<b>'+fmt(x.tot)+'</b>';}}],'총국별 예상 금액')
+    +'<div class="ib bl" style="margin-bottom:0">· 순위·금액은 <b>12월 8일 마감 기준</b>으로 확정돼요 · 지금은 현재 실적 기준 중간 현황<br>· 스구N 순증 인당 = 총국 스구N 순증 ÷ 총국 교사수 · 12월 퇴회율 = 총국 12월 예상퇴회 ÷ 11월말 관리과목 × 100 (둘째자리 절사)<br>· 순위는 6개 총국끼리 비교 · 퇴회율 금액은 총국 구분(동부·북부·충청·호남 / 경상 / 경서)별</div></div>';
 }
 function julyChongNov(){
   var tabs=['총국주도','TOP TOUR','커피차','🏫 총국 관리'];if(!S.jtab||tabs.indexOf(S.jtab)<0)S.jtab='총국주도';
@@ -2524,8 +2540,8 @@ function adminInc11(){
       +st('[4분기] 스구N 목표관리','달성률 50%↑ 순위제 · 1위 '+shortName(sg[0].소속명)+' '+fmt1(sg[0].달성률)+'%',sgw.length,'개','시상 30위',sgw.reduce(function(a,x){return a+x.pay;},0),"prtIncList('eopsgn')")
       +st('[4분기] 사업국 퇴회율','누적 퇴회율 4.5%↓ · 달성률 80%↑',etw.length,'개',pc(etw.length,et.length),etw.reduce(function(a,r){return a+r.amt*10000;},0),"prtIncList('eoptoi4')")
       +topTourStat('사업국')+st('[10~11월] 스테이우애','누적 달성률 100%↑ 상위 2 · 1위 '+shortName(sa[0].소속명)+' '+fmt1(sa[0].달성률)+'%',sw.length,'개','T/O 2','1박 2일 이용권',"prtIncList('eopstay')")+ongTopStat('사업국')+'</div>';
-  }else{var tot=0,lines='';['J','K','N','R','S','T'].forEach(function(ch){var c=ch+'1000',o=q[c]||{},a=Number(o.달성률)||0,ad=CHONG_ADD11[ch],r=a>=150?ad[0]:a>=100?ad[1]:a>=50?ad[2]:0;tot+=(CHONG_BASE11[ch]||0)+r;});
-    body='<div class="incwrap">'+st('[11월] 총국주도 인센티브','기본 배정 + 달성률 추가 배정(150/100/50%) · 지국 스구N 인당·12월 퇴회율 순위는 총국별',6,'개','전체',Math.round(tot*10000),"prtIncList('chonglead11')")+topTourStat('총국')+coffeeStat()+'</div>';
+  }else{var tot=0,lines='';chongLeadRows11().forEach(function(x){tot+=x.tot;});
+    body='<div class="incwrap">'+st('[11월] 총국주도 인센티브','기본 배정 + 달성률 추가 배정(150/100/50%) + 6개 총국 스구N 인당·12월 퇴회율 순위',6,'개','전체',Math.round(tot*10000),"prtIncList('chonglead11')")+topTourStat('총국')+coffeeStat()+'</div>';
   }
   return head+body;
 }
@@ -6159,12 +6175,10 @@ function prtIncList(key){
     return;
   }
   if(key==='chonglead11'){
-    var me=(S.user&&S.user.소속코드)||'',chs=(S.type==='org'&&S.pos==='총국')?[me.charAt(0)]:['J','K','N','R','S','T'],rows=[];
-    chs.forEach(function(ch){var sg=chongSgnRank11(ch).filter(function(x){return x.pay>0;});sg.forEach(function(x){rows.push({_code:x.code,_win:true,c:chongNameOf(ch+'1000').replace('총국',''),k:'스구N 인당',nm:x.nm,mg:x.mg,v:fmtD2(x.per),r:x.prank+'위',p:fmt(x.pay)});});
-      var tr=chongToiRank11(ch).filter(function(x){return x.pay>0;});tr.forEach(function(x){rows.push({_code:x.code,_win:true,c:chongNameOf(ch+'1000').replace('총국',''),k:'12월 퇴회율',nm:x.nm,mg:x.mg,v:fmtD2(x.rate)+'%',r:x.prank+'위',p:fmt(x.pay)});});});
-    rows.forEach(function(r,i){r._rank=i+1;});
-    prtOpen({title:'[11월] 총국주도 인센티브 · 지국 순위 (중간현황)',sub:'스구N 순증 인당 1위 50만·2위 30만·3위 20만·4~7위 10만(순증 1↑) · 12월 퇴회율 4.5%↓ 1~7위(총국별 금액) · 12월 8일 마감 기준 확정',
-      cols:[{h:'총국',k:'c'},{h:'구분',k:'k'},{h:'지국',k:'nm'},{h:'지국장',k:'mg'},{h:'실적',k:'v',num:1,hi:1},{h:'순위',k:'r'},{h:'시상금',k:'p',num:1,hi:1}],rows:rows,n:rows.length,noTB:true});
+    var L=chongLeadRows11();
+    prtOpen({title:'[11월] 총국주도 인센티브 · 6개 총국 (중간현황)',sub:'기본 배정 + 11월 달성률 추가 배정(150/100/50%) + 스구N 순증 인당 순위(1위 50·2위 30·3위 20·4위~ 10만, 순증 1↑) + 12월 퇴회율 4.5%↓ 순위(총국 구분별) · 12월 8일 마감 기준 확정 · 단위 만원',
+      cols:[{h:'총국',k:'nm'},{h:'총국장',k:'mg'},{h:'11월 달성률(%)',k:'a',num:1,hi:1},{h:'기본 배정',k:'b',num:1},{h:'추가 배정',k:'d',num:1},{g:'스구N 순증 인당',h:'인당',k:'sp',num:1,crit:1},{g:'스구N 순증 인당',h:'순위',k:'sr'},{g:'스구N 순증 인당',h:'시상',k:'ss',num:1},{g:'12월 퇴회율',h:'퇴회율(%)',k:'tr',num:1,crit:1},{g:'12월 퇴회율',h:'순위',k:'trr'},{g:'12월 퇴회율',h:'시상',k:'ts',num:1},{h:'합계',k:'t',num:1,hi:1,crit:0}],
+      rows:L.map(function(x){var g=x.sg||{},t=x.tr;return {_rank:x.rank,_code:x.code,nm:x.nm,mg:x.mg,a:fmt1(x.ach),b:fmt(x.base),d:x.add?fmt(x.add):'-',sp:g.per!=null?fmtD2(g.per):'-',sr:g.rank?g.rank+'위':'-',ss:x.sp?fmt(x.sp):'-',tr:t?fmtD2(t.rate):'-',trr:t?t.rank+'위':'-',ts:x.tp?fmt(x.tp):'-',t:fmt(x.tot)};}),n:6,noTB:true});
     return;
   }
   if(key==='eopent10'){
