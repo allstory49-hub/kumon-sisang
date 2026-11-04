@@ -3870,15 +3870,15 @@ async function anaDaysUpload(inp){var f=inp.files&&inp.files[0];if(!f)return;var
   catch(e){if(msg)msg.textContent='저장 실패: '+(e.message||e);}}
 function anaFileTypes(days){var segs={},T={};days.forEach(function(x){(segs[x.seg]=segs[x.seg]||[]).push(x);});
   Object.keys(segs).forEach(function(k){var ds=segs[k];k=+k;ds.forEach(function(x,i){var t;
-    if(x===days[0])t='e0';else if(x===days[1]&&k===1&&i<ds.length-1)t='e0n';else if(k===4)t=(i===ds.length-1)?'e6':(i===ds.length-2?'e5':'k4');else if(i===ds.length-1)t=['e1','e2','e3'][k-1];else t=(k===3)?'k3':'reg';T[x.d]=t;});});
+    if(x===days[0])t='e0';else if(x===days[1]&&k===1&&i<ds.length-1)t='e0n';else if(k===4)t=(i===ds.length-1)?'e6':(i===ds.length-2?'e5':'k4');else if(i===ds.length-1)t=['e1','e2','e3'][k-1];else t='k'+k;T[x.d]=t;});});
   return T;}
 function anaBoardRatios(mk){var A=APP.anaDays,ex=((APP.anaHist||{}).exc)||['2026-07'];if(!A||!A.months)return null;
   var ms=Object.keys(A.months).filter(function(m){var d=A.months[m].days||[];return m<mk&&ex.indexOf(m)<0&&d.length>=15&&d.some(function(x){return x.seg===4;});}).sort().slice(-6);if(ms.length<3)return null;
   function med(a){a=a.filter(function(x){return x!=null&&!isNaN(x);}).sort(function(x,y){return x-y;});if(!a.length)return null;var h=a.length>>1;return a.length%2?a[h]:(a[h-1]+a[h])/2;}
-  var R={};['S','N','O'].forEach(function(c){var K={};ms.forEach(function(m){var ds=A.months[m].days,T=anaFileTypes(ds),reg=ds.filter(function(x){return T[x.d]==='reg'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
+  var R={};['S','N','O'].forEach(function(c){var K={};ms.forEach(function(m){var ds=A.months[m].days,T=anaFileTypes(ds),reg=ds.filter(function(x){return T[x.d]==='k1'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
       var L=reg.length?reg.reduce(function(a,b){return a+b;},0)/reg.length:0;if(!L)return;var g={};ds.forEach(function(x){if(x[c]==null||x.n>1)return;(g[T[x.d]]=g[T[x.d]]||[]).push(x[c]/L);});
       Object.keys(g).forEach(function(t){(K[t]=K[t]||[]).push(g[t].reduce(function(a,b){return a+b;},0)/g[t].length);});});
-    var r={};Object.keys(K).forEach(function(t){r[t]=med(K[t]);});r.reg=1;R[c]=r;});
+    var r={};Object.keys(K).forEach(function(t){r[t]=med(K[t]);});r.k1=1;r.reg=1;R[c]=r;});
   return {ms:ms,R:R};}
 function anaBoard(mk,cut){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP.anaDays||{months:{}},F=(A.months[mk]||{}).days||[],act={},lump={};
   F.forEach(function(x){act[x.d]={S:x.S,N:x.N,O:x.O,src:'file'};if(x.n>1)lump[x.d]=x.n;});
@@ -3891,12 +3891,14 @@ function anaBoard(mk,cut){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP
   fill(anaSeries('ALL','in','S',mk),'S');fill(anaSeries('ALL','in','N',mk),'N');fill(anaSeries('ALL','in','O',mk),'O');
   if(cut)Object.keys(act).forEach(function(d){if(+d>cut)delete act[d];});   // 예상 기록: 그날까지 자료만으로 다시 계산
   var all=[];for(var s=1;s<=4;s++)anaBizDays(mk,s).forEach(function(d){all.push({d:d,seg:s,t:anaDayType(mk,d)});});
-  if(all[1]&&all[1].t==='reg'&&all[1].seg===1)all[1].t='e0n';   // 첫날 다음 영업일: 평소 평일의 약 0.7 → 별도 배수
+  all.forEach(function(x){if(x.t==='reg')x.t='k'+x.seg;});   // 평일: 구간별(1·2구간 따로)
+  if(all[1]&&all[1].t==='k1')all[1].t='e0n';   // 첫날 다음 영업일: 평소 평일의 약 0.7 → 별도 배수
   var lastAct=0;all.forEach(function(x){if(act[x.d]&&act[x.d].S!=null)lastAct=x.d;});
-  var L={},Lest=0;['S','N','O'].forEach(function(c){var v=[];all.forEach(function(x){var o=act[x.d];if(x.t==='reg'&&o&&o[c]!=null&&!lump[x.d])v.push(o[c]);});L[c]=v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;
-    if(v.length<3){   // 평일(reg) 실적이 3일 미만(월초): 그동안의 실적 ÷ 날 유형별 배수 와 전월 평일 평균을 평균
+  var L={},Lest=0,KW={k1:1,k2:1};['S','N','O'].forEach(function(c){var v=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(KW[x.t]&&o&&o[c]!=null&&!lump[x.d]&&r)v.push(o[c]/r);});   // 구간별 평일 실적 ÷ 그 구간 배수 → 1구간 평일 기준 하루값
+    L[c]=v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;
+    if(v.length<3){   // 평일 실적이 3일 미만(월초): 지금까지 실적 ÷ 날 유형별 배수 와 전월 1구간 평일 평균을 평균
       var est=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(o&&o[c]!=null&&!lump[x.d]&&r)est.push(o[c]/r);});
-      var pm=anaPrevMk(mk),PD=((A.months[pm]||{}).days)||[],PT=PD.length?anaFileTypes(PD):{},pv=PD.filter(function(x){return PT[x.d]==='reg'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
+      var pm=anaPrevMk(mk),PD=((A.months[pm]||{}).days)||[],PT=PD.length?anaFileTypes(PD):{},pv=PD.filter(function(x){return PT[x.d]==='k1'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
       if(pv.length)est.push(pv.reduce(function(a,b){return a+b;},0)/pv.length);
       if(est.length){L[c]=est.reduce(function(a,b){return a+b;},0)/est.length;Lest=1;}}});
   all.forEach(function(x){var o=act[x.d];x.lump=lump[x.d]||0;
@@ -3946,8 +3948,15 @@ function anaBoardHtml(mk){var B=anaBoard(mk);
     +'<div class="incgrid4">'+'<div class="ig4"><div class="ig4l">실적 누적</div><div class="ig4v" style="font-size:17px">'+fmt(Math.round(B.actS))+'</div></div><div class="ig4"><div class="ig4l">남은 일자 예상</div><div class="ig4v" style="font-size:17px">+'+fmt(Math.round(B.tot.S-B.actS))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 (합산)</div><div class="ig4v" style="font-size:17px;color:#E8590C">'+fmt(Math.round(B.tot.S))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 NKU · 온공</div><div class="ig4v" style="font-size:15px">'+fmt(Math.round(B.tot.N))+' · '+fmt(Math.round(B.tot.O))+'</div></div></div>'
     +tb
     +'<div class="ib bl" style="margin-top:6px">· 실적: 업로드 탭 자료(합산 ③소평, NKU·온공 ④관통 · 업로드할 때마다 자동 저장) · 일반 = 합산 − NKU<br>'
-    +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+(B.Lest?' · 월초라 평일 실적이 3일 미만이어서 지금까지 실적÷날 유형별 배수와 전월 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값<br>'
-    +'· 합산 배수: 첫날 다음 영업일 '+(r.e0n!=null?r.e0n.toFixed(2):'-')+' · 2구간 마감 '+r.e2.toFixed(2)+' · 3구간 평일 '+r.k3.toFixed(2)+' · 3구간 마감 '+r.e3.toFixed(2)+' · 4구간 평일 '+r.k4.toFixed(2)+' · 월마감 전일 '+r.e5.toFixed(2)+' · 월마감 '+r.e6.toFixed(2)+'<br>· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
+    +'· 예상: 1구간 평일 기준 하루값(합산 '+fmt(Math.round(B.L.S||0))+' · 당월 1·2구간 평일 실적을 각 구간 배수로 환산한 평균'+(B.Lest?' · 월초라 평일 실적이 3일 미만이어서 지금까지 실적÷날 유형별 배수와 전월 1구간 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값'
+    +'</div>'+anaTypeTable(B)+'<div class="ib bl" style="margin-top:6px">· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
+// 날 유형별(구간별 평일·구간 마감일) 배수 · 당월 실적 평균 · 적용 예상
+function anaTypeTable(B){var r=B.R.S||{},T=[['k1','1구간 평일'],['k2','2구간 평일'],['k3','3구간 평일'],['k4','4구간 평일'],['e0','첫날'],['e0n','첫날 다음 영업일'],['e1','1구간 마감'],['e2','2구간 마감'],['e3','3구간 마감'],['e5','월마감 전일'],['e6','월마감']];
+  var A={};B.days.forEach(function(x){if(x.fc||x.inLump||x.lump>1||x.v.S==null)return;(A[x.t]=A[x.t]||[]).push(x.v.S);});
+  var rows=T.map(function(t,i){var a=A[t[0]],n=B.days.filter(function(x){return x.t===t[0];}).length;if(!n)return '';var rr=r[t[0]];
+    return '<tr'+(i===4?' style="border-top:2px solid #C3CAD1"':'')+'><td>'+t[1]+'</td><td class="num">'+n+'일</td><td class="num">'+(rr!=null?rr.toFixed(2):'-')+'</td><td class="num">'+(a?fmt(Math.round(a.reduce(function(p,q){return p+q;},0)/a.length))+' <span style="font-size:10px;color:var(--t3)">('+a.length+'일)</span>':'-')+'</td><td class="num"><b>'+(rr!=null&&B.L.S!=null?fmt(Math.round(B.L.S*rr)):'-')+'</b></td></tr>';}).join('');
+  return '<div class="stl" style="margin-top:10px;font-size:13px">구간별 평일 · 마감일 하루 실적 (합산)</div><div style="overflow-x:auto"><table class="anatb"><thead><tr><th>날 유형</th><th class="num">당월 일수</th><th class="num">배수</th><th class="num">당월 실적 평균</th><th class="num">예상 하루</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
+
 // ───── 예상퇴회 최종 예측: 「예상퇴회 일자별 변동」 엑셀 이력(대상월별 등록 누적) · 등록 마감월의 남은 영업일 같은 시점 등록률로 최종 퇴회 추정 ─────
 async function loadEtHist(){try{var r=await dfetch('cumulative/et_hist.json?t='+Date.now());if(r.ok)APP.etHist=await r.json();}catch(e){APP.etHist=null;}}
 var ET_HOL={};['2023-01-23','2023-01-24','2023-03-01','2023-05-01','2023-05-05','2023-05-29','2023-06-06','2023-08-15','2023-09-28','2023-09-29','2023-10-02','2023-10-03','2023-10-09','2023-12-25',
