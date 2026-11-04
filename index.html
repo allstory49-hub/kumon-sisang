@@ -3870,7 +3870,7 @@ async function anaDaysUpload(inp){var f=inp.files&&inp.files[0];if(!f)return;var
   catch(e){if(msg)msg.textContent='저장 실패: '+(e.message||e);}}
 function anaFileTypes(days){var segs={},T={};days.forEach(function(x){(segs[x.seg]=segs[x.seg]||[]).push(x);});
   Object.keys(segs).forEach(function(k){var ds=segs[k];k=+k;ds.forEach(function(x,i){var t;
-    if(x===days[0])t='e0';else if(k===4)t=(i===ds.length-1)?'e6':(i===ds.length-2?'e5':'k4');else if(i===ds.length-1)t=['e1','e2','e3'][k-1];else t=(k===3)?'k3':'reg';T[x.d]=t;});});
+    if(x===days[0])t='e0';else if(x===days[1]&&k===1&&i<ds.length-1)t='e0n';else if(k===4)t=(i===ds.length-1)?'e6':(i===ds.length-2?'e5':'k4');else if(i===ds.length-1)t=['e1','e2','e3'][k-1];else t=(k===3)?'k3':'reg';T[x.d]=t;});});
   return T;}
 function anaBoardRatios(mk){var A=APP.anaDays,ex=((APP.anaHist||{}).exc)||['2026-07'];if(!A||!A.months)return null;
   var ms=Object.keys(A.months).filter(function(m){var d=A.months[m].days||[];return m<mk&&ex.indexOf(m)<0&&d.length>=15&&d.some(function(x){return x.seg===4;});}).sort().slice(-6);if(ms.length<3)return null;
@@ -3891,9 +3891,10 @@ function anaBoard(mk,cut){var RB=anaBoardRatios(mk);if(!RB)return null;var A=APP
   fill(anaSeries('ALL','in','S',mk),'S');fill(anaSeries('ALL','in','N',mk),'N');fill(anaSeries('ALL','in','O',mk),'O');
   if(cut)Object.keys(act).forEach(function(d){if(+d>cut)delete act[d];});   // 예상 기록: 그날까지 자료만으로 다시 계산
   var all=[];for(var s=1;s<=4;s++)anaBizDays(mk,s).forEach(function(d){all.push({d:d,seg:s,t:anaDayType(mk,d)});});
+  if(all[1]&&all[1].t==='reg'&&all[1].seg===1)all[1].t='e0n';   // 첫날 다음 영업일: 평소 평일의 약 0.7 → 별도 배수
   var lastAct=0;all.forEach(function(x){if(act[x.d]&&act[x.d].S!=null)lastAct=x.d;});
   var L={},Lest=0;['S','N','O'].forEach(function(c){var v=[];all.forEach(function(x){var o=act[x.d];if(x.t==='reg'&&o&&o[c]!=null&&!lump[x.d])v.push(o[c]);});L[c]=v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;
-    if(L[c]==null){   // 아직 평일(reg) 실적이 없을 때(월초): 첫날·구간마감 실적 ÷ 배수 와 전월 평일 평균을 평균
+    if(v.length<3){   // 평일(reg) 실적이 3일 미만(월초): 그동안의 실적 ÷ 날 유형별 배수 와 전월 평일 평균을 평균
       var est=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(o&&o[c]!=null&&!lump[x.d]&&r)est.push(o[c]/r);});
       var pm=anaPrevMk(mk),PD=((A.months[pm]||{}).days)||[],PT=PD.length?anaFileTypes(PD):{},pv=PD.filter(function(x){return PT[x.d]==='reg'&&x[c]!=null&&!(x.n>1);}).map(function(x){return x[c];});
       if(pv.length)est.push(pv.reduce(function(a,b){return a+b;},0)/pv.length);
@@ -3945,8 +3946,8 @@ function anaBoardHtml(mk){var B=anaBoard(mk);
     +'<div class="incgrid4">'+'<div class="ig4"><div class="ig4l">실적 누적</div><div class="ig4v" style="font-size:17px">'+fmt(Math.round(B.actS))+'</div></div><div class="ig4"><div class="ig4l">남은 일자 예상</div><div class="ig4v" style="font-size:17px">+'+fmt(Math.round(B.tot.S-B.actS))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 (합산)</div><div class="ig4v" style="font-size:17px;color:#E8590C">'+fmt(Math.round(B.tot.S))+'</div></div><div class="ig4"><div class="ig4l">마감 예상 NKU · 온공</div><div class="ig4v" style="font-size:15px">'+fmt(Math.round(B.tot.N))+' · '+fmt(Math.round(B.tot.O))+'</div></div></div>'
     +tb
     +'<div class="ib bl" style="margin-top:6px">· 실적: 업로드 탭 자료(합산 ③소평, NKU·온공 ④관통 · 업로드할 때마다 자동 저장) · 일반 = 합산 − NKU<br>'
-    +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+(B.Lest?' · 아직 평일 실적이 없어 첫날 실적÷배수와 전월 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값<br>'
-    +'· 합산 배수: 2구간 마감 '+r.e2.toFixed(2)+' · 3구간 평일 '+r.k3.toFixed(2)+' · 3구간 마감 '+r.e3.toFixed(2)+' · 4구간 평일 '+r.k4.toFixed(2)+' · 월마감 전일 '+r.e5.toFixed(2)+' · 월마감 '+r.e6.toFixed(2)+'<br>· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
+    +'· 예상: 당월 1·2구간 평일 하루 평균(합산 '+fmt(Math.round(B.L.S||0))+(B.Lest?' · 월초라 평일 실적이 3일 미만이어서 지금까지 실적÷날 유형별 배수와 전월 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값<br>'
+    +'· 합산 배수: 첫날 다음 영업일 '+(r.e0n!=null?r.e0n.toFixed(2):'-')+' · 2구간 마감 '+r.e2.toFixed(2)+' · 3구간 평일 '+r.k3.toFixed(2)+' · 3구간 마감 '+r.e3.toFixed(2)+' · 4구간 평일 '+r.k4.toFixed(2)+' · 월마감 전일 '+r.e5.toFixed(2)+' · 월마감 '+r.e6.toFixed(2)+'<br>· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
 // ───── 예상퇴회 최종 예측: 「예상퇴회 일자별 변동」 엑셀 이력(대상월별 등록 누적) · 등록 마감월의 남은 영업일 같은 시점 등록률로 최종 퇴회 추정 ─────
 async function loadEtHist(){try{var r=await dfetch('cumulative/et_hist.json?t='+Date.now());if(r.ok)APP.etHist=await r.json();}catch(e){APP.etHist=null;}}
 var ET_HOL={};['2023-01-23','2023-01-24','2023-03-01','2023-05-01','2023-05-05','2023-05-29','2023-06-06','2023-08-15','2023-09-28','2023-09-29','2023-10-02','2023-10-03','2023-10-09','2023-12-25',
