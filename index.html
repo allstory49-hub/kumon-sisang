@@ -2512,7 +2512,7 @@ function julyChongNov(){
 function incStatSort(body){var P='<div class="incwrap">',M='<div class="incstat">';if(body.indexOf(P)!==0||body.slice(-6)!=='</div>')return body;
   var inner=body.slice(P.length,-6),parts=inner.split(M),pre=parts.shift();
   function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/상시/.test(t))return -1;if(/반기/.test(t))return 0;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
-  var cards=parts.map(function(p,i){return {h:M+p,r:rk(p),i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.i-y.i);});
+  var cards=parts.map(function(p,i){var m=/\[[^\]]*\]([^<]*)/.exec(p);return {h:M+p,r:rk(p),t:(m&&/퇴회/.test(m[1]))?0:1,i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.t-y.t)||(x.i-y.i);});   // 같은 기간이면 퇴회율 카드 먼저
   return P+pre+cards.map(function(c){return c.h;}).join('')+'</div>';}
 function adminInc11(){
   var roles=['교사','지구','지국','사업국','총국'];if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';var M=NOV_M;
