@@ -746,6 +746,11 @@ function rankDelta(map,key,cur,field){
   if(d<0)return ' '+lbl+'<span class="rkdn">▼'+(-d)+'</span>';
   return ' '+lbl+'<span class="rksame">—</span>';
 }
+// GitHub 저장: 서버 일시 오류(5xx)·충돌(409)이면 잠시 후 최대 3번 다시 시도 (충돌 시 최신 sha 다시 받아서)
+async function ghPutRetry(api,hd,body){var r;for(var t=0;t<4;t++){r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+    if(r.ok||!(r.status>=500||r.status===409))return r;await new Promise(function(res){setTimeout(res,1500*(t+1));});
+    try{var g=await fetch(api+'?t='+Date.now(),{headers:hd,cache:'no-store'});if(g.ok){var gj=await g.json();if(gj.sha)body.sha=gj.sha;}}catch(e){}}
+  return r;}
 async function saveFile(path,content,message){
   var api='https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/contents/'+path;
   var hd={'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'};
@@ -754,7 +759,7 @@ async function saveFile(path,content,message){
   if(!sha){try{var tr=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/git/trees/'+GH.branch+'?recursive=1',{headers:hd,cache:'no-store'});if(tr.ok){var trj=await tr.json();(trj.tree||[]).forEach(function(it){if(it.path===path)sha=it.sha;});}}catch(e){}}
   var body={message:message,content:b64utf8(encContent(content))};
   if(sha)body.sha=sha;
-  var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+  var r=await ghPutRetry(api,hd,body);
   if(!r.ok){var et=await r.text();throw new Error('저장 실패 ('+r.status+')');}
   return true;
 }
@@ -766,7 +771,7 @@ async function saveToGitHub(bakedJs){
   if(!sha){try{var tr=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo+'/git/trees/'+GH.branch,{headers:hd,cache:'no-store'});if(tr.ok){var trj=await tr.json();(trj.tree||[]).forEach(function(it){if(it.path===GH.path)sha=it.sha;});}}catch(e){}}
   var body={message:'데이터 갱신 '+new Date().toISOString(),content:b64utf8(bakedJs)};
   if(sha)body.sha=sha;
-  var r=await fetch(api,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+  var r=await ghPutRetry(api,hd,body);
   if(!r.ok){var et=await r.text();throw new Error('GitHub 저장 실패 ('+r.status+'): '+et.slice(0,120));}
   return true;
 }
