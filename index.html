@@ -906,7 +906,7 @@ function doLogin(){
   var pw=document.getElementById('upw').value.trim();
   document.getElementById('lerr').textContent='';
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
-  var ADMINS={'한정호':'921128','김해영':'41542','안선욱':'624146'};   // 관리자 로그인
+  var ADMINS={'한정호':'921128','김해영':'41542','안선욱':'624146','정은혜':'602051'};   // 관리자 로그인
   if(ADMINS[id]&&ADMINS[id]===pw){showPage('ap');renderAdmin();return;}
   if(isClosedDay()){document.getElementById('lerr').textContent=CLOSED_MSG;return;}   // 월마감일: 관리자 외 조회 차단
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
