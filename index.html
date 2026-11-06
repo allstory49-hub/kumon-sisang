@@ -1397,11 +1397,11 @@ function prtClub10(){
       aw:(i<nLeft?slot+'위 (예상)':'-')});});
   prtOpen({
     title:'[상시] 지국 온공 10 CLUB · 중간현황',
-    sub:'25년 7월~ 누적 인당순증 10 달성 순서대로 호점 선정 · 1~'+nL+'호점 달성 완료 · '+(nL+1)+'~10호점 경쟁 (잔여 = 인당 10까지 필요 온공 건수, 당월 교사수 기준)',
+    sub:'25년 7월~ 누적 인당순증 10 달성 순서대로 호점 선정 · 1~'+nL+'호점 달성 완료 · '+c10S().lbl+' 경쟁 · 잔여 = 인당 10까지 필요 온공 건수(당월 교사수 기준)',
     cols:[{h:'지국',k:'nm'},{h:'지국장',k:'mgr'},{g:gB,h:'온공 순증',k:'a',num:1},{g:gB,h:'인당',k:'b',num:1},{g:gC,h:'교사수',k:'t',num:1},{g:gC,h:'온공 순증',k:'c',num:1},{g:gC,h:'인당',k:'d',num:1},
       {g:gT,h:'온공 순증',k:'f',num:1},{g:gT,h:'인당',k:'e',num:1,hi:1},{g:gT,h:'잔여(건)',k:'g',num:1},{h:'시상(예상)',k:'aw'}],
     rows:rows,
-    cutLabel:'1~'+nL+'호점 달성 · '+(nL+1)+'~10호점 = 누적 인당 10 달성 순',n:Math.min(30,rows.length)
+    cutLabel:'1~'+nL+'호점 달성 · '+c10S().lbl+' = 누적 인당 10 달성 순',n:Math.min(30,rows.length)
   });
 }
 function eliteCalc(code){
@@ -5234,9 +5234,18 @@ function prtSplitRem(P){
 function prtTBN(){var r0=(PRT.rows||[]).find(function(r){return r._code;});var lv=r0?classifyOrg(r0._code):null;return lv==='총국'?1:(lv==='사업국'?5:0);}
 function prtTB(r){if(PRT&&PRT.noTB)return '';var N=prtTBN();if(!N||!r||r._me)return '';var tot=PRT.rows.length,rk=r._rank||0;if(tot<N*2)return '';if(rk>tot-N)return 'bot';return '';}   // 상위는 순위색 대신 인센티브 기준(급간·선정)으로 색칠 · 하위만 순위색
 var PRT_TOP_BG='BDD7EE', PRT_BOT_BG='F28B82';
+// 공유자료 '시상 기준' 띠: 설명줄(sub)에서 대상·건수·마감 같은 현황 정보를 빼고 기준만 남김 (cfg.crit로 직접 지정 가능)
+function prtCritParts(P){if(P.noCrit)return null;var src=P.crit||P.sub||'';
+  if(!P.crit&&/지국 퇴회율/.test(P.title||'')&&/4분기/.test(P.title||''))src='누적 퇴회율 4.5% 이하 + 누적 달성률 80% 이상 → 교사수 × 급간 단가 · 급간 '+JIKTOI4.map(function(g){return g.max+'%↓ '+fmtD(g.p)+'만';}).join('·')+' (교사 1인당)';
+  if(!src)return null;var parts=src.split(/\s+·\s+/).map(function(x){return x.trim();}).filter(function(x){return x&&!/^(대상|자격 충족|선정|예상 지급|전사|우리|총국 |사업국 )|마감|중간현황|단위 만원|관리자 사번/.test(x);});
+  parts=parts.map(function(x){return x.replace(/\s*·\s*/g,' · ');});return parts.length?parts:null;}
+// 기준 문구를 폭에 맞게 줄 나누기 (· 단위로, 최대한 한 줄 · 길면 다음 줄)
+function prtCritWrap(parts,maxW,measure){var toks=[];parts.forEach(function(p,i){if(measure(p)>maxW&&/\s\+\s/.test(p)){p.split(/\s\+\s/).forEach(function(q,j,arr){toks.push({t:(j?'+ ':'')+q.trim(),sep:j===arr.length-1,plus:j>0});});}else if(measure(p)>maxW){p.split('·').forEach(function(q,j,arr){toks.push({t:q.trim()+(j<arr.length-1?' ·':''),sep:j===arr.length-1});});}else toks.push({t:p,sep:true});});
+  var lines=[],cur='';toks.forEach(function(k,i){var add=cur?(cur+((cur.slice(-1)==='·'||k.plus)?' ':'   ·   ')+k.t):k.t;if(cur&&measure(add)>maxW){lines.push(cur);cur=k.t;}else cur=add;});if(cur)lines.push(cur);return lines;}
 function prtOpen(cfg){
   if(window.__PRTCAP){window.__PRTCAP=cfg||{};return;}   // 관리자 통계 미리보기용: 화면 열지 않고 명단만 가져오기
   PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
+  PRT.critParts=prtCritParts(PRT);
   // 조직 인센티브(행에 _code 있음)면 범위(전사/총국/사업국) 선택 제공
   var hasCode=PRT.rows.some(function(r){return r._code;});
   PRT.hasWin=PRT.rows.some(function(r){return r._win!=null;});
@@ -5423,8 +5432,9 @@ function prtRender(){
     +'.ft{margin-top:9px;font-size:9.5px;color:#9AA8A1;display:flex;justify-content:space-between}'
     +'</style></head><body>'
     +'<div class="hd"><div><h1>'+prtEsc(PRT.title)+'</h1>'
-      +(PRT.sub?'<div class="sub">'+prtEsc(PRT.sub)+'</div>':'')+'</div>'
+      +(PRT.critParts?'':(PRT.sub?'<div class="sub">'+prtEsc(PRT.sub)+'</div>':''))+'</div>'
       +'<div class="rt">'+prtEsc((APP.meta&&APP.meta.date)||'')+'<br>'+fmt(rows.length)+'명(개) 표시</div></div>'
+    +(PRT.critParts?'<div style="display:flex;gap:12px;align-items:flex-start;margin:6px 0 8px;padding:7px 12px;border:2.5px solid #E03131;background:#FFF5F5;border-radius:4px;font-size:12.5px;font-weight:700;color:#1A1A1A"><span style="color:#C92A2A;font-weight:800;white-space:nowrap">🎯 시상 기준</span><span>'+PRT.critParts.map(prtEsc).join(' &nbsp;·&nbsp; ')+'</span></div>':'')
     +'<div class="lg">'
       +'<span><span class="sw" style="background:#D4A017"></span><span class="sw" style="background:#9BA7AE"></span><span class="sw" style="background:#B4763C"></span>1~3위</span>'
       +(PRT.cut?'<span><b>■</b> 주황 점선 위 = 시상 대상 ('+prtEsc(PRT.cutLabel||(PRT.cut+'명'))+')</span>'
@@ -5688,7 +5698,7 @@ function prtImage(){
   var mc=document.createElement('canvas').getContext('2d');
   function mw(t,size,w){mc.font=(w||'700')+' '+size+'px '+FF;return mc.measureText(String(t==null?'':t)).width;}
   function disp(c,v){v=(v==null?'':String(v));if(!c.num&&/^(조직|사업국|총국|지국)$/.test(c.h))v=v.replace(/(사업국|총국|지국)$/,'');return v;}
-  var FS=16, HFS=14.5, rowH=30, headH=40, subY=0, titleH=PRT.banner?2:62, infoH=30, footH=30, rkW=50;
+  var FS=16, HFS=14.5, rowH=30, headH=40, subY=0, titleH=PRT.banner?2:62, infoH=30, CRL=null, footH=30, rkW=50;
   var all=rows.concat(meExtra?[meExtra]:[]).concat(PRT.foot?[PRT.foot]:[]);
   var cw=cols.map(function(c){
     var w=mw(c.h,HFS,'800')+18;
@@ -5704,6 +5714,7 @@ function prtImage(){
   var cutAfter=-1;
   if(PRT.cut&&!PRT.hasWin){for(var i=0;i<rows.length;i++){if((rows[i]._rank||i+1)<=PRT.cut)cutAfter=i;}}
   var nRows=rows.length+(meExtra?1:0)+(PRT.foot?1:0);
+  if(PRT.critParts&&!PRT.banner){var _mc=document.createElement('canvas').getContext('2d');_mc.font='700 14px '+FF;CRL=prtCritWrap(PRT.critParts,tableW-150,function(t){return _mc.measureText(t).width;});infoH=30+CRL.length*24+16;}
   var H=titleH+infoH+headH+nRows*rowH+(meExtra?8:0)+footH+pad;
   var cv=document.createElement('canvas');cv.width=W*DPR;cv.height=H*DPR;
   var g=cv.getContext('2d');g.scale(DPR,DPR);
@@ -5718,9 +5729,11 @@ function prtImage(){
   var iy=titleH+6;
   var dt=((APP.meta&&APP.meta.date)||'').replace(/^\d{4}년\s*/,'').replace(/마감$/,'마감 기준');
   var dW=mw(dt,14,'800')+6;
-  if(PRT.banner)txt(PRT.rankLbl||'현재 순위',x0+2,iy+infoH/2,16,'#111111','800','left');else txt(clip(PRT.sub||'',tableW-dW-16,12.5,'500'),x0+2,iy+infoH/2,12.5,'#4A5560','500','left');
-  txt(dt,x0+tableW-2,iy+infoH/2,14,'#111111','800','right');
+  if(PRT.banner)txt(PRT.rankLbl||'현재 순위',x0+2,iy+infoH/2,16,'#111111','800','left');else if(!CRL)txt(clip(PRT.sub||'',tableW-dW-16,12.5,'500'),x0+2,iy+15,12.5,'#4A5560','500','left');
+  txt(dt,x0+tableW-2,iy+15,14,'#111111','800','right');
   // 헤더
+  if(CRL){var cy=iy+31,chH=CRL.length*24+8;g.fillStyle='#FFF5F5';g.fillRect(x0,cy,tableW,chH);g.strokeStyle='#E03131';g.lineWidth=2.5;g.strokeRect(x0+1,cy+1,tableW-2,chH-2);
+    txt('🎯 시상 기준',x0+14,cy+16,14,'#C92A2A','800','left');CRL.forEach(function(L,i){txt(L,x0+128,cy+16+i*24,14,'#1A1A1A','700','left');});}
   var hy=iy+infoH;
   g.fillStyle='#EEF1F4';g.fillRect(x0,hy,tableW,headH);
   var xs=[x0+rkW];cw.forEach(function(w,i){xs.push(xs[i]+w);});
