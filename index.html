@@ -270,6 +270,7 @@ input,button{font-family:inherit;font-size:14px}
 .ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
 .ictiers b{font-weight:800}
 .incwrap{display:flex;flex-direction:column;gap:8px}
+.incstop{margin:-4px 0 10px;padding:6px 8px 8px;background:var(--card);border:1px solid var(--bd);border-top:none;border-radius:0 0 11px 11px;overflow-x:auto}.incstop table{width:100%;border-collapse:collapse;font-size:11.5px}.incstop th{font-weight:700;color:var(--t2);text-align:left;padding:4px 5px;border-bottom:1px solid var(--bd);white-space:nowrap;font-size:10.5px}.incstop td{padding:4px 5px;border-bottom:1px solid #EEF1F4;white-space:nowrap}.incstop .num{text-align:right}.incstop tr.w td{background:#EBFBEE}.incstopb{display:block;width:100%;margin-top:6px;padding:6px;border:1px solid var(--bd);border-radius:8px;background:#F8F9FA;font-size:12px;font-weight:700;color:var(--t2);cursor:pointer}
 .incstat{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 14px;border-radius:11px;background:var(--card);border:1px solid var(--bd);box-shadow:0 1px 3px rgba(11,31,23,.05)}
 .incstat.tot{background:var(--card);border-color:rgba(29,158,117,.45);border-width:1.5px}
 .incstat.na{background:var(--card);opacity:.72}
@@ -2514,11 +2515,28 @@ function julyChongNov(){
   return octHead()+jSub(tabs,S.jtab)+body+jContact(NOV_CONTACT);
 }
 // ── 관리자 통계 (11월) ──
+// 관리자 인센티브 통계: 카드 아래 상위 5개(펼치면 10개) 명단 — 공유자료 명단을 그대로 가져와 핵심 열만 표시
+var INC_TOP_JS=[];S.incTopOpen=S.incTopOpen||{};
+function incTopToggle(i){var js=INC_TOP_JS[i];if(js==null)return;S.incTopOpen[js]=!S.incTopOpen[js];renderAdmin();}
+function incTopHtml(js){var cfg=null;try{window.__PRTCAP=1;(new Function(js))();cfg=window.__PRTCAP;}catch(e){cfg=null;}window.__PRTCAP=0;
+  if(!cfg||cfg===1||!cfg.rows||!cfg.rows.length||!cfg.cols||!cfg.cols.length)return '';
+  var P=Object.assign({rows:[],cols:[],title:''},cfg);try{prtRenameCols(P);}catch(e){}
+  var cols=P.cols,c0=cols[0],c1=(cols[1]&&/장|관리자|교사|성함|매니저|담당/.test(cols[1].h||''))?cols[1]:null;
+  function isCrit(c){if(c.crit!=null)return !!c.crit;return !!c.hi&&!/시상|캐리어|지급/.test(c.h||'');}
+  var crit=cols.filter(function(c){return c!==c0&&c!==c1&&isCrit(c);}).slice(0,3);
+  var pc=cols.filter(function(c){return c!==c0&&c!==c1&&crit.indexOf(c)<0&&c.k!=='g';}),pay=pc.filter(function(c){return /^합계$/.test(c.h||'');})[0]||pc.filter(function(c){return /시상금/.test(c.h||'');})[0]||pc.filter(function(c){return /시상|금액|지급액/.test(c.h||'');})[0];
+  var show=[c0].concat(c1?[c1]:[]).concat(crit).concat(pay?[pay]:[]);
+  var idx=INC_TOP_JS.indexOf(js);if(idx<0){INC_TOP_JS.push(js);idx=INC_TOP_JS.length-1;}
+  var open=!!S.incTopOpen[js],N=open?10:5,all=P.rows.filter(function(r){return !r._span;}),rows=all.slice(0,N);   // 이미 달성 완료(호점 고정) 행은 빼고 경쟁 순위만
+  function lab(c){var h=(c.h||'').replace(/\(%\)/,'').trim();if(c.g)h=(c.g.indexOf(h)>=0)?c.g:(/^(누적|합계)$/.test(h)?c.g+' '+h:c.g+' '+h);h=h.replace(/^(\d{2}\.)?\d{1,2}~\d{1,2}월\s*/,'');return h.replace(/\s+/g,' ');}   // 기간 접두어(10~12월 등)는 카드 제목에 있으니 생략
+  var th='<tr><th>#</th>'+show.map(function(c){return '<th'+(c.num?' class="num"':'')+(isCrit(c)?' style="color:#C92A2A"':'')+'>'+lab(c)+'</th>';}).join('')+'</tr>';
+  var tb=rows.map(function(r,i){var w=r._win===true||(r._win==null&&r._tier===0);return '<tr'+(w?' class="w"':'')+'><td>'+(r._rank!=null?r._rank:i+1)+'</td>'+show.map(function(c){var v=r[c.k];return '<td'+(c.num?' class="num"':'')+'>'+(v==null||v===''?'-':String(v))+'</td>';}).join('')+'</tr>';}).join('');
+  return '<div class="incstop"><table>'+th+tb+'</table>'+(all.length>5?'<button class="incstopb" onclick="incTopToggle('+idx+')">'+(open?'▲ 5개만 보기':'▼ 상위 10개 보기')+'</button>':'')+'</div>';}
 // 인센티브 통계 카드 순서: 상시 → 반기 → 분기 → 2개월(예: 10~11월) → 당월 · 같은 묶음 안에서는 기존 순서
 function incStatSort(body){var P='<div class="incwrap">',M='<div class="incstat">';if(body.indexOf(P)!==0||body.slice(-6)!=='</div>')return body;
   var inner=body.slice(P.length,-6),parts=inner.split(M),pre=parts.shift();
   function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/상시/.test(t))return -1;if(/반기/.test(t))return 0;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
-  var cards=parts.map(function(p,i){var m=/\[[^\]]*\]([^<]*)/.exec(p);return {h:M+p,r:rk(p),t:(m&&/퇴회/.test(m[1]))?0:1,i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.t-y.t)||(x.i-y.i);});   // 같은 기간이면 퇴회율 카드 먼저
+  var cards=parts.map(function(p,i){var m=/\[[^\]]*\]([^<]*)/.exec(p);var sj=/class="(?:prtlink|isbtn)" onclick="([^"]+)"/.exec(p);if(sj&&p.indexOf('incstop')<0){var js=sj[1].replace(/&quot;/g,'"');var tp=incTopHtml(js);if(tp)p=p.replace(/<\/div>\s*$/,'')+'</div>'+tp;}return {h:M+p,r:rk(p),t:(m&&/퇴회/.test(m[1]))?0:1,i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.t-y.t)||(x.i-y.i);});   // 같은 기간이면 퇴회율 카드 먼저
   return P+pre+cards.map(function(c){return c.h;}).join('')+'</div>';}
 function adminInc11(){
   var roles=['교사','지구','지국','사업국','총국'];if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';var M=NOV_M;
@@ -5217,6 +5235,7 @@ function prtTBN(){var r0=(PRT.rows||[]).find(function(r){return r._code;});var l
 function prtTB(r){if(PRT&&PRT.noTB)return '';var N=prtTBN();if(!N||!r||r._me)return '';var tot=PRT.rows.length,rk=r._rank||0;if(tot<N*2)return '';if(rk>tot-N)return 'bot';return '';}   // 상위는 순위색 대신 인센티브 기준(급간·선정)으로 색칠 · 하위만 순위색
 var PRT_TOP_BG='BDD7EE', PRT_BOT_BG='F28B82';
 function prtOpen(cfg){
+  if(window.__PRTCAP){window.__PRTCAP=cfg||{};return;}   // 관리자 통계 미리보기용: 화면 열지 않고 명단만 가져오기
   PRT=Object.assign({rows:[],title:'',sub:'',cols:[],cut:0,cutLabel:'',n:30,scope:'all',_allRows:null,_cutAll:0},cfg||{});
   // 조직 인센티브(행에 _code 있음)면 범위(전사/총국/사업국) 선택 제공
   var hasCode=PRT.rows.some(function(r){return r._code;});
