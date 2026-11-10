@@ -2525,7 +2525,8 @@ function incTopHtml(js){var cfg=null;try{window.__PRTCAP=1;(new Function(js))();
   function isCrit(c){if(c.crit!=null)return !!c.crit;return !!c.hi&&!/시상|캐리어|지급/.test(c.h||'');}
   var crit=cols.filter(function(c){return c!==c0&&c!==c1&&isCrit(c);}).slice(0,3);
   var pc=cols.filter(function(c){return c!==c0&&c!==c1&&crit.indexOf(c)<0&&c.k!=='g';}),pay=pc.filter(function(c){return /^합계$/.test(c.h||'');})[0]||pc.filter(function(c){return /시상금/.test(c.h||'');})[0]||pc.filter(function(c){return /시상|금액|지급액/.test(c.h||'');})[0];
-  var show=[c0].concat(c1?[c1]:[]).concat(crit).concat(pay?[pay]:[]);
+  var extra=cols.filter(function(c){return c.top&&c!==c0&&c!==c1&&crit.indexOf(c)<0&&c!==pay;});   // top:1 = 명단에 꼭 보여줄 열
+  var show=[c0].concat(c1?[c1]:[]).concat(extra).concat(crit).concat(pay?[pay]:[]);
   var idx=INC_TOP_JS.indexOf(js);if(idx<0){INC_TOP_JS.push(js);idx=INC_TOP_JS.length-1;}
   var open=!!S.incTopOpen[js],N=open?10:5,all=P.rows.filter(function(r){return !r._span;}),rows=all.slice(0,N);   // 이미 달성 완료(호점 고정) 행은 빼고 경쟁 순위만
   function lab(c){var h=(c.h||'').replace(/\(%\)/,'').trim();if(c.g)h=(c.g.indexOf(h)>=0)?c.g:(/^(누적|합계)$/.test(h)?c.g+' '+h:c.g+' '+h);h=h.replace(/^(\d{2}\.)?\d{1,2}~\d{1,2}월\s*/,'');return h.replace(/\s+/g,' ');}   // 기간 접두어(10~12월 등)는 카드 제목에 있으니 생략
@@ -6282,7 +6283,7 @@ function prtIncList(key){
     var win=arr.filter(function(x){return x.pay>0;}).length;
     prtOpen({title:isS?'[4분기] 사업국 스구N 목표관리':'['+(isNovView()?NOV_M:curMonth())+'월] 사업국 달성률 인센티브',
       sub:'달성률 '+(isS?50:eopAchMin())+'%↑ · 1~3위 50만·4~10위 30만·11~20위 20만·21~30위 10만 · 동률: 일반과목순증(인당)>D순증(인당) · 대상 '+fmt(win)+'개',
-      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:isS?'4분기 목표':'목표',k:'m',num:1}].concat(isS?QRANGE.Q4.filter(function(mk){return mk<=liveKey();}).map(function(mk,j){return {g:'스구N 순증',h:mLbl(mk)+(mk===liveKey()?'(전일)':''),k:'sm'+j,num:1};}).concat([{g:'스구N 순증',h:'누적',k:'s',num:1}]):[{h:unit,k:'s',num:1}]).concat([{h:'달성률(%)',k:'a',num:1,hi:1},{h:'예상 시상금',k:'ex',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}]),
+      cols:[{h:'사업국',k:'nm'},{h:'사업국장',k:'mg'},{h:isS?'4분기 목표':'목표',k:'m',num:1}].concat(isS?QRANGE.Q4.filter(function(mk){return mk<=liveKey();}).map(function(mk,j){return {g:'스구N 순증',h:mLbl(mk)+(mk===liveKey()?'(전일)':''),k:'sm'+j,num:1};}).concat([{g:'스구N 순증',h:'누적',k:'s',num:1,top:1}]):[{h:unit,k:'s',num:1}]).concat([{h:'달성률(%)',k:'a',num:1,hi:1},{h:'예상 시상금',k:'ex',num:1,hi:1},{h:'지급',k:'g'},{h:'선정까지',k:'rem'}]),
       rows:arr.map(function(x){
         var rem='-';
         if(!x.elig)rem='달성'+(isS?50:eopAchMin())+'%까지 '+unit+' '+fmt1(isS?Math.max(0,Math.ceil(x.목표*0.5)-x.순증):needSunFor(eopAchMin(),x.목표,x.순증));
