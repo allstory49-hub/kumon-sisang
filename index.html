@@ -3972,17 +3972,27 @@ async function anaGoalSave(mk){var g={};['M','O','N'].forEach(function(c){var el
   if(!g.M||!g.O||!g.N){alert('관리·온공·N 목표를 모두 입력해 주세요');return;}
   var G=APP.anaGoal||{months:{}};G.months=G.months||{};G.months[mk]=g;G.updated=kstDay();
   try{await saveFile('cumulative/ana_goal.json',JSON.stringify(G),'ana goal '+mk);APP.anaGoal=G;S.anaGoalEdit=false;renderAdmin();}catch(e){alert('저장 실패: '+e.message);}}
+var ANA_GOAL_E6MAX=7700;   // 월마감일 합산 목표 상한
+// 최근 3개월 일자별 비율: 구간 안 몇 번째 평일인지(1번째·2번째…)별 중앙값 · 특별한 날(첫날·구간 마감·월마감 전일·월마감)은 날 유형 비율
+function anaPosRatios(ms,c){var A=APP.anaDays||{months:{}},K={};ms.forEach(function(m){var ds=(A.months[m]||{}).days||[];if(ds.length<15)return;var T=anaFileTypes(ds);
+    var reg=ds.filter(function(x){return T[x.d]==='k1'&&anaVal(x,c)!=null&&!(x.n>1);}).map(function(x){return anaVal(x,c);});var L=reg.length?reg.reduce(function(a,b){return a+b;},0)/reg.length:0;if(!L)return;
+    var pos={};ds.forEach(function(x){var t=T[x.d];if(!/^(k[1-4]|e0n)$/.test(t))return;pos[x.seg]=(pos[x.seg]||0)+1;var v=anaVal(x,c);if(v==null||x.n>1)return;var key=x.seg+'-'+pos[x.seg];(K[key]=K[key]||[]).push(v/L);});});
+  var R={};Object.keys(K).forEach(function(k){var a=K[k].slice().sort(function(p,q){return p-q;}),h=a.length>>1;R[k]=a.length%2?a[h]:(a[h-1]+a[h])/2;});return R;}
 function anaGoalPlan(mk){var g=((APP.anaGoal||{}).months||{})[mk];if(!g)return null;var B=anaBoard(mk),RB=anaBoardRatios(mk);if(!B||!RB)return null;
-  var cats=['M','O','N'],days=B.days.map(function(x){var t=(x.t==='e0n')?'k1':x.t;   // 평일은 구간별 같은 값(첫날 다음 영업일도 1구간 평일로)
-    var o={d:x.d,seg:x.seg,t:x.t,fc:x.fc,inLump:x.inLump,lump:x.lump,w:{},act:{},tg:{},need:{}};cats.forEach(function(c){var r=RB.R[c][t];o.w[c]=Math.max(0,r==null?0:r);o.act[c]=x.fc?null:anaVal(x.v,c);});return o;});
-  var res={goal:{M:g.M,O:g.O,N:g.N,S:g.M+g.O+g.N},days:days,act:{},actCum:{},tgCum:{},rem:{}};
-  cats.forEach(function(c){var sw=days.reduce(function(a,x){return a+x.w[c];},0)||1;days.forEach(function(x){x.tg[c]=g[c]*x.w[c]/sw;});
-    var act=days.reduce(function(a,x){return a+(x.act[c]||0);},0),rd=days.filter(function(x){return x.fc;}),rw=rd.reduce(function(a,x){return a+x.w[c];},0)||1;
-    rd.forEach(function(x){x.need[c]=Math.max(0,(g[c]-act))*x.w[c]/rw;});res.act[c]=act;res.rem[c]=g[c]-act;
-    res.tgCum[c]=days.filter(function(x){return !x.fc;}).reduce(function(a,x){return a+x.tg[c];},0);});
+  var cats=['M','O','N'],PR={};cats.forEach(function(c){PR[c]=anaPosRatios(RB.ms,c);});var pos={};
+  var days=B.days.map(function(x){var wk=/^(k[1-4]|e0n|reg)$/.test(x.t),key=null;if(wk){pos[x.seg]=(pos[x.seg]||0)+1;key=x.seg+'-'+pos[x.seg];}
+    var o={d:x.d,seg:x.seg,t:x.t,fc:x.fc,inLump:x.inLump,lump:x.lump,w:{},act:{},tg:{},need:{}};
+    cats.forEach(function(c){var r=(key&&PR[c][key]!=null)?PR[c][key]:RB.R[c][x.t==='reg'?'k'+x.seg:x.t];o.w[c]=Math.max(0,r==null?0:r);o.act[c]=x.fc?null:anaVal(x.v,c);});return o;});
+  // 배분 + 월마감일 합산 상한(넘는 몫은 같은 과목의 다른 날에 비율대로)
+  function alloc(sub,tot,field){cats.forEach(function(c){var sw=sub.reduce(function(a,x){return a+x.w[c];},0)||1;sub.forEach(function(x){x[field][c]=Math.max(0,tot[c])*x.w[c]/sw;});});
+    var e6=sub.filter(function(x){return x.t==='e6';})[0];if(!e6)return;var se=cats.reduce(function(a,c){return a+e6[field][c];},0);if(se<=ANA_GOAL_E6MAX)return;var f=ANA_GOAL_E6MAX/se;
+    cats.forEach(function(c){var cut=e6[field][c]*(1-f);e6[field][c]*=f;var oth=sub.filter(function(x){return x!==e6;}),ow=oth.reduce(function(a,x){return a+x.w[c];},0)||1;oth.forEach(function(x){x[field][c]+=cut*x.w[c]/ow;});});}
+  var res={goal:{M:g.M,O:g.O,N:g.N,S:g.M+g.O+g.N},days:days,act:{},tgCum:{},rem:{},ms:RB.ms};
+  alloc(days,g,'tg');var rd=days.filter(function(x){return x.fc;}),remT={};
+  cats.forEach(function(c){var act=days.reduce(function(a,x){return a+(x.act[c]||0);},0);res.act[c]=act;res.rem[c]=g[c]-act;remT[c]=g[c]-act;res.tgCum[c]=days.filter(function(x){return !x.fc;}).reduce(function(a,x){return a+x.tg[c];},0);});
+  if(rd.length)alloc(rd,remT,'need');
   days.forEach(function(x){x.tg.S=x.tg.M+x.tg.O+x.tg.N;x.act.S=(x.act.M==null)?null:x.act.M+x.act.O+x.act.N;x.need.S=x.fc?(x.need.M+x.need.O+x.need.N):null;});
-  ['S'].forEach(function(c){res.act[c]=res.act.M+res.act.O+res.act.N;res.rem[c]=res.goal[c]-res.act[c];res.tgCum[c]=res.tgCum.M+res.tgCum.O+res.tgCum.N;});
-  res.left=days.filter(function(x){return x.fc;}).length;res.ms=RB.ms;return res;}
+  res.act.S=res.act.M+res.act.O+res.act.N;res.rem.S=res.goal.S-res.act.S;res.tgCum.S=res.tgCum.M+res.tgCum.O+res.tgCum.N;res.left=rd.length;return res;}
 function anaGoalHtml(mk,cat){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',g=((APP.anaGoal||{}).months||{})[mk]||{};
   var edit='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0">'+[['M','관리'],['O','온공'],['N','N']].map(function(c){return '<label style="font-size:12px;font-weight:700">'+c[1]+' <input id="agoal_'+c[0]+'" inputmode="numeric" value="'+(g[c[0]]?fmt(g[c[0]]):'')+'" style="width:78px;padding:5px 6px;border:1px solid var(--bd);border-radius:7px;font-size:13px;text-align:right"></label>';}).join('')
     +'<button class="rtb" onclick="anaGoalSave(\''+mk+'\')">저장</button>'+(g.M?'<button class="rtb" onclick="S.anaGoalEdit=false;renderAdmin()">취소</button>':'')+'</div><div style="font-size:11px;color:var(--t3)">· 합산 목표 = 관리 + 온공 + N</div>';
@@ -4002,7 +4012,7 @@ function anaGoalHtml(mk,cat){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리
     rows+='<tr'+(x.fc?' style="background:#FFF6EC"':'')+'><td>'+x.d+'일('+WK[anaDow(mk,x.d)]+')'+lab+'</td><td class="num">'+f(x.tg[K])+'</td><td class="num">'+f(cT)+'</td><td class="num">'+(x.inLump?'<span style="font-size:10px;color:var(--t3)">합산</span>':f(a))+'</td><td class="num">'+(a!=null||x.inLump?f(cA):'')+'</td><td class="num" style="color:'+(df==null?'':(df>=0?'var(--green)':'var(--red)'))+'">'+(df==null?'':(df>=0?'+':'')+fmt(Math.round(df)))+'</td><td class="num"><b style="color:#E8590C">'+(x.fc?f(x.need[K]):'')+'</b></td></tr>';
     var nx=P.days[i+1];if(!nx||nx.seg!==x.seg)rows+='<tr style="background:#EEF1F4;font-weight:800"><td>'+x.seg+'구간</td><td class="num"></td><td class="num">'+f(cT)+'</td><td></td><td class="num">'+(P.days.some(function(y){return y.seg===x.seg&&!y.fc;})?f(cA):'')+'</td><td></td><td></td></tr>';});
   var tb='<div style="overflow-x:auto"><table class="anatb agt"><thead><tr><th>일자</th><th class="num">목표</th><th class="num">목표 누적</th><th class="num">실적</th><th class="num">실적 누적</th><th class="num">차이</th><th class="num">남은 기간<br>필요</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-  return head+tiles+tb+'<div class="ib bl" style="margin-top:6px">· 일자별 목표 = 과목별 월 목표를 최근 3개월('+P.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+') 날 유형별 입회 비율로 나눈 값 · 평일은 구간별로 같은 값 · 첫날·구간 마감·월마감 전일·월마감은 각자 비율'+(cat==='S'?' · 합산 = 관리 + 온공 + N':'')+'<br>· 남은 기간 필요 = (월 목표 − 현재 실적)을 남은 날에 같은 비율로 다시 나눈 값'+(K==='O'?'<br>· 온공은 3·4구간에 삭제가 많아 평일 목표가 0에 가깝게 나와요':'')+'</div>';}
+  return head+tiles+tb+'<div class="ib bl" style="margin-top:6px">· 일자별 목표 = 과목별 월 목표를 최근 3개월('+P.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+') 일자별 입회 비율로 나눈 값 · 평일은 구간 안 몇 번째 날인지에 따라 각각 · 첫날·구간 마감·월마감 전일·월마감은 날 유형 비율 · 월마감일 합산 목표는 최대 '+fmt(ANA_GOAL_E6MAX)+'(넘는 몫은 다른 날에 나눔)'+(cat==='S'?' · 합산 = 관리 + 온공 + N':'')+'<br>· 남은 기간 필요 = (월 목표 − 현재 실적)을 남은 날에 같은 비율로 다시 나눈 값'+(K==='O'?'<br>· 온공은 3·4구간에 삭제가 많아 평일 목표가 0에 가깝게 나와요':'')+'</div>';}
 function anaBoardHtml(mk,cat){cat=cat||'S';var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',B=anaBoard(mk);
   if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div><div class="ib am">업로드 자료가 쌓이면 일자별 실적과 남은 일자 예상이 나와요.</div>';
   var WK=['일','월','화','수','목','금','토'],cum=0,rows='',cur={v:0,fc:false},s12={v:0,fc:false},all={v:0,fc:false};
