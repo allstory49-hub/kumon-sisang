@@ -2540,6 +2540,7 @@ function incStatSort(body){var P='<div class="incwrap">',M='<div class="incstat"
   function rk(c){var m=/\[([^\]]*)\]/.exec(c);var t=m?m[1]:'';if(/상시/.test(t))return -1;if(/반기/.test(t))return 0;if(/분기/.test(t))return 1;if(/~/.test(t))return 2;if(/월/.test(t))return 3;return 4;}
   var cards=parts.map(function(p,i){var m=/\[[^\]]*\]([^<]*)/.exec(p);var sj=/class="(?:prtlink|isbtn)" onclick="([^"]+)"/.exec(p);if(sj&&p.indexOf('incstop')<0){var js=sj[1].replace(/&quot;/g,'"');var tp=incTopHtml(js);if(tp)p=p.replace(/<\/div>\s*$/,'')+'</div>'+tp;}return {h:M+p,r:rk(p),t:(m&&/퇴회/.test(m[1]))?0:1,i:i};});cards.sort(function(x,y){return (x.r-y.r)||(x.t-y.t)||(x.i-y.i);});   // 같은 기간이면 퇴회율 카드 먼저
   return P+pre+cards.map(function(c){return c.h;}).join('')+'</div>';}
+var GIFT11_P=29150;   // 휴그랩 펄스힐v2 발마사지기 단가
 function adminInc11(){
   var roles=['교사','지구','지국','사업국','총국'];if(!S.aincRole||roles.indexOf(S.aincRole)<0)S.aincRole='교사';var M=NOV_M;
   var rtab='<div class="rtog jsub">'+roles.map(function(r){return '<button class="rtb'+(S.aincRole===r?' on':'')+'" onclick="S.aincRole=\''+r+'\';S.jtab=null;renderAdmin()">'+r+'</button>';}).join('')+'</div>';
@@ -2550,7 +2551,7 @@ function adminInc11(){
   if(S.aincRole==='교사'){var L=APP.incList||[],n=L.length,w6=L.filter(function(r){return (Number(r.과목순증)||0)>=6;}).length;
     var mt='';if((APP.teachers||[]).length){var el=0,p130=0,p60=0;APP.teachers.forEach(function(t){if((Number(t.퇴회)||0)>0)return;var wk=Number(t.근무기간)||0,g=Number(t.전월말관리과목)||0;if(wk>=6&&g>=60){el++;if(g>=130)p130++;else p60++;}});
       mt=st('[11월] 무퇴회 인센티브','근무6↑·과목60↑ 무퇴회 · 130↑ '+fmt(p130)+'명(2만)·60~129 '+fmt(p60)+'명(1만)',el,'명',pc(el,APP.teachers.length),p130*20000+p60*10000,"prtIncList('mut')");}
-    body='<div class="incwrap">'+st('[11월] 월 성과 (발마사지기)','합산과목 순증 6↑ · 휴그랩 펄스힐v2 발마사지기',w6,'명',pc(w6,n),'시상품 '+fmt(w6)+'개',"prtIncList('wol11')")+mt+ongTopTeaStat()+'</div>';
+    body='<div class="incwrap">'+st('[11월] 월 성과 (발마사지기)','합산과목 순증 6↑ · 휴그랩 펄스힐v2 발마사지기 (1개 '+fmt(GIFT11_P)+'원)',w6,'명',pc(w6,n),w6*GIFT11_P,"prtIncList('wol11')")+mt+ongTopTeaStat()+'</div>';
   }else if(S.aincRole==='지구'){var rs=[];Object.keys(q).forEach(function(c){var r=jiguAch11Row(c);if(r)rs.push(r);});var w=rs.filter(function(r){return r.pay>0;});
     var cnt=JIGUACH11.map(function(g,i){return rs.filter(function(r){return r.row===i;}).length;});
     body='<div class="incwrap">'+st('[11월] 지구 달성률','300↑ '+cnt[0]+' · 250↑ '+cnt[1]+' · 200↑ '+cnt[2]+' · 150↑ '+cnt[3]+' · 100↑ '+cnt[4]+' (교사수 × 3~1만)',w.length,'개',pc(w.length,rs.length),w.reduce(function(a,r){return a+r.pay;},0),"prtIncList('jiguach11')")+ongTopStat('지구')+'</div>';
@@ -2559,7 +2560,7 @@ function adminInc11(){
     var el=eliteRank('지국','Q4'),eq=el.filter(function(x){return x.자격;}),ew=Math.min(20,eq.length);
     var tr=[];Object.keys(q).forEach(function(c){if(q[c].lv!=='지국')return;var r=jikToiQ4Row(c);if(r)tr.push(r);});var tw=tr.filter(function(r){return r.win;});
     body='<div class="incwrap">'+st('[11월] 지국 D순증','40↑ '+dc[0]+' · 25↑ '+dc[1]+' · 15↑ '+dc[2]+' · 5↑ '+dc[3]+' (50/25/15/10만)',dw.length,'개',pc(dw.length,ds.length),dw.reduce(function(a,r){return a+r.pay;},0),"prtIncList('jikd11')")
-      +st('[11월] 매니저 · 지국 달성률','지국 달성률 100%↑ · 발마사지기',mg,'개',pc(mg,mt2),'시상품 '+fmt(mg)+'개',"prtIncList('manager11')")
+      +st('[11월] 매니저 · 지국 달성률','지국 달성률 100%↑ · 발마사지기 (1개 '+fmt(GIFT11_P)+'원)',mg,'개',pc(mg,mt2),mg*GIFT11_P,"prtIncList('manager11')")
       +(el.length?st('[4분기] 엘리트 지국장','달성률 100%↑ &amp; D순증 1↑ · 자격 충족 '+fmt(eq.length)+'명',ew,'명','T/O 20',ew*200000,"prtEliteQ('지국','Q4')"):'')
       +(tr.length?st('[4분기] 지국 퇴회율','누적 퇴회율 4.5%↓ · 달성률 80%↑ · 교사수 × 급간 단가',tw.length,'개',pc(tw.length,tr.length),tw.reduce(function(a,r){return a+r.pay;},0),"prtIncList('jiktoi4')"):'')
       +club10AdminStat(st)+ongTopStat('지국')+'</div>';
