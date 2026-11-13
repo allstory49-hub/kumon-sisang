@@ -612,7 +612,7 @@ input,button{font-family:inherit;font-size:14px}
 <!-- 선택 (시상/인센티브) -->
 <div id="cp" class="page">
   <div class="hdr"><div class="hbrand">KUMON</div>
-    <button class="bo" onclick="out()">로그아웃</button></div>
+    <button class="bo" onclick="pwOpen(false)">🔑 비밀번호</button> <button class="bo" onclick="out()">로그아웃</button></div>
   <div class="bd">
     <div class="chwrap">
       <div class="chhi">안녕하세요, <b id="cNm"></b>님</div>
@@ -641,7 +641,7 @@ input,button{font-family:inherit;font-size:14px}
 <!-- 관리자 -->
 <div id="ap" class="page">
   <div class="hdr"><div class="hbrand">KUMON <span>관리자</span></div>
-    <button class="bo" onclick="out()">로그아웃</button></div>
+    <button class="bo" onclick="pwOpen(false)">🔑 비밀번호</button> <button class="bo" onclick="out()">로그아웃</button></div>
   <div class="tb" id="aTabs"></div>
   <div class="bd" id="aBody"></div>
 </div>
@@ -792,7 +792,7 @@ async function saveToGitHub(bakedJs){
   await loadJaeExpFixed();
   await loadToiExp();
   await loadSprint();
-  loadAnaHist();loadAnaDays();loadEtHist();loadAnaGoal();
+  loadAnaHist();loadAnaDays();loadEtHist();loadAnaGoal();loadPw();
   try{var rfi=await dfetch('cumulative/frozen_ital.json?t='+Date.now());if(rfi.ok)APP.frozenItal=await rfi.json();}catch(e){APP.frozenItal=null;}
   await loadSejongPrev();
   await loadSejongMetrics();
@@ -881,7 +881,7 @@ function fitNums(root){(root||document).querySelectorAll(FIT_SEL).forEach(functi
 var _fitT=null;function fitSoon(){clearTimeout(_fitT);_fitT=setTimeout(function(){fitNums();},60);}
 try{new MutationObserver(fitSoon).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('resize',fitSoon);}catch(e){}
 function showPage(id){['pp','lp','cp','up','ip','ap'].forEach(function(p){document.getElementById(p).className='page'+(p===id?' active':'');});}
-function out(){if(S.peek){S.peek=false;S.user=null;S.type='teacher';showPage('ap');renderAdmin();return;}S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
+function out(){S.pwKey=null;S.pwDef=false;var _po=document.getElementById('pwOv');if(_po)_po.remove();if(S.peek){S.peek=false;S.user=null;S.type='teacher';showPage('ap');renderAdmin();return;}S.user=null;S.tab='my';S.search=null;showPage('lp');renderBadge();var u=document.getElementById('uid'),p=document.getElementById('upw');if(u)u.value='';if(p)p.value='';}
 function rbC(n){return n===1?'r1':n===2?'r2':n===3?'r3':'rn';}
 function badgeStyle(rank){
   if(rank>10)return 'background:var(--card2);color:var(--t2)';
@@ -909,13 +909,14 @@ function renderBadge(){
 }
 
 /* ───── 로그인 ───── */
-function doLogin(){
+async function doLogin(){
   var id=document.getElementById('uid').value.trim();
   var pw=document.getElementById('upw').value.trim();
   document.getElementById('lerr').textContent='';
   if(!id||!pw){document.getElementById('lerr').textContent='이름과 사번을 입력하세요.';return;}
-  var ADMINS={'한정호':'921128','김해영':'41542','안선욱':'624146','정은혜':'602051','강명식':'35114','김성희':'35661'};   // 관리자 로그인
-  if(ADMINS[id]&&ADMINS[id]===pw){showPage('ap');renderAdmin();return;}
+  if(!APP.pw)await loadPw();
+  if(ADMIN_H[id]){var ak='a:'+id,okA=APP.pw.users[ak]?(await pwHash(APP.pw.users[ak].s+'|'+pw))===APP.pw.users[ak].h:(await pwHash('kadm|'+pw))===ADMIN_H[id];
+    if(okA){S.pwKey=ak;S.pwName=id;S.pwDef=!APP.pw.users[ak];showPage('ap');renderAdmin();pwAfterLogin();return;}}
   if(isClosedDay()){document.getElementById('lerr').textContent=CLOSED_MSG;return;}   // 월마감일: 관리자 외 조회 차단
   var t=APP.teachers.find(function(r){return r.교사명===id&&r.교사번호===pw;});
   if(t){S.user=t;S.type='teacher';S.pos='구몬교사';S.inSisang=true;S.tab='my';goChooser(id);return;}
@@ -923,21 +924,63 @@ function doLogin(){
   if(it){S.user=it;S.type='teacher';S.pos='구몬교사';S.inSisang=false;S.tab='my';goChooser(id);return;}
   var roles=['지구','지국','사업국','총국'];
   for(var i=0;i<roles.length;i++){
-    var o=(APP.org[roles[i]]||[]).find(function(r){return r.관리자명===id&&r.사번===pw;});
-    if(o){S.user=o;S.type='org';S.pos=roles[i];S.inSisang=true;S.tab='my';goChooser(id);return;}
+    var cs=(APP.org[roles[i]]||[]).filter(function(r){return r.관리자명===id;}),o=null;
+    for(var j=0;j<cs.length;j++){if(await pwOrgOk(cs[j].사번,pw)){o=cs[j];break;}}
+    if(o){S.user=o;S.type='org';S.pos=roles[i];S.inSisang=true;S.tab='my';S.pwKey='o:'+o.사번;S.pwName=id;S.pwDef=!APP.pw.users[S.pwKey];goChooser(id);pwAfterLogin();return;}
   }
   // 5인 이하 등 시상용(baked)에 없는 조직 관리자 → 인센티브용(q3cur)에서 찾음(시상 순위는 제외)
   var cur=APP.q3cur||{};
-  var ck=Object.keys(cur).find(function(c){var o=cur[c];return o.관리자===id&&String(o.사번)===pw;});
+  var ck=null,cks=Object.keys(cur).filter(function(c){var o=cur[c];return o.관리자===id&&o.사번&&['지구','지국','사업국','총국'].indexOf(o.lv)>=0;});
+  for(var j2=0;j2<cks.length;j2++){if(await pwOrgOk(String(cur[cks[j2]].사번),pw)){ck=cks[j2];break;}}
   if(ck){
     var o2=cur[ck];
     S.user={소속코드:ck,소속명:o2.소속명,관리자명:o2.관리자,사번:String(o2.사번),
       과목순증:o2.순증,디지털순증:o2.D순증,달성률:o2.달성률,교사수:o2.교사수,시상점수:0,지구당:0,지구수:0,
       전월말:o2.교사수,전월말순증:null,특별점수:0,태블릿점수:0,스구N재약정:0};
-    S.type='org';S.pos=o2.lv;S.inSisang=false;S.tab='my';goChooser(id);return;
+    S.type='org';S.pos=o2.lv;S.inSisang=false;S.tab='my';S.pwKey='o:'+String(o2.사번);S.pwName=id;S.pwDef=!APP.pw.users[S.pwKey];goChooser(id);pwAfterLogin();return;
   }
-  document.getElementById('lerr').textContent='이름 또는 사번이 올바르지 않습니다.';
+  document.getElementById('lerr').textContent='이름 또는 비밀번호가 올바르지 않습니다.';
 }
+
+/* ───── 비밀번호 변경 (조직장·관리자) · 해시로만 저장(cumulative/pw.json) ───── */
+var ADMIN_H={"한정호":"0e6eb73a356bf528757d5168fcfbe4adc2f7c7e4a745b274fe4b2dbd4a8acbaa","김해영":"ade801e472d0e9fdad15588cb622c32c64c725f51eb1321b38650611db963844","안선욱":"29e2633920c649926459f764ca99889626ce97abe86a925ccd794d5a44406cf7","정은혜":"1479ceec11d031bf1a39089ff6117b3966dba5b7ac592391b4cf1fa82555c681","강명식":"dade59079e007c6637f6bb8771260244698b1d4b31877579cfb39008edf93730","김성희":"e9353403fbad7bd9ceb32ef80a43f824e687ed72248f03a29905f5d177e2a835"};   // 관리자 기본 비밀번호(해시)
+async function pwHash(t){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
+async function loadPw(){try{var r=await dfetch('cumulative/pw.json?t='+Date.now());APP.pw=r.ok?await r.json():{users:{}};}catch(e){APP.pw={users:{}};}APP.pw.users=APP.pw.users||{};}
+async function pwOrgOk(sabun,pw){var u=APP.pw.users['o:'+sabun];if(u)return (await pwHash(u.s+'|'+pw))===u.h;return String(sabun)===pw;}
+function pwAfterLogin(){if(S.pwDef&&!S.peek){try{if(sessionStorage.getItem('pwskip_'+S.pwKey))return;}catch(e){}setTimeout(function(){pwOpen(true);},300);}}
+function pwOpen(first){if(S.peek||!S.pwKey){alert('로그인한 본인만 비밀번호를 바꿀 수 있어요');return;}var ov=document.getElementById('pwOv');if(ov)ov.remove();ov=document.createElement('div');ov.id='pwOv';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  var inp='width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #C3CAD1;border-radius:10px;font-size:15px;margin-top:6px';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px 18px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)">'
+    +'<div style="font-size:17px;font-weight:800;margin-bottom:6px">🔑 비밀번호 변경</div>'
+    +(first?'<div style="font-size:13px;color:#C92A2A;font-weight:700;margin-bottom:8px">처음 로그인하셨네요. 보안을 위해 비밀번호를 바꿔 주세요.</div>':'')
+    +'<div style="font-size:12px;color:#5C6670">'+S.pwName+'님 · 지금 비밀번호는 '+(S.pwDef?'<b>사번</b>이에요':'바꾼 비밀번호예요')+'</div>'
+    +'<input id="pwCur" type="password" placeholder="지금 비밀번호" style="'+inp+'"><input id="pwNew" type="password" placeholder="새 비밀번호 (4자 이상)" style="'+inp+'"><input id="pwNew2" type="password" placeholder="새 비밀번호 확인" style="'+inp+'">'
+    +'<div id="pwMsg" style="font-size:12.5px;color:#C92A2A;min-height:18px;margin-top:6px"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px"><button onclick="pwSubmit()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#1B3A2D;color:#fff;font-weight:800;font-size:15px">변경</button>'
+    +'<button onclick="pwClose('+(first?1:0)+')" style="flex:1;padding:12px;border:1px solid #C3CAD1;border-radius:10px;background:#fff;font-weight:700;font-size:15px">'+(first?'다음에':'닫기')+'</button></div>'
+    +'<div style="font-size:11px;color:#8A949E;margin-top:10px">· 비밀번호를 잊으면 관리자에게 초기화(사번으로 되돌리기)를 요청하세요</div></div>';
+  document.body.appendChild(ov);}
+function pwClose(first){var ov=document.getElementById('pwOv');if(ov)ov.remove();if(first){try{sessionStorage.setItem('pwskip_'+S.pwKey,'1');}catch(e){}}}
+async function pwSubmit(){var c=document.getElementById('pwCur').value.trim(),n=document.getElementById('pwNew').value.trim(),n2=document.getElementById('pwNew2').value.trim(),m=document.getElementById('pwMsg');
+  if(n.length<4){m.textContent='새 비밀번호는 4자 이상으로 해주세요';return;}if(n!==n2){m.textContent='새 비밀번호가 서로 달라요';return;}
+  await loadPw();var k=S.pwKey,u=APP.pw.users[k],ok;
+  if(u)ok=(await pwHash(u.s+'|'+c))===u.h;else if(k.indexOf('a:')===0)ok=(await pwHash('kadm|'+c))===ADMIN_H[k.slice(2)];else ok=(k.slice(2)===c);
+  if(!ok){m.textContent='지금 비밀번호가 맞지 않아요';return;}
+  var sa=Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+  APP.pw.users[k]={s:sa,h:await pwHash(sa+'|'+n),at:kstDay(),nm:S.pwName};m.style.color='#1B3A2D';m.textContent='저장 중…';
+  try{await saveFile('cumulative/pw.json',JSON.stringify(APP.pw),'pw change');S.pwDef=false;m.textContent='✓ 비밀번호를 바꿨어요. 다음 로그인부터 새 비밀번호를 쓰세요.';setTimeout(function(){pwClose(0);},1600);}
+  catch(e){m.style.color='#C92A2A';m.textContent='저장 실패: 잠시 후 다시 시도해 주세요';delete APP.pw.users[k];}}
+// 관리자: 비밀번호 초기화(사번/기본값으로 되돌리기)
+function pwAdminHtml(){var q=(S.pwQ||'').trim(),h='<div class="mt" style="margin-top:22px">🔑 비밀번호 초기화</div><div class="ib gr">비밀번호를 잊은 조직장·관리자를 찾아 초기화하면 다시 <b>사번</b>(관리자는 기본 비밀번호)으로 로그인할 수 있어요</div>'
+    +'<div class="sb2"><input class="si" id="pwQ" placeholder="이름 입력..." value="'+q+'" onkeydown="if(event.key===\'Enter\'){S.pwQ=this.value;renderAdmin();}"><button class="sbtn" onclick="S.pwQ=document.getElementById(\'pwQ\').value;renderAdmin()">찾기</button></div>';
+  var U=(APP.pw||{}).users||{},chg=Object.keys(U).length;h+='<div style="font-size:12px;color:var(--t3);margin:4px 0 8px">지금까지 비밀번호를 바꾼 사람 '+fmt(chg)+'명</div>';
+  if(!q)return h;var cur=APP.q3cur||{},L=[],seen={};
+  Object.keys(cur).forEach(function(c){var o=cur[c];if(o.관리자===q&&o.사번&&['지구','지국','사업국','총국'].indexOf(o.lv)>=0&&!seen[o.사번]){seen[o.사번]=1;L.push({k:'o:'+o.사번,t:o.소속명+' ('+o.lv+'장)'});}});
+  if(ADMIN_H[q])L.push({k:'a:'+q,t:'관리자'});
+  if(!L.length)return h+'<div class="empty">찾는 이름이 없어요</div>';
+  return h+L.map(function(x){var u=U[x.k];return '<div class="hc" style="display:flex;justify-content:space-between;align-items:center"><div><b>'+q+'</b> · '+x.t+'<div style="font-size:11.5px;color:var(--t3)">'+(u?'비밀번호 변경함 ('+u.at+')':'기본 비밀번호 사용 중')+'</div></div>'+(u?'<button class="sbtn" onclick="pwReset(\''+x.k+'\')">초기화</button>':'')+'</div>';}).join('');}
+async function pwReset(k){if(!confirm('비밀번호를 초기화할까요?'))return;await loadPw();delete APP.pw.users[k];try{await saveFile('cumulative/pw.json',JSON.stringify(APP.pw),'pw reset');alert('초기화했어요');renderAdmin();}catch(e){alert('저장 실패: '+e.message);}}
 
 /* ───── 사용자 화면 ───── */
 // 월마감일 조회 차단(관리자 제외) · 한국시간 기준 날짜
@@ -7246,6 +7289,8 @@ function adminRank(){
 }
 
 function search(){
+  return searchMain()+pwAdminHtml();}
+function searchMain(){
   var h='<div class="mt">지구장 조회</div><div class="sb2"><input class="si" id="sInp" placeholder="지구장 이름 또는 지구명..." onkeydown="if(event.key===\'Enter\')doSearch()"><button class="sbtn" onclick="doSearch()">조회</button></div>';
   if(S.search===null)return h;
   if(!S.search||!S.search.length)return h+'<div class="empty">검색 결과가 없습니다.</div>';
