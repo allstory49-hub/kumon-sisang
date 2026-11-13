@@ -270,6 +270,7 @@ input,button{font-family:inherit;font-size:14px}
 .ictiers{font-size:12px;color:var(--blue);font-weight:600;line-height:1.55;margin-top:3px}
 .ictiers b{font-weight:800}
 .incwrap{display:flex;flex-direction:column;gap:8px}
+.anadet>summary{cursor:pointer;font-weight:800;font-size:13px;padding:10px 12px;background:var(--card);border:1px solid var(--bd);border-radius:10px;list-style:none;color:var(--t2)}.anadet[open]>summary{margin-bottom:6px}.anadet>summary::-webkit-details-marker{display:none}
 .agt th,.agt td{padding:5px 3px!important;font-size:11px!important;white-space:nowrap}.agt td:first-child{white-space:normal;min-width:52px}
 .incstop{margin:-4px 0 10px;padding:6px 8px 8px;background:var(--card);border:1px solid var(--bd);border-top:none;border-radius:0 0 11px 11px;overflow-x:auto}.incstop table{width:100%;border-collapse:collapse;font-size:11.5px}.incstop th{font-weight:700;color:var(--t2);text-align:left;padding:4px 5px;border-bottom:1px solid var(--bd);white-space:nowrap;font-size:10.5px}.incstop td{padding:4px 5px;border-bottom:1px solid #EEF1F4;white-space:nowrap}.incstop .num{text-align:right}.incstop tr.w td{background:#EBFBEE}.incstopb{display:block;width:100%;margin-top:6px;padding:6px;border:1px solid var(--bd);border-radius:8px;background:#F8F9FA;font-size:12px;font-weight:700;color:var(--t2);cursor:pointer}
 .incstat{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:13px 14px;border-radius:11px;background:var(--card);border:1px solid var(--bd);box-shadow:0 1px 3px rgba(11,31,23,.05)}
@@ -3994,10 +3995,11 @@ function anaGoalPlan(mk){var g=((APP.anaGoal||{}).months||{})[mk];if(!g)return n
   if(rd.length)alloc(rd,remT,'need');
   days.forEach(function(x){x.tg.S=x.tg.M+x.tg.O+x.tg.N;x.act.S=(x.act.M==null)?null:x.act.M+x.act.O+x.act.N;x.need.S=x.fc?(x.need.M+x.need.O+x.need.N):null;});
   res.act.S=res.act.M+res.act.O+res.act.N;res.rem.S=res.goal.S-res.act.S;res.tgCum.S=res.tgCum.M+res.tgCum.O+res.tgCum.N;res.left=rd.length;return res;}
-function anaGoalHtml(mk,cat){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',g=((APP.anaGoal||{}).months||{})[mk]||{};
+function anaGoalHtml(mk,cat,compact){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',g=((APP.anaGoal||{}).months||{})[mk]||{};
   var edit='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0">'+[['M','관리'],['O','온공'],['N','N']].map(function(c){return '<label style="font-size:12px;font-weight:700">'+c[1]+' <input id="agoal_'+c[0]+'" inputmode="numeric" value="'+(g[c[0]]?fmt(g[c[0]]):'')+'" style="width:78px;padding:5px 6px;border:1px solid var(--bd);border-radius:7px;font-size:13px;text-align:right"></label>';}).join('')
     +'<button class="rtb" onclick="anaGoalSave(\''+mk+'\')">저장</button>'+(g.M?'<button class="rtb" onclick="S.anaGoalEdit=false;renderAdmin()">취소</button>':'')+'</div><div style="font-size:11px;color:var(--t3)">· 합산 목표 = 관리 + 온공 + N</div>';
   var head='<div class="stl" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center"><span>🎯 입회 목표 대비 · '+(+mk.slice(5))+'월 · '+CL+'</span>'+(g.M&&!S.anaGoalEdit?'<button class="rtb" onclick="S.anaGoalEdit=true;renderAdmin()">목표 수정</button>':'')+'</div>';
+  if(compact){return '<div class="stl" style="margin-top:10px;font-size:13px">🎯 입회 목표 ('+(+mk.slice(5))+'월)</div>'+(g.M&&!S.anaGoalEdit?'<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px"><span>관리 <b>'+fmt(g.M)+'</b> · 온공 <b>'+fmt(g.O)+'</b> · N <b>'+fmt(g.N)+'</b> · 합산 <b>'+fmt(g.M+g.O+g.N)+'</b></span><button class="rtb" onclick="S.anaGoalEdit=true;S.anaDetOpen=true;renderAdmin()">목표 수정</button></div>':edit);}
   if(!g.M||S.anaGoalEdit)return head+'<div class="ib am">'+(g.M?'목표를 수정하세요':'이번 달 입회 목표를 입력하면 일자별 목표와 목표 대비 실적이 나와요')+'</div>'+edit;
   var P=anaGoalPlan(mk);if(!P)return head+'<div class="ib am">업로드 자료가 쌓이면 목표 대비가 나와요.</div>';
   var G=P.goal[K],A=P.act[K],TC=P.tgCum[K],gap=A-TC,dl=anaDual('ALL',cat,mk),fcv=dl?dl.mid:null,WK=['일','월','화','수','목','금','토'];
@@ -4014,6 +4016,52 @@ function anaGoalHtml(mk,cat){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리
     var nx=P.days[i+1];if(!nx||nx.seg!==x.seg)rows+='<tr style="background:#EEF1F4;font-weight:800"><td>'+x.seg+'구간</td><td class="num"></td><td class="num">'+f(cT)+'</td><td></td><td class="num">'+(P.days.some(function(y){return y.seg===x.seg&&!y.fc;})?f(cA):'')+'</td><td></td><td></td></tr>';});
   var tb='<div style="overflow-x:auto"><table class="anatb agt"><thead><tr><th>일자</th><th class="num">목표</th><th class="num">목표 누적</th><th class="num">실적</th><th class="num">실적 누적</th><th class="num">차이</th><th class="num">남은 기간<br>필요</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   return head+tiles+tb+'<div class="ib bl" style="margin-top:6px">· 일자별 목표 = 과목별 월 목표를 최근 3개월('+P.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+') 일자별 입회 비율로 나눈 값 · 평일은 구간 안 몇 번째 날인지에 따라 각각 · 첫날·구간 마감·월마감 전일·월마감은 날 유형 비율 · 월마감일 합산 목표는 최대 '+fmt(ANA_GOAL_E6MAX)+'(넘는 몫은 다른 날에 나눔)'+(cat==='S'?' · 합산 = 관리 + 온공 + N':'')+'<br>· 남은 기간 필요 = (월 목표 − 현재 실적)을 남은 날에 같은 비율로 다시 나눈 값'+(K==='O'?'<br>· 온공은 3·4구간에 삭제가 많아 평일 목표가 0에 가깝게 나와요':'')+'</div>';}
+// ───── 전사 입회 화면(간단 버전): 요약 4칸 + 구간별 요약 + 일자별 통합표(영업일·구간 기준 전월 비교) + 자세히 보기 ─────
+// 전월 동 영업일 맞추기: 같은 구간 안에서 첫날↔첫날, 구간 마감↔구간 마감, 월마감 전일·월마감↔같은 날, 나머지 평일은 구간 안 순서대로
+function anaAlignPrev(curDays,prevDays){var m={};[1,2,3,4].forEach(function(k){var C=curDays.filter(function(x){return x.seg===k;}),P=prevDays.filter(function(x){return x.seg===k;});if(!C.length||!P.length)return;
+    var tail=(k===4)?2:1,head=(k===1)?1:0,Cm=C.slice(head,C.length-tail),Pm=P.slice(head,P.length-tail);
+    if(head){m[C[0].d]=P[0];}for(var t=1;t<=tail;t++){if(C.length-t>=head&&P.length-t>=head)m[C[C.length-t].d]=P[P.length-t];}
+    Cm.forEach(function(x,i){if(Pm[i])m[x.d]=Pm[i];});});return m;}
+function anaMainIn(mk,cat,head){var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat],B=anaBoard(mk);if(!B)return null;
+  var pm=anaPrevMk(mk),PD=(((APP.anaDays||{}).months||{})[pm]||{}).days||[],P=anaGoalPlan(mk),dl=anaDual('ALL',cat,mk),tq=anaToiNow('ALL',cat,mk),WK=['일','월','화','수','목','금','토'];
+  var pdays=PD.map(function(x){return {d:x.d,seg:x.seg,v:anaVal(x,K)};}),AL=anaAlignPrev(B.days,pdays),G=P?P.goal[K]:null,gd={};if(P)P.days.forEach(function(x){gd[x.d]=x;});
+  function f(v){return v==null?'-':fmt(Math.round(v));}function sg(v){return v==null?'-':(v>=0?'+':'')+fmt(Math.round(v));}function cc(v){return v==null?'':(v>=0?'var(--green)':'var(--red)');}
+  function t4(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
+  // 실적 누적 · 전월 동 영업일 누적
+  var act=0,pAct=0,lastA=null;B.days.forEach(function(x){if(x.fc)return;var v=x.v[K];if(v!=null)act+=v;var p=AL[x.d];if(p&&p.v!=null)pAct+=p.v;lastA=x;});
+  var ps=lastA?anaPos(mk,lastA.d):null,mid=dl?dl.mid:B.tot[K],tn=tq?tq.v:null;
+  // A. 요약 4칸
+  var A='<div class="incgrid4">'+t4('당월 누적',f(act),'전월 동 영업일 대비 <b style="color:'+cc(act-pAct)+'">'+sg(act-pAct)+'</b>'+(ps?' · '+ps.seg+'구간 '+ps.idx+'영업일':''))
+    +t4('월말 예상',f(mid),dl&&dl.b!=null?'범위 '+f(dl.lo)+' ~ '+f(dl.hi)+'<br>① 3개월 추세 '+f(dl.a)+' · ② 전년 동월 '+f(dl.b):'','#E8590C')
+    +t4('목표 달성 예상',G?fmt1(mid/G*100)+'%':'-',G?'목표 '+fmt(G)+' · 누적 목표 대비 <b style="color:'+cc(act-P.tgCum[K])+'">'+sg(act-P.tgCum[K])+'</b>':'<a href="javascript:void(0)" onclick="S.anaGoalEdit=true;renderAdmin()">목표 입력</a>',G&&mid>=G?'var(--green)':'#E8590C')
+    +t4('예상 순증',tn!=null?sg(mid-tn):'-',tn!=null?'퇴회 '+f(tn)+(dl&&dl.b!=null?'<br>범위 '+sg(dl.lo-tn)+' ~ '+sg(dl.hi-tn):''):'퇴회 자료 없음',tn!=null?cc(mid-tn):'')+'</div>';
+  // 구간별 요약
+  var segR='';[1,2,3,4].forEach(function(k){var ds=B.days.filter(function(x){return x.seg===k;});if(!ds.length)return;var a=0,fc=0,pv=0,pvAll=0,tg=0,tgA=0,anyA=false,allA=true;
+    ds.forEach(function(x){var v=x.v[K]||0,p=AL[x.d];if(x.fc){fc+=v;allA=false;}else{a+=v;anyA=true;if(p&&p.v!=null)pv+=p.v;if(gd[x.d])tgA+=gd[x.d].tg[K];}if(gd[x.d])tg+=gd[x.d].tg[K];});
+    pdays.filter(function(x){return x.seg===k;}).forEach(function(x){pvAll+=x.v||0;});
+    var st=allA?'마감':(anyA?'진행 중':'예정'),d0=ds[0].d,d1=ds[ds.length-1].d;
+    segR+='<tr'+(anyA&&!allA?' style="background:rgba(30,111,217,.08)"':'')+'><td><b>'+k+'구간</b><div style="font-size:10px;color:var(--t3)">'+d0+'~'+d1+'일 · '+st+'</div></td><td class="num">'+(P?f(tg):'-')+'</td><td class="num">'+(anyA?f(a):'')+(fc?'<div style="font-size:10px;color:#E8590C">+예상 '+f(fc)+'</div>':'')+'</td><td class="num">'+(anyA?f(pv):'')+(!allA?'<div style="font-size:10px;color:var(--t3)">전월 구간 '+f(pvAll)+'</div>':'')+'</td><td class="num" style="color:'+cc(anyA?a-pv:null)+'">'+(anyA?sg(a-pv):'')+'</td><td class="num" style="color:'+cc(P&&anyA?a-tgA:null)+'">'+(P&&anyA?sg(a-tgA):'')+'</td></tr>';});
+  var segT='<div class="stl" style="margin-top:14px">구간별 · '+CL+'</div><div style="overflow-x:auto"><table class="anatb agt"><thead><tr><th>구간</th><th class="num">목표</th><th class="num">실적</th><th class="num">전월<br>동 영업일</th><th class="num">전월<br>대비</th><th class="num">목표<br>대비</th></tr></thead><tbody>'+segR+'</tbody></table></div>';
+  // B. 일자별 통합표
+  var rows='',cA=0,cT=0,cE=0,seg0=0;B.days.forEach(function(x,i){if(x.seg!==seg0){seg0=x.seg;rows+='<tr style="background:#EEF1F4"><td colspan="7" style="font-weight:800;font-size:11px">'+x.seg+'구간</td></tr>';}
+    var v=x.v[K],g=gd[x.d],p=AL[x.d],tgv=g?g.tg[K]:null;if(tgv!=null)cT+=tgv;cE+=(v||0);if(!x.fc&&v!=null)cA+=v;
+    var lab=(x.t==='e0'?'첫날':x.t==='e1'||x.t==='e2'||x.t==='e3'?x.seg+'구간 마감':x.t==='e5'?'마감 전일':x.t==='e6'?'월마감':'');
+    var dd=(!x.fc&&v!=null&&p&&p.v!=null)?v-p.v:null,gap=(!x.fc&&g)?cA-cT:null;
+    rows+='<tr'+(x.fc?' style="background:#FFF6EC"':'')+'><td>'+x.d+'일('+WK[anaDow(mk,x.d)]+')'+(lab?'<div style="font-size:9.5px;color:#E8590C">'+lab+'</div>':'')+'</td><td class="num">'+(g?f(tgv):'-')+'</td>'
+      +'<td class="num">'+(x.inLump?'<span style="font-size:10px;color:var(--t3)">합산</span>':(x.fc?'<span style="color:#E8590C">'+f(v)+'</span>':f(v)))+'</td>'
+      +'<td class="num">'+(x.fc?'<span style="color:#E8590C">'+f(cE)+'</span>':f(cA))+'</td>'
+      +'<td class="num" style="color:'+cc(gap)+'">'+(x.fc?(g&&g.need[K]!=null?'<span style="color:#E8590C;font-size:10px">필요 </span><b style="color:#E8590C">'+f(g.need[K])+'</b>':''):(gap!=null?sg(gap):''))+'</td>'
+      +'<td class="num">'+(p&&p.v!=null?f(p.v)+'<div style="font-size:9.5px;color:var(--t3)">'+(+pm.slice(5))+'/'+p.d+'</div>':'-')+'</td>'
+      +'<td class="num" style="color:'+cc(dd)+'">'+(dd!=null?sg(dd):'')+'</td></tr>';});
+  var dayT='<div class="stl" style="margin-top:14px">일자별 · '+CL+'</div><div style="overflow-x:auto"><table class="anatb agt"><thead><tr><th>일자</th><th class="num">목표</th><th class="num">실적<br><span style="font-weight:500;color:#E8590C">예상</span></th><th class="num">누적</th><th class="num">목표 대비<br><span style="font-weight:500;color:#E8590C">남은 날 필요</span></th><th class="num">전월<br>동 영업일</th><th class="num">전월<br>대비</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="font-size:10.5px;color:var(--t3);margin-top:4px">· 주황색 줄 = 남은 날(① 최근 3개월 추세 예상) · 전월 동 영업일 = 같은 구간 안에서 첫날·구간 마감·월마감은 같은 날끼리, 나머지 평일은 순서대로 맞춘 날</div>';
+  // C. 자세히 보기
+  var det='<details class="anadet" style="margin-top:14px"'+(S.anaDetOpen?' open':'')+' ontoggle="S.anaDetOpen=this.open"><summary>▶ 자세히 보기 · 목표 수정 · 날 유형별 배수 · 월말 예상 기록 · 계산 방법</summary>'
+    +anaGoalHtml(mk,cat,true)+anaTypeTable(B,cat)+anaPredLogHtml(mk,cat)
+    +'<div class="ib bl" style="margin-top:8px">· 월말 예상 = ① 최근 3개월 추세(1구간 평일 기준 하루값 '+fmt(Math.round(B.L[K]||0))+' × 날 유형별 배수, 배수는 '+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+' 중앙값)와 ② 전년 동월 흐름 적용의 평균 · 합산 = 관리 + 온공 + N<br>'
+    +'· 목표: 과목별 월 목표를 최근 3개월 일자별 입회 비율로 나눔(평일은 구간 안 순서별, 월마감일 합산 최대 '+fmt(ANA_GOAL_E6MAX)+') · 남은 날 필요 = (목표 − 실적)을 남은 날에 같은 비율로 다시 나눈 값<br>'
+    +'· 실적: 업로드 탭 자료(합산 ③소평, 온공·N ④관통, 관리 = 합산 − N − 온공) · 전사는 구몬학습센터 포함 · 주말·공휴일 실적은 전 영업일에 합산</div></details>';
+  return head+A+segT+dayT+det;}
 function anaBoardHtml(mk,cat){cat=cat||'S';var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',B=anaBoard(mk);
   if(!B)return '<div class="stl" style="margin-top:16px">일자별 입회 현황 (실적 + 예상)</div><div class="ib am">업로드 자료가 쌓이면 일자별 실적과 남은 일자 예상이 나와요.</div>';
   var WK=['일','월','화','수','목','금','토'],cum=0,rows='',cur={v:0,fc:false},s12={v:0,fc:false},all={v:0,fc:false};
@@ -4231,6 +4279,7 @@ function adminAnalysis(){
   if(met==='et'&&!Object.keys((APP.daily||{}).days||{}).some(function(k){return APP.daily.days[k][S.anaEt===2?'et2':'et'];}))
     return head+'<div class="ib am">📋 과목별 예상퇴회 파일을 받으면 이 분석이 추가돼요. 파일 양식을 보내주세요.</div>';
   var fF=isA?function(v){return fmt1(v)+'%';}:fmt1;
+  if(met==='in'&&code==='ALL'){var _mv=anaMainIn(mk,cat,head);if(_mv)return _mv;}
   var cur=anaSeries(code,met,cat,mk),prev=anaSeries(code,met,cat,pm);
   if(met==='et')head+='<div class="ib bl" style="margin-top:0">📋 당월에 업로드한 <b>'+(S.anaEt===2?'차차월('+toiNk(mk+'-01',2).slice(5).replace(/^0/,'')+'월)':'차월('+toiNk(mk+'-01',1).slice(5).replace(/^0/,'')+'월)')+' 예상퇴회</b> 등록 누적을 일자별로 보여줘요. 전월 비교는 전월에 올린 '+(S.anaEt===2?'차차월':'차월')+' 예상퇴회예요. N과목 = NKU 열</div>';
   if(!cur.length)return head+'<div class="ib am">📋 아직 당월 '+ml+cl+' 자료가 없어요. ④ 관통_지구 파일을 업로드하면 그날부터 쌓여요.</div>';
@@ -4291,7 +4340,8 @@ function adminAnalysis(){
     if(pr){nb=bizCount(mk,anaEff(mk,pr.d),anaEff(mk,p.d));pod=anaMapDate(mk,pr.d,pm);
       if(!(pr.src&&p.src&&pr.src!==p.src))dv=Math.round((p.v-pr.v)*10)/10;else if(p.dd!=null&&nb===1&&anaIsBiz(mk,p.d))dv=p.dd;else dv=null;}
     else if(!isA){dv=p.v;nb=bizCount(mk,0,anaEff(mk,p.d));pod=0;}
-    var lv=null;if(od&&pp&&nb===1&&pp.dd!=null&&anaIsBiz(pm,pp.d)&&anaEff(pm,pp.d)===anaEff(pm,od))lv=pp.dd;   // 전월 그날 하루 실적
+    var noM=(!isEnd&&ps.idx>Math.max(1,anaBizDays(pm,ps.seg).length-1));   // 전월 같은 구간에 그 순서의 평일이 없으면 당일 비교 안 함(영업일 기준)
+    var lv=null;if(noM){}else if(od&&pp&&nb===1&&pp.dd!=null&&anaIsBiz(pm,pp.d)&&anaEff(pm,pp.d)===anaEff(pm,od))lv=pp.dd;   // 전월 그날 하루 실적
     else if(od&&pp&&pod!=null){if(pod===0)lv=pp.v;else{var pb=anaAt(prev,pod);if(pb)lv=Math.round((pp.v-pb.v)*10)/10;}}
     var dd=(dv!=null&&lv!=null)?Math.round((dv-lv)*10)/10:null;
     var nbt=nb>1?' <span style="font-size:10px;color:var(--t3)">('+nb+'영업일 합)</span>':'';
