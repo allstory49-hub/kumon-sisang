@@ -4356,8 +4356,8 @@ function adminAnalysis(){
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
   var diff=pa?Math.round((last.v-pa.v)*10)/10:null;
   var g3=((met==='ns'||met==='in')&&dl)?' style="grid-template-columns:repeat(3,1fr)"':'';   // 순증: 한 줄에 3칸씩
-  var tiles='<div class="incgrid4"'+g3+'>'+tile('당월 누적',fF(last.v),(+mk.slice(5))+'월 '+last.d+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
-    +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+pa.d+'일 마감':'전월 자료 없음')
+  var tiles='<div class="incgrid4"'+g3+'>'+tile('당월 누적',fF(last.v),(+mk.slice(5))+'월 '+anaEff(mk,last.d)+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
+    +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+anaEff(pm,pa.d)+'일 마감':'전월 자료 없음')   /* 주말에 저장된 자료는 그 주 금요일(영업일)로 표시 */
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +((inNs||g3)?'':tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C'))+'</div>';
   if(dl&&(met==='in'||met==='ns')){var _tn0=(met==='ns'&&nsP)?nsP.tn.v:0,_u=met==='ns'?' (순증)':'';
