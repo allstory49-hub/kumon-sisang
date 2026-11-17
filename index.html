@@ -4294,6 +4294,7 @@ function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로
   return out;}
 function anaAllHQ(mk){var D=(APP.daily&&APP.daily.days)||{},ks=Object.keys(D).filter(function(k){return k.slice(0,7)===mk;});return ks.length&&ks.every(function(k){return D[k].org&&D[k].org.HQ;});}
 function anaAt(series,day){var r=null;series.forEach(function(p){if(p.d<=day)r=p;});return r;}
+function anaAch(org,code){var o=org&&org[code];return (o&&o.목표)?q3flr(Number(o.순증)/Number(o.목표)*100,1):null;}   /* 조직 달성률 = 순증 ÷ 목표 */
 function anaFinalAch(code,mk){var bm=((APP.q3cum||{}).byMonth||{})[mk];if(!bm)return null;if(code==='ALL'){var h=bm.HQ;return (h&&h.목표)?q3flr(h.순증/h.목표*100,1):null;}return anaAch(bm,code);}
 function anaSvg(cur,prev,proj,dim,fmtF,segE){
   var W=680,H=250,L=56,R=14,T=14,B=30,pts=cur.concat(prev);if(proj!=null)pts.push({d:dim,v:proj});
@@ -4324,7 +4325,7 @@ function adminAnalysis(){
   if(met==='et'){S.anaEt=S.anaEt||1;head+='<div class="rtog jsub" style="margin:0 0 10px">'+[[1,'차월 예상퇴회'],[2,'차차월 예상퇴회']].map(function(o){return '<button class="rtb'+(S.anaEt===o[0]?' on':'')+'" onclick="S.anaEt='+o[0]+';renderAdmin()">'+o[1]+'</button>';}).join('')+'</div>';}
   if(met==='et'&&!Object.keys((APP.daily||{}).days||{}).some(function(k){return APP.daily.days[k][S.anaEt===2?'et2':'et'];}))
     return head+'<div class="ib am">📋 과목별 예상퇴회 파일을 받으면 이 분석이 추가돼요. 파일 양식을 보내주세요.</div>';
-  var fF=isA?function(v){return fmt1(v)+'%';}:fmt1;
+  var fF=isA?function(v){return fmt1(v)+'%';}:function(v){return (Math.round(Math.abs(v)*10)%10)?fmt1(v):fmt(Math.round(v));};   // 소수점 있을 때만 .5 표시
   if(met==='in'&&code==='ALL'){var _mv=anaMainIn(mk,cat,head);if(_mv)return _mv;}
   var cur=anaSeries(code,met,cat,mk),prev=anaSeries(code,met,cat,pm);
   if(met==='et')head+='<div class="ib bl" style="margin-top:0">📋 당월에 업로드한 <b>'+(S.anaEt===2?'차차월('+toiNk(mk+'-01',2).slice(5).replace(/^0/,'')+'월)':'차월('+toiNk(mk+'-01',1).slice(5).replace(/^0/,'')+'월)')+' 예상퇴회</b> 등록 누적을 일자별로 보여줘요. 전월 비교는 전월에 올린 '+(S.anaEt===2?'차차월':'차월')+' 예상퇴회예요. N과목 = NKU 열</div>';
@@ -4347,19 +4348,23 @@ function adminAnalysis(){
   var proj=null,how='',hp=null;
   var bd0=(met==='in'&&code==='ALL')?anaBoard(mk):null;
   var dl=(met==='in'||met==='ns')?anaDual(code,cat,mk):null;
-  if(met==='in'&&cat==='S'){if(bd0&&dl){proj=Math.round(dl.mid*10)/10;how='최근 3개월 추세 · 전년 동월 두 예상의 평균';hp={board:1};}else{hp=anaHistProj(mk,cur);if(hp){proj=hp.T;how='과거 '+hp.ms.length+'개월 영업일 패턴 (남은 영업일 반영)';}}}
+  if(met==='in'&&cat==='S'){if(dl){proj=Math.round(dl.mid*10)/10;how='최근 3개월 추세 · 전년 동월 두 예상의 평균';hp={board:1};}else{hp=anaHistProj(mk,cur);if(hp){proj=hp.T;how='과거 '+hp.ms.length+'개월 영업일 패턴 (남은 영업일 반영)';}}}
   if(met==='in'&&cat!=='S'){var _pc=anaProjIn(code,cat,mk);if(_pc!=null){proj=Math.round(_pc*10)/10;how=(dl&&dl.b!=null?'최근 3개월 추세 · 전년 동월 두 예상의 평균':'남은 영업일 × 날 유형별 배수');hp={board:1};}}
   var inNs=null;if(met==='in'&&proj!=null){var _tq=anaToiNow(code,cat,mk);if(_tq)inNs={pi:proj,tn:_tq};}
-  var etT=null;if(met==='et'){etT=anaToiFinal(mk,S.anaEt===2?2:1);if(etT&&cur.length){var _sc=(code==='ALL'&&cat==='S')?1:(last.v/etT.cur.v);proj=Math.round(etT.pred*_sc*10)/10;how=(+etT.tgt.slice(5))+'월 최종 퇴회 예상 (같은 시점 등록률 '+(etT.fm*100).toFixed(1)+'%)';hp={board:1};}}
+  var etT=null;if(met==='et'){etT=anaToiFinal(mk,S.anaEt===2?2:1);if(etT&&cur.length){var _sc=(code==='ALL'&&cat==='S')?1:(last.v/etT.cur.v);proj=Math.round(etT.pred*_sc*10)/10;how=(+etT.tgt.slice(5))+'월 최종 퇴회 예상';hp={board:1};}}
   var nsP=null;if(met==='ns'){var _pi=anaProjIn(code,cat,mk),_tn=anaToiNow(code,cat,mk);if(_pi!=null&&_tn){nsP={pi:_pi,tn:_tn};proj=Math.round((_pi-_tn.v)*10)/10;how='예상 입회 '+fmt(Math.round(_pi))+' − 퇴회 '+fmt(Math.round(_tn.v));hp={board:1};}}
   if(hp){}else if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
   var diff=pa?Math.round((last.v-pa.v)*10)/10:null;
-  var g3=((met==='ns'||met==='in')&&dl)?' style="grid-template-columns:repeat(3,1fr)"':'';   // 순증: 한 줄에 3칸씩
+  var g3=' style="grid-template-columns:repeat(3,1fr)"';   // 모든 탭: 한 줄에 3칸씩 (첫 줄 당월 누적·전월 동 영업일·차이)
   var tiles='<div class="incgrid4"'+g3+'>'+tile('당월 누적',fF(last.v),(+mk.slice(5))+'월 '+anaEff(mk,last.d)+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
     +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+anaEff(pm,pa.d)+'일 마감':'전월 자료 없음')   /* 주말에 저장된 자료는 그 주 금요일(영업일)로 표시 */
     +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +((inNs||g3)?'':tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C'))+'</div>';
+  if(!(dl&&(met==='in'||met==='ns'))){   // 예상퇴회·삭제·달성률: 둘째 줄 = 전월 마감 · 월말 예상 · 남은 기간 예상 증감
+    var _pfL=isA?'전월 마감 달성률':'전월 마감',_rem=(proj!=null)?Math.round((proj-last.v)*10)/10:null;
+    tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+((met==='et'&&etT)?tile('같은 시점 등록률',(etT.fm*100).toFixed(1)+'%','최종 퇴회 대비 지금까지 등록 비율'):tile(_pfL,pf!=null?fF(pf):'-',(+pm.slice(5))+'월 최종'))
+      +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+tile('남은 기간 예상',_rem==null?'-':(_rem>0?'+':'')+(isA?fmt1(_rem)+'%p':fmt1(_rem)),'월말 예상 − 당월 누적')+'</div>';}
   if(dl&&(met==='in'||met==='ns')){var _tn0=(met==='ns'&&nsP)?nsP.tn.v:0,_u=met==='ns'?' (순증)':'';
     if(met==='ns'||met==='in'){var _r=function(v){v=Math.round(v);return met==='in'?fmt(v):(v>0?'+':'')+fmt(v);},_si=(met==='in');   // 순증: ① · ② · 월말 예상(범위)
       tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+tile('최근 3개월 추세',_r(dl.a-_tn0),_si?'날 유형별 배수':'예상 입회 '+fmt(Math.round(dl.a))+' − 퇴회')
