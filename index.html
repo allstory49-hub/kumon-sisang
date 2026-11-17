@@ -4294,6 +4294,8 @@ function anaSeries(code,met,cat,mk){   // [{d,k,v}] 누적값 (해당 월 업로
   return out;}
 function anaAllHQ(mk){var D=(APP.daily&&APP.daily.days)||{},ks=Object.keys(D).filter(function(k){return k.slice(0,7)===mk;});return ks.length&&ks.every(function(k){return D[k].org&&D[k].org.HQ;});}
 function anaAt(series,day){var r=null;series.forEach(function(p){if(p.d<=day)r=p;});return r;}
+function anaGoalOf(code,mk){var D=(APP.daily&&APP.daily.days)||{},ks=Object.keys(D).filter(function(k){return k.slice(0,7)===mk;}).sort().reverse();   // 그 달 순증 목표(③소평)
+  for(var i=0;i<ks.length;i++){var o=D[ks[i]].org||{},r=code==='ALL'?o.HQ:o[code];if(r&&Number(r.목표))return Number(r.목표);}var q=(APP.q3cur||{})[code==='ALL'?'HQ':code];return q&&Number(q.목표)?Number(q.목표):null;}
 function anaAch(org,code){var o=org&&org[code];return (o&&o.목표)?q3flr(Number(o.순증)/Number(o.목표)*100,1):null;}   /* 조직 달성률 = 순증 ÷ 목표 */
 function anaFinalAch(code,mk){var bm=((APP.q3cum||{}).byMonth||{})[mk];if(!bm)return null;if(code==='ALL'){var h=bm.HQ;return (h&&h.목표)?q3flr(h.순증/h.목표*100,1):null;}return anaAch(bm,code);}
 function anaSvg(cur,prev,proj,dim,fmtF,segE){
@@ -4353,6 +4355,8 @@ function adminAnalysis(){
   var inNs=null;if(met==='in'&&proj!=null){var _tq=anaToiNow(code,cat,mk);if(_tq)inNs={pi:proj,tn:_tq};}
   var etT=null;if(met==='et'){etT=anaToiFinal(mk,S.anaEt===2?2:1);if(etT&&cur.length){var _sc=(code==='ALL'&&cat==='S')?1:(last.v/etT.cur.v);proj=Math.round(etT.pred*_sc*10)/10;how=(+etT.tgt.slice(5))+'월 최종 퇴회 예상';hp={board:1};}}
   var nsP=null;if(met==='ns'){var _pi=anaProjIn(code,cat,mk),_tn=anaToiNow(code,cat,mk);if(_pi!=null&&_tn){nsP={pi:_pi,tn:_tn};proj=Math.round((_pi-_tn.v)*10)/10;how='예상 입회 '+fmt(Math.round(_pi))+' − 퇴회 '+fmt(Math.round(_tn.v));hp={board:1};}}
+  var achP=null;if(isA){var _d=anaDual(code,'S',mk),_t=anaToiNow(code,'S',mk),_g=anaGoalOf(code,mk);   // 달성률 월말 예상 = 예상 순증 ÷ 목표
+    if(_d&&_t&&_g){var _m=_d.mid-_t.v,_lo=_d.lo-_t.v,_hi=_d.hi-_t.v;achP={g:_g,ns:_m,nlo:_lo,nhi:_hi,a:q3flr(_m/_g*100,1),lo:q3flr(_lo/_g*100,1),hi:q3flr(_hi/_g*100,1)};proj=achP.a;how='예상 순증 '+fmt(Math.round(_m))+' ÷ 목표 '+fmt(_g);hp={board:1};}}
   if(hp){}else if(pf!=null&&pa){proj=Math.round((last.v+(pf-pa.v))*10)/10;how='전월 동 영업일→월말 흐름 적용';}else if(!isA){proj=Math.round(last.v/last.d*dim*10)/10;how='일수 비례 (전월 자료 없음)';}
   function tile(l,v,sub,col){return '<div class="ig4"><div class="ig4l">'+l+'</div><div class="ig4v" style="font-size:17px'+(col?';color:'+col:'')+'">'+v+'</div>'+(sub?'<div style="font-size:10.5px;color:var(--t3);margin-top:2px">'+sub+'</div>':'')+'</div>';}
   var diff=pa?Math.round((last.v-pa.v)*10)/10:null;
@@ -4364,7 +4368,8 @@ function adminAnalysis(){
   if(!(dl&&(met==='in'||met==='ns'))){   // 예상퇴회·삭제·달성률: 둘째 줄 = 전월 마감 · 월말 예상 · 남은 기간 예상 증감
     var _pfL=isA?'전월 마감 달성률':'전월 마감',_rem=(proj!=null)?Math.round((proj-last.v)*10)/10:null;
     tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+((met==='et'&&etT)?tile('같은 시점 등록률',(etT.fm*100).toFixed(1)+'%','최종 퇴회 대비 지금까지 등록 비율'):tile(_pfL,pf!=null?fF(pf):'-',(+pm.slice(5))+'월 최종'))
-      +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+tile('남은 기간 예상',_rem==null?'-':(_rem>0?'+':'')+(isA?fmt1(_rem)+'%p':fF(_rem)),'월말 예상 − 당월 누적')+'</div>';}
+      +(achP?tile('월말 예상','<span style="font-size:14px">'+fmt1(achP.lo)+' ~ '+fmt1(achP.hi)+'%</span>','예상 순증 ÷ 목표 '+fmt(achP.g),'#E8590C')+tile('예상 순증','<span style="font-size:14px">'+(achP.nlo>0?'+':'')+fmt(Math.round(achP.nlo))+' ~ '+(achP.nhi>0?'+':'')+fmt(Math.round(achP.nhi))+'</span>','순증 탭 월말 예상 범위')
+        :tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+tile('남은 기간 예상',_rem==null?'-':(_rem>0?'+':'')+(isA?fmt1(_rem)+'%p':fF(_rem)),'월말 예상 − 당월 누적'))+'</div>';}
   if(dl&&(met==='in'||met==='ns')){var _tn0=(met==='ns'&&nsP)?nsP.tn.v:0,_u=met==='ns'?' (순증)':'';
     if(met==='ns'||met==='in'){var _r=function(v){v=Math.round(v);return met==='in'?fmt(v):(v>0?'+':'')+fmt(v);},_si=(met==='in');   // 순증: ① · ② · 월말 예상(범위)
       tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+tile('최근 3개월 추세',_r(dl.a-_tn0),_si?'날 유형별 배수':'예상 입회 '+fmt(Math.round(dl.a))+' − 퇴회')
