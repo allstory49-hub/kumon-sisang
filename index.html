@@ -4359,12 +4359,12 @@ function adminAnalysis(){
   var g3=' style="grid-template-columns:repeat(3,1fr)"';   // 모든 탭: 한 줄에 3칸씩 (첫 줄 당월 누적·전월 동 영업일·차이)
   var tiles='<div class="incgrid4"'+g3+'>'+tile('당월 누적',fF(last.v),(+mk.slice(5))+'월 '+anaEff(mk,last.d)+'일 · '+pos.seg+'구간 '+pos.idx+'영업일')
     +tile('전월 동 영업일',pa?fF(pa.v):'-',pa?(+pm.slice(5))+'월 '+anaEff(pm,pa.d)+'일 마감':'전월 자료 없음')   /* 주말에 저장된 자료는 그 주 금요일(영업일)로 표시 */
-    +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fmt1(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
+    +tile('차이',diff==null?'-':(diff>0?'+':'')+(isA?fmt1(diff)+'%p':fF(diff)),'',diff==null?'':(diff>=0?'var(--green)':'var(--red)'))
     +((inNs||g3)?'':tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C'))+'</div>';
   if(!(dl&&(met==='in'||met==='ns'))){   // 예상퇴회·삭제·달성률: 둘째 줄 = 전월 마감 · 월말 예상 · 남은 기간 예상 증감
     var _pfL=isA?'전월 마감 달성률':'전월 마감',_rem=(proj!=null)?Math.round((proj-last.v)*10)/10:null;
     tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+((met==='et'&&etT)?tile('같은 시점 등록률',(etT.fm*100).toFixed(1)+'%','최종 퇴회 대비 지금까지 등록 비율'):tile(_pfL,pf!=null?fF(pf):'-',(+pm.slice(5))+'월 최종'))
-      +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+tile('남은 기간 예상',_rem==null?'-':(_rem>0?'+':'')+(isA?fmt1(_rem)+'%p':fmt1(_rem)),'월말 예상 − 당월 누적')+'</div>';}
+      +tile('월말 예상',proj==null?'-':fF(proj),how,'#E8590C')+tile('남은 기간 예상',_rem==null?'-':(_rem>0?'+':'')+(isA?fmt1(_rem)+'%p':fF(_rem)),'월말 예상 − 당월 누적')+'</div>';}
   if(dl&&(met==='in'||met==='ns')){var _tn0=(met==='ns'&&nsP)?nsP.tn.v:0,_u=met==='ns'?' (순증)':'';
     if(met==='ns'||met==='in'){var _r=function(v){v=Math.round(v);return met==='in'?fmt(v):(v>0?'+':'')+fmt(v);},_si=(met==='in');   // 순증: ① · ② · 월말 예상(범위)
       tiles+='<div class="incgrid4" style="margin-top:-2px;grid-template-columns:repeat(3,1fr)">'+tile('최근 3개월 추세',_r(dl.a-_tn0),_si?'날 유형별 배수':'예상 입회 '+fmt(Math.round(dl.a))+' − 퇴회')
