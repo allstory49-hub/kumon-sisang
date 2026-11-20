@@ -4216,7 +4216,9 @@ function anaHistProj(mk,cur,rO){var R=rO?{r:rO.r,ms:rO.ms}:anaHistRatios(mk);if(
 function anaCatKey(cat){return cat==='G'?'M':cat;}
 function anaDual(code,cat,mk){var k=anaCatKey(cat),A=anaBoard(mk),L=anaBoard(mk,null,'ly');if(!A)return null;
   var a,b;if(code==='ALL'){a=A.tot[k];b=L?L.tot[k]:null;}
-  else{a=anaProjIn0(code,cat,mk);if(a==null)return null;b=(L&&A.tot[k])?a*(L.tot[k]/A.tot[k]):null;}
+  else{var sr=anaSeries(code,'in',cat,mk),oc=sr.length?sr[sr.length-1].v:null,ac=A.act[k];   // 총국·사업국: 전사 남은 기간 예상을 이번 달 누적 비중대로 나눔 → 사업국 합 = 총국 합 ≈ 전사
+    if(oc==null||!ac){a=anaProjIn0(code,cat,mk);if(a==null)return null;b=(L&&A.tot[k])?a*(L.tot[k]/A.tot[k]):null;}
+    else{var sh=oc/ac;a=oc+(A.tot[k]-ac)*sh;b=L?oc+(L.tot[k]-(L.act[k]!=null?L.act[k]:ac))*sh:null;}}
   if(a==null)return null;var mid=(b!=null)?(a+b)/2:a;return {a:a,b:b,mid:mid,lo:(b!=null?Math.min(a,b):a),hi:(b!=null?Math.max(a,b):a),lyMk:L?L.ms[0]:null};}
 function anaRangeTxt(d){return d&&d.b!=null?'범위 '+fmt(Math.round(d.lo))+' ~ '+fmt(Math.round(d.hi)):'';}
 function anaProjIn(code,cat,mk){var d=anaDual(code,cat,mk);if(d)return d.mid;return anaProjIn0(code,cat,mk);}
