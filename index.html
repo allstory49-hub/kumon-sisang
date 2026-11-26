@@ -3979,8 +3979,11 @@ function anaBoard(mk,cut,mode){var RB=(mode==='ly')?anaBoardRatiosLY(mk):anaBoar
   all.forEach(function(x){if(x.t==='reg')x.t='k'+x.seg;});   // 평일: 구간별(1·2구간 따로)
   if(all[1]&&all[1].t==='k1')all[1].t='e0n';   // 첫날 다음 영업일: 평소 평일의 약 0.7 → 별도 배수
   var lastAct=0;all.forEach(function(x){if(act[x.d]&&act[x.d].S!=null)lastAct=x.d;});
-  var L={},Lest=0,KW={k1:1,k2:1};['S','M','N','O'].forEach(function(c){var v=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(KW[x.t]&&o&&o[c]!=null&&!lump[x.d]&&r)v.push(o[c]/r);});   // 구간별 평일 실적 ÷ 그 구간 배수 → 1구간 평일 기준 하루값
-    L[c]=v.length?v.reduce(function(a,b){return a+b;},0)/v.length:null;
+  var L={},Lest=0,KW={k1:1,k2:1},curSeg=0;all.forEach(function(x){if(x.d<=lastAct)curSeg=x.seg;});var KC=curSeg>=3?'k'+curSeg:null,Lmix={};   // 혼합: 현재 구간(3·4구간) 평일이 3일 이상이면 그 구간 평일도 기준에 반영 (그 구간 배수가 0.2 미만인 과목은 값이 튀어 제외)
+  ['S','M','N','O'].forEach(function(c){var v=[],vc=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(o&&o[c]!=null&&!lump[x.d]&&r){if(KW[x.t])v.push(o[c]/r);else if(KC&&x.t===KC&&r>=0.2)vc.push(o[c]/r);}});   // 구간별 평일 실적 ÷ 그 구간 배수 → 1구간 평일 기준 하루값
+    var av=function(a){return a.reduce(function(p,q){return p+q;},0)/a.length;};
+    L[c]=v.length?av(v):null;
+    if(L[c]!=null&&vc.length>=3){Lmix[c]={L12:L[c],Lc:av(vc),n:vc.length,seg:curSeg};L[c]=(L[c]+av(vc))/2;}   // 1·2구간 평일 기준값과 현재 구간 평일 기준값을 반반
     if(v.length<3){   // 평일 실적이 3일 미만(월초): 지금까지 실적 ÷ 날 유형별 배수 와 전월 1구간 평일 평균을 평균
       var est=[];all.forEach(function(x){var o=act[x.d],r=RB.R[c][x.t];if(o&&o[c]!=null&&!lump[x.d]&&r)est.push(o[c]/r);});
       var pm=anaPrevMk(mk),PD=((A.months[pm]||{}).days)||[],PT=PD.length?anaFileTypes(PD):{},pv=PD.filter(function(x){return PT[x.d]==='k1'&&anaVal(x,c)!=null&&!(x.n>1);}).map(function(x){return anaVal(x,c);});
@@ -3993,7 +3996,7 @@ function anaBoard(mk,cut,mode){var RB=(mode==='ly')?anaBoardRatiosLY(mk):anaBoar
     else{x.fc=false;x.inLump=true;x.v={};}
     if(x.v.S!=null&&x.v.N!=null)x.v.G=Math.round((x.v.S-x.v.N)*10)/10;});
   var tot={S:0,G:0,N:0,O:0,M:0},act0={S:0,N:0,O:0,M:0},n=0;all.forEach(function(x){['S','G','N','O','M'].forEach(function(c){if(x.v[c]!=null)tot[c]+=x.v[c];});if(!x.fc)['S','N','O','M'].forEach(function(c){if(x.v[c]!=null)act0[c]+=x.v[c];});});
-  return {days:all,L:L,Lest:Lest,R:RB.R,ms:RB.ms,ly:!!RB.ly,tot:tot,act:act0,actS:act0.S,fileLast:fileLast,title:(A.months[mk]||{}).title||''};}
+  return {days:all,L:L,Lmix:Lmix,Lest:Lest,R:RB.R,ms:RB.ms,ly:!!RB.ly,tot:tot,act:act0,actS:act0.S,fileLast:fileLast,title:(A.months[mk]||{}).title||''};}
 // 월 마감 시 자동 추가: 업로드할 때마다 그 달 일자별 실적(합산 ③ · NKU·온공 ④)을 배수 자료(ana_days)에 저장 — 파일로 올린 날짜는 그대로 둠
 async function anaDaysAutoSave(mk){if(!APP.anaDays)await loadAnaDays();var A=APP.anaDays||{months:{}};A.months=A.months||{};var B=anaBoard(mk);if(!B)return;
   var M=A.months[mk]||{title:'',days:[]},keep=(M.days||[]).filter(function(x){return !x.auto;}),fl=keep.length?keep[keep.length-1].d:0,add=[];
@@ -4128,7 +4131,7 @@ function anaBoardHtml(mk,cat){cat=cat||'S';var K=anaCatKey(cat),CL={S:'합산과
     
     +tb
     +'<div class="ib bl" style="margin-top:6px">· 일별 예상은 ① 최근 3개월 추세 기준이에요 · 실적: 업로드 탭 자료(합산 ③소평, 온공·N ④관통, 관리 = 합산 − N − 온공 · 업로드할 때마다 자동 저장)'+(cat==='S'?' · 합산 예상 = 관리 + 온공 + N 예상의 합':'')+'<br>'
-    +'· 예상: 1구간 평일 기준 하루값('+fmt(Math.round(B.L[K]||0))+' · 당월 1·2구간 평일 실적을 각 구간 배수로 환산한 평균'+(B.Lest?' · 월초라 평일 실적이 3일 미만이어서 지금까지 실적÷날 유형별 배수와 전월 1구간 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값'
+    +'· 예상: 1구간 평일 기준 하루값('+fmt(Math.round(B.L[K]||0))+(B.Lmix&&B.Lmix[K]?' · 1·2구간 평일 환산값 '+fmt(Math.round(B.Lmix[K].L12))+', '+B.Lmix[K].seg+'구간 평일 '+B.Lmix[K].n+'일 환산값 '+fmt(Math.round(B.Lmix[K].Lc))+'의 평균':' · 당월 1·2구간 평일 실적을 각 구간 배수로 환산한 평균')+(B.Lest?' · 월초라 평일 실적이 3일 미만이어서 지금까지 실적÷날 유형별 배수와 전월 1구간 평일 평균으로 추정':'')+') × 날 유형별 배수 · 배수는 최근 '+B.ms.length+'개월('+B.ms.map(function(m){return m.slice(2).replace('-','.');}).join(', ')+', 이슈 월 제외) 일자별 실적의 중앙값'
     +'</div>'+anaTypeTable(B,cat)+'<div class="ib bl" style="margin-top:6px">· 파일의 전월·전년 비교값은 쓰지 않아요.</div>';}
 // 날 유형별(구간별 평일·구간 마감일) 배수 · 당월 실적 평균 · 적용 예상
 function anaTypeTable(B,cat){cat=cat||'S';var K=anaCatKey(cat),CL={S:'합산과목',G:'관리과목',O:'온공과목',N:'N과목'}[cat]||'합산과목',r=B.R[K]||{},LYB=anaBoard(B.mk||liveKey(),null,'ly'),ry=LYB?(LYB.R[K]||{}):{},T=[['k1','1구간 평일'],['k2','2구간 평일'],['k3','3구간 평일'],['k4','4구간 평일'],['e0','첫날'],['e0n','첫날 다음 영업일'],['e1','1구간 마감'],['e2','2구간 마감'],['e3','3구간 마감'],['e5','월마감 전일'],['e6','월마감']];
