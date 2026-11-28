@@ -984,7 +984,7 @@ async function pwReset(k){if(!confirm('비밀번호를 초기화할까요?'))ret
 
 /* ───── 사용자 화면 ───── */
 // 월마감일 조회 차단(관리자 제외) · 한국시간 기준 날짜
-var CLOSED_DAYS=['2026-10-30'],CLOSED_MSG='월마감일에는 조회불가합니다.';
+var CLOSED_DAYS=['2026-10-30','2026-11-30'],CLOSED_MSG='월마감일에는 조회불가합니다.';
 function kstDay(){var d=new Date(Date.now()+9*3600e3);return d.toISOString().slice(0,10);}
 function isClosedDay(){return CLOSED_DAYS.indexOf(kstDay())>=0;}
 function closedGuard(){if(!isClosedDay()||S.type==='admin')return false;S.user=null;showPage('lp');var e=document.getElementById('lerr');if(e)e.textContent=CLOSED_MSG;return true;}
